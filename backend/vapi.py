@@ -312,7 +312,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         "stopSpeakingPlan": {"numWords": 2, "voiceSeconds": 0.3, "backoffSeconds": 1, "acknowledgementPhrases": ACK_ES},
         "backgroundSound": background_sound(agent),
         "silenceTimeoutSeconds": 30,
-        "maxDurationSeconds": 900,
+        "maxDurationSeconds": lead.get("max_seconds") or 900,
         "serverMessages": ["status-update", "end-of-call-report", "tool-calls"],
         "server": server,
         "analysisPlan": analysis_plan(),

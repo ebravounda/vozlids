@@ -25,6 +25,7 @@ import extra_routes as X  # noqa: E402
 import saas  # noqa: E402
 import billing  # noqa: E402
 import voice_preview  # noqa: E402
+import landing  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
 from db import client, db  # noqa: E402
@@ -461,6 +462,7 @@ app.include_router(X.router)
 app.include_router(saas.router)
 app.include_router(billing.router)
 app.include_router(voice_preview.router)
+app.include_router(landing.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

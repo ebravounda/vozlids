@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Loader2, Mic, Plus, Trash2 } from "lucide-react";
+import { CreditCard, Globe2, Loader2, Mic, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -109,6 +109,52 @@ export function CustomVoices() {
         <Input value={f.tone} onChange={(e) => setF({ ...f, tone: e.target.value })} placeholder="Tono (opcional)" className="col-span-2 bg-slate-950/60" data-testid="voice-tone-input" />
       </div>
       <Button onClick={add} disabled={!f.name || f.voice_id.length < 10} className="rounded-full" data-testid="voice-add-button"><Plus className="mr-2 h-4 w-4" /> Añadir voz</Button>
+    </Panel>
+  );
+}
+
+const ST = { llamando: "Llamando", en_curso: "En curso", completada: "Llamado", fallida: "Llamada fallida", sin_agente: "Sin agente", repetida: "Repetida (24 h)", no_llamar: "No llamar" };
+
+export function LandingSettings() {
+  const [cfg, setCfg] = useState(null);
+  const [agents, setAgents] = useState([]);
+  const [reqs, setReqs] = useState([]);
+  useEffect(() => {
+    api.get("/admin/landing").then((r) => setCfg(r.data));
+    api.get("/agents").then((r) => setAgents(r.data));
+    api.get("/admin/info-requests").then((r) => setReqs(r.data));
+  }, []);
+  const save = async () => { try { await api.put("/admin/landing", cfg); toast.success("Formulario de la web guardado"); } catch (e) { toast.error(errMsg(e)); } };
+  if (!cfg) return null;
+  const pick = (c) => (
+    <Select value={cfg[`agent_${c}`] || "none"} onValueChange={(v) => setCfg({ ...cfg, [`agent_${c}`]: v === "none" ? "" : v })}>
+      <SelectTrigger className="bg-slate-950/60" data-testid={`landing-agent-${c}-select`}><SelectValue /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">No llamar, solo avisarme</SelectItem>
+        {agents.filter((a) => (a.country || "ES") === c.toUpperCase()).map((a) => <SelectItem key={a.id} value={a.id}>{a.name} · {a.business_name}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
+  return (
+    <Panel className="space-y-4 lg:col-span-2" data-testid="landing-settings-panel">
+      <div className="flex items-center gap-2"><Globe2 className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">Formulario «Solicita información» de la web</h3></div>
+      <p className="text-xs text-slate-400">Elige qué agente llama al instante a quien deja sus datos (llamada corta de ~40 segundos con guion de bienvenida de VozLeads). Siempre recibes un email con cada solicitud.</p>
+      <div className="grid gap-3 md:grid-cols-3">
+        <label className="space-y-1 text-xs text-slate-400">Agente para España (+34){pick("es")}</label>
+        <label className="space-y-1 text-xs text-slate-400">Agente para Chile (+56){pick("cl")}</label>
+        <label className="space-y-1 text-xs text-slate-400">Email de aviso (vacío = tu email)
+          <Input value={cfg.notify_email} onChange={(e) => setCfg({ ...cfg, notify_email: e.target.value })} placeholder="ventas@vozleads.com" className="bg-slate-950/60" data-testid="landing-notify-email-input" />
+        </label>
+      </div>
+      <Button onClick={save} className="rounded-full" data-testid="landing-settings-save-button">Guardar</Button>
+      <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-800" data-testid="info-requests-list">
+        {reqs.length === 0 ? <p className="p-4 text-sm text-slate-500">Aún no hay solicitudes desde la web.</p> : reqs.map((r) => (
+          <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 p-3 text-sm last:border-0" data-testid={`info-request-${r.id}`}>
+            <span className="text-white">{r.name} <a href={`tel:${r.phone}`} className="font-mono text-xs text-slate-400 hover:text-emerald-300">{r.phone}</a></span>
+            <span className="text-xs text-slate-500">{r.page} · {new Date(r.created_at).toLocaleString("es-ES")} · <span className="text-emerald-300">{ST[r.call_status] || r.call_status}</span></span>
+          </div>
+        ))}
+      </div>
     </Panel>
   );
 }

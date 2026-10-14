@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /login
+Disallow: /registro
+Disallow: /f/
+
+Sitemap: https://vozleads.com/sitemap.xml

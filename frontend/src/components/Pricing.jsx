@@ -29,9 +29,9 @@ const PlanCard = ({ p, currency, featured }) => (
   </div>
 );
 
-export function Pricing() {
+export function Pricing({ initial }) {
   const [plans, setPlans] = useState([]);
-  const [currency, setCurrency] = useState(detectCurrency);
+  const [currency, setCurrency] = useState(() => initial || detectCurrency());
   useEffect(() => { api.get("/public/plans").then((r) => setPlans(r.data)).catch(() => {}); }, []);
   const change = (c) => { setCurrency(c); saveCurrency(c); };
   if (!plans.length) return null;
