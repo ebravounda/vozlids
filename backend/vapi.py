@@ -109,7 +109,7 @@ def background_sound(agent: dict) -> str:
         return "off"
     if a == "vapi_office":
         return "office"
-    return f"{public_url()}/api/ambience/{a}/{int(agent.get('ambience_volume', 35))}.wav"
+    return f"{public_url()}/api/ambience/{a}/{int(agent.get('ambience_volume', 35))}.wav?v=2"
 
 
 def first_name(name: str) -> str:

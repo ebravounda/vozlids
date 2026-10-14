@@ -39,12 +39,8 @@ def _envelope(rng, n):
 
 
 def _voice(rng, n):
-    base = rng.uniform(95, 230)
-    drift = _band(rng.standard_normal(n), 0, 3)
-    f0 = base * (1 + 0.12 * _norm(drift))
-    phase = np.cumsum(f0 / SR)
-    src = 2 * (phase % 1) - 1 + 0.15 * rng.standard_normal(n)
-    v = _band(src, 180, rng.uniform(1300, 2000))
+    lo = rng.uniform(250, 400)
+    v = _band(rng.standard_normal(n), lo, lo + rng.uniform(500, 900))
     return _norm(v) * _envelope(rng, n) * rng.uniform(0.35, 1.0)
 
 
