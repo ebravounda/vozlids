@@ -4,6 +4,7 @@ import { Bot, CalendarDays, Code2, Euro, LifeBuoy, LogOut, PhoneCall, PhoneOff, 
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { formatPrice } from "@/lib/currency";
 
 const NAV = [
   { to: "/app", label: "Leads y llamadas", icon: PhoneCall, id: "leads", end: true },
@@ -25,7 +26,7 @@ function UsageBadge() {
   useEffect(() => { api.get("/account/usage").then((r) => setU(r.data)).catch(() => {}); }, []);
   if (!u?.plan) return <span />;
   const over = u.minutes_used >= u.plan.minutes;
-  return <span data-testid="usage-badge" className={`rounded-full border px-3 py-1 text-xs font-semibold ${over ? "border-rose-500/40 text-rose-300" : "border-slate-700 text-slate-300"}`}>Plan {u.plan.name}: {u.minutes_used} / {u.plan.minutes} min{over && !u.allow_overage ? " · llamadas en pausa" : ""}</span>;
+  return <span data-testid="usage-badge" className={`rounded-full border px-3 py-1 text-xs font-semibold ${over ? "border-rose-500/40 text-rose-300" : "border-slate-700 text-slate-300"}`}>Plan {u.plan.name} ({formatPrice(u.plan.price, u.plan.currency)}/mes): {u.minutes_used} / {u.plan.minutes} min{over && !u.allow_overage ? " · llamadas en pausa" : ""}</span>;
 }
 
 function ImpersonationBar() {

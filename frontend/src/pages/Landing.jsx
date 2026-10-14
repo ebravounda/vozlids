@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, BarChart3, CalendarCheck, Check, Code2, Globe2, Headphones, LifeBuoy, PhoneCall, ShieldCheck, Timer, Wallet } from "lucide-react";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
+import { Pricing } from "@/components/Pricing";
 
 const DEMO = "Hola Laura, soy Marta, asistente virtual de Clínica Sonrisa. Te llamo porque acabas de pedir información en nuestra web. ¿Tienes un minuto?";
 const USES = [
@@ -27,7 +28,7 @@ const Nav = () => (
       </span>
       <nav className="hidden gap-8 text-sm text-slate-600 md:flex">
         <a href="#soluciones" className="hover:text-slate-900">Soluciones</a><a href="#como" className="hover:text-slate-900">Cómo funciona</a>
-        <a href="#api" className="hover:text-slate-900">API</a><a href="#faq" className="hover:text-slate-900">Preguntas</a>
+        <a href="#api" className="hover:text-slate-900">API</a><a href="#precios" className="hover:text-slate-900" data-testid="landing-nav-pricing-link">Precios</a><a href="#faq" className="hover:text-slate-900">Preguntas</a>
       </nav>
       <div className="flex items-center gap-2">
         <Link to="/login" data-testid="landing-nav-login-button" className="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900">Acceder</Link>
@@ -115,6 +116,8 @@ X-API-Key: vl_live_…
   "context": { "importe": "$45.000", "vencimiento": "15/06" }
 }`}</pre>
       </section>
+
+      <Pricing />
 
       <section id="faq" className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-3xl px-6 py-20">

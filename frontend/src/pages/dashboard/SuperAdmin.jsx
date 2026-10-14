@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LogIn, Plus, Trash2 } from "lucide-react";
+import { LogIn, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { formatPrice } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -8,11 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 
+const EMPTY = { name: "", minutes: 100, price_eur: 49, price_clp: 49000, overage_eur: 0.45, overage_clp: 450, features: "", public: true };
+const NUMS = ["minutes", "price_eur", "price_clp", "overage_eur", "overage_clp"];
+
 function Plans({ plans, reload }) {
-  const [f, setF] = useState({ name: "", minutes: 100, price: 49, currency: "EUR", overage_price: 0.45 });
+  const [f, setF] = useState(EMPTY);
+  const [editId, setEditId] = useState(null);
+  const edit = (p) => { setEditId(p.id); setF({ ...EMPTY, ...p, features: (p.features || []).join(", ") }); };
+  const reset = () => { setEditId(null); setF(EMPTY); };
   const create = async () => {
-    try { await api.post("/admin/plans", { ...f, minutes: Number(f.minutes), price: Number(f.price), overage_price: Number(f.overage_price) }); toast.success("Plan creado"); reload(); }
-    catch (e) { toast.error(errMsg(e)); }
+    const body = { name: f.name, public: f.public, features: f.features.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 8) };
+    NUMS.forEach((k) => { body[k] = Number(f[k]); });
+    try {
+      if (editId) await api.put(`/admin/plans/${editId}`, body); else await api.post("/admin/plans", body);
+      toast.success(editId ? "Plan actualizado" : "Plan creado"); reset(); reload();
+    } catch (e) { toast.error(errMsg(e)); }
   };
   const del = async (id) => { try { await api.delete(`/admin/plans/${id}`); reload(); } catch (e) { toast.error(errMsg(e)); } };
   const inp = (k, ph, type = "text") => <Input type={type} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} placeholder={ph} className="bg-slate-950/60" data-testid={`plan-${k}-input`} />;
@@ -21,17 +32,27 @@ function Plans({ plans, reload }) {
       <h3 className="text-lg font-semibold text-white">Planes</h3>
       {plans.map((p) => (
         <div key={p.id} className="flex items-center justify-between rounded-xl border border-slate-800 p-3" data-testid={`plan-row-${p.id}`}>
-          <div><p className="font-semibold text-white">{p.name}</p><p className="text-xs text-slate-400">{p.minutes} min/mes · {p.price} {p.currency}/mes · exceso {p.overage_price} {p.currency}/min</p></div>
-          <button onClick={() => del(p.id)} className="text-slate-500 hover:text-rose-300" data-testid={`plan-delete-${p.id}`}><Trash2 className="h-4 w-4" /></button>
+          <div>
+            <p className="font-semibold text-white">{p.name}{!p.public && <span className="ml-2 text-xs text-slate-500">(oculto en la web)</span>}</p>
+            <p className="text-xs text-slate-400">{p.minutes} min/mes · España {formatPrice(p.price_eur, "EUR")}/mes (extra {formatPrice(p.overage_eur, "EUR", 2)}/min) · Chile {formatPrice(p.price_clp, "CLP")}/mes (extra {formatPrice(p.overage_clp, "CLP")}/min)</p>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => edit(p)} className="text-slate-500 hover:text-emerald-300" data-testid={`plan-edit-${p.id}`}><Pencil className="h-4 w-4" /></button>
+            <button onClick={() => del(p.id)} className="text-slate-500 hover:text-rose-300" data-testid={`plan-delete-${p.id}`}><Trash2 className="h-4 w-4" /></button>
+          </div>
         </div>
       ))}
       <div className="grid grid-cols-2 gap-2 border-t border-slate-800 pt-4">
-        {inp("name", "Nombre del plan")}{inp("minutes", "Minutos/mes", "number")}{inp("price", "Precio/mes", "number")}{inp("overage_price", "Precio minuto extra", "number")}
-        <Select value={f.currency} onValueChange={(v) => setF({ ...f, currency: v })}>
-          <SelectTrigger className="bg-slate-950/60" data-testid="plan-currency-select"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="CLP">CLP</SelectItem></SelectContent>
-        </Select>
-        <Button onClick={create} disabled={!f.name} className="rounded-full" data-testid="plan-create-button"><Plus className="mr-2 h-4 w-4" /> Crear plan</Button>
+        <p className="col-span-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{editId ? "Editar plan" : "Nuevo plan"}</p>
+        {inp("name", "Nombre del plan")}{inp("minutes", "Minutos/mes", "number")}
+        {inp("price_eur", "Precio/mes España (EUR)", "number")}{inp("price_clp", "Precio/mes Chile (CLP)", "number")}
+        {inp("overage_eur", "Minuto extra España (EUR)", "number")}{inp("overage_clp", "Minuto extra Chile (CLP)", "number")}
+        <div className="col-span-2">{inp("features", "Características separadas por comas")}</div>
+        <label className="flex items-center gap-2 text-sm text-slate-300"><Switch checked={f.public} onCheckedChange={(v) => setF({ ...f, public: v })} data-testid="plan-public-switch" /> Visible en la web</label>
+        <div className="flex justify-end gap-2">
+          {editId && <Button variant="ghost" onClick={reset} className="rounded-full" data-testid="plan-cancel-edit-button">Cancelar</Button>}
+          <Button onClick={create} disabled={!f.name} className="rounded-full" data-testid="plan-create-button">{editId ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}{editId ? "Guardar" : "Crear plan"}</Button>
+        </div>
       </div>
     </Panel>
   );
@@ -43,6 +64,10 @@ function UserRow({ u, plans, reload }) {
     catch (e) { toast.error(errMsg(e)); }
   };
   const plan = plans.find((p) => p.id === u.plan_id);
+  const remove = async () => {
+    if (!window.confirm(`¿Eliminar la cuenta ${u.business_name} y todos sus datos? No se puede deshacer.`)) return;
+    try { await api.delete(`/admin/users/${u.id}`); toast.success("Cuenta eliminada"); reload(); } catch (e) { toast.error(errMsg(e)); }
+  };
   const impersonate = async () => { await api.post(`/admin/users/${u.id}/impersonate`); window.location.href = "/app"; };
   const over = plan && u.minutes_used >= plan.minutes;
   return (
@@ -58,7 +83,8 @@ function UserRow({ u, plans, reload }) {
       <td className="p-3 text-xs text-slate-300">{u.calls} llamadas · {u.agents} agentes</td>
       <td className="p-3"><Switch checked={u.allow_overage} onCheckedChange={(v) => save({ allow_overage: v })} data-testid={`admin-user-overage-${u.id}`} /></td>
       <td className="p-3"><Switch checked={u.suspended} onCheckedChange={(v) => save({ suspended: v })} data-testid={`admin-user-suspend-${u.id}`} /></td>
-      <td className="p-3">{u.role !== "admin" && <button onClick={impersonate} className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-emerald-500" data-testid={`admin-user-impersonate-${u.id}`}><LogIn className="h-3.5 w-3.5" /> Entrar</button>}</td>
+      <td className="p-3">{u.role !== "admin" && <button onClick={impersonate} className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-emerald-500" data-testid={`admin-user-impersonate-${u.id}`}><LogIn className="h-3.5 w-3.5" /> Entrar</button>}
+        {u.role !== "admin" && <button onClick={remove} className="ml-2 text-slate-500 hover:text-rose-300" data-testid={`admin-user-delete-${u.id}`}><Trash2 className="inline h-4 w-4" /></button>}</td>
     </tr>
   );
 }

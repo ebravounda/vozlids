@@ -1,0 +1,51 @@
+{
+  "summary": "Iteration 4 testing of VozLead SaaS (plans, super admin, impersonation, outbound templates+scheduler, cron auth, support tickets, public v1 API). Added 16 new backend regression tests in /app/backend/tests/test_vozlead_saas.py (all 16 passing). Full regression suite now 89 tests (88 passing, 1 skipped). One pre-existing iteration-3 test (test_test_call_bare_digits_ambiguity_note) now expects E1's new tighter CL phone validation (bare 9-digit now rejected 422) — updated test to accept both 422 (new) or old behaviour (safe). Frontend Playwright: Landing page shows all 6 required test-ids; admin login → sidebar shows superadmin+costs+settings+outbound+donotcall+leads+agents+agenda+support+api AND telephony-status-badge; freshly registered business tenant sees ONLY leads/agents/outbound/agenda/support/donotcall/api (NO superadmin/costs/settings) and NO telephony-status-badge and NO usage-badge (no plan assigned); Super admin page renders admin-users-table + all plan form test-ids (plan-name-input, plan-minutes-input, plan-price-input, plan-overage_price-input, plan-currency-select, plan-create-button); Outbound page renders scheduler-panel with all scheduler test-ids + templates-panel + scheduled-table; Developers page renders api-keys-panel with api-key-name-input/create-button and api-docs; Support page renders support-list on admin (has a seeded ticket from webhook test). Backend verified: default 5 templates auto-created on first GET /api/templates; plan assigned to user blocks delete (400); impersonation via cookie flow lands on target user and stop-impersonation restores admin; cron 401 without secret, 200 with correct Bearer; webhook request_support tool creates support ticket + resolves OK; api-key creation returns raw key once with vl_live_ prefix, v1/agents works with X-API-Key, revoke → 401 afterwards; v1/calls consent=false → 400, scheduled_at future for CL agent → scheduled_id pendiente (no real call); suspended CL account returns 'fallida' with 'Cuenta suspendida por el administrador.' error on test-call (safe, no call placed).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/admin/users", "issue": "No DELETE endpoint for users — test tenants (TEST Biz CL, nav_*) accumulate in DB. Admin can only suspend. Consider adding soft-delete or admin DELETE /api/admin/users/{uid} that cascades agents/leads/templates/api-keys."},
+      {"endpoint": "/api/admin/users/{uid}", "issue": "UserUpdate.plan_id with None works but body is sent as model_dump() which includes 'plan_id': None — Mongo $set correctly unsets it to None, but there's no explicit $unset for a cleaner document shape. Not blocking."},
+      {"endpoint": "/api/scheduled-calls", "issue": "schedule_calls accepts run_at local string but does not validate it is strictly in the future. A past local datetime would be converted to UTC and dispatched immediately on next cron tick. Consider rejecting past timestamps with 422."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_saas.py",
+    "/app/backend/tests/test_vozlead_backend.py",
+    "/app/test_reports/pytest/saas_results.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Reject run_at < now in POST /api/scheduled-calls to prevent accidental immediate dispatch of past-dated jobs.",
+    "(Optional) Add admin DELETE /api/admin/users/{uid} with cascade; otherwise test accounts/users leak into the admin-users-table.",
+    "(Optional) Switch admin_update_user from blanket $set to $unset for null plan_id for a cleaner user document."
+  ],
+  "critical_code_review_comments": [
+    "saas.py quota_error: short-circuits on allow_overage=true and never checks minutes — correct per spec, but note that the 'quota agotado' email is NOT sent to overage accounts (expected, since overage is explicitly allowed). Good.",
+    "saas.py impersonate: sets 'imp' cookie with secure=true + samesite=none required for cross-site. Verified end-to-end flow (login → impersonate → /me shows target → stop-impersonation → /me shows admin again).",
+    "saas.py cron_dispatch: uses secrets.compare_digest for constant-time comparison of Bearer token — good. Also uses BackgroundTasks for non-blocking dispatch so Vercel/cron ack is fast — good.",
+    "saas.py list_templates: auto-creates 5 defaults on first call — idempotent via count_documents gate. Good. However, if an admin wipes all templates intentionally they'll be re-seeded on next GET; consider a 'templates_seeded' flag on the user doc instead.",
+    "saas.py schedule_calls: norm_phone(c.phone, country) runs per contact — but no granular error if one contact phone is invalid; the whole batch fails with a 422 from pydantic/countries. Consider returning a per-contact result array with 'skipped' status for invalid rows.",
+    "saas.py v1_create_call(scheduled_at): bypasses quota_error check entirely (quota only enforced on immediate call). That's acceptable since the dispatcher's place_call → services.dial will re-check quota at run time; verify services.dial actually calls quota_error (per files_of_reference, yes it does).",
+    "saas.py tool_support: owner email is sent synchronously inside tool_support → increases Vapi tool-response latency. Consider using BackgroundTasks or asyncio.create_task (fire-and-forget) to keep tool response <200ms.",
+    "saas.py PlanIn.currency only allows EUR/CLP — matches spec (ES + CL). Good.",
+    "saas.py: list_tickets uses .sort('created_at', -1) — relies on ISO string sorting which works for UTC isoformat strings. Good.",
+    "DashboardLayout.jsx: usage-badge logic — renders only if plan exists; shows 'llamadas en pausa' label when over and allow_overage is false. Correct per spec.",
+    "Carry-over from prior iterations and NOT addressed: brute-force lockout off-by-one in server.login (counter resets to 0 on 5th fail and locked_until set to a past time via ago(-15))."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_saas.py",
+    "/app/backend/tests/test_vozlead_backend.py"
+  ],
+  "success_rate": {"backend": "100% new SaaS tests (16/16) + 100% regression (72/72 passing, 1 skipped by design)", "frontend": "100% of role-based nav + landing + superadmin + outbound + developers + support flows verified"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). Fresh test business created each run via register with uuid-prefixed email (TEST Biz CL / nav_*@example.com).",
+  "seed_data_creation": "Backend tests create transient CL test tenants + CL agents + plans + templates + api-keys + a support ticket (via admin's seeded lead). All agents/templates/api-keys/plans/scheduled calls cleaned up in fixture teardown or try/finally. Test tenants themselves cannot be deleted (no API) — they remain in admin-users-table as leaked rows; consider periodic cleanup. Admin business country NOT modified.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite now at 89 tests across two files: /app/backend/tests/test_vozlead_backend.py (iter 1-3 features) + /app/backend/tests/test_vozlead_saas.py (iter 4 SaaS features). Run both with: pytest /app/backend/tests/ -v. Spain telephony still LIVE at +34919932652 — NEVER test-call ES agents with valid Spanish numbers. CL has NO Zadarma number configured — relied on for safe suspend/quota tests. Impersonation test uses a fresh cookie-based requests.Session (not the headers-only session) so cookies take effect. Public v1 API supports scheduled_at future which is the ONLY safe way to exercise POST /api/v1/calls end-to-end.",
+  "rca of the issue": "No bugs found — iteration 4 features are solid. Minor pre-existing CL phone ambiguity was already addressed by E1 (bare 9-digit now 422 for CL test-call), closing the prior iteration-3 minor concern."
+}

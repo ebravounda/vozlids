@@ -111,20 +111,38 @@ async def resolve_ticket(tid: str, user=CurrentUser):
 class PlanIn(BaseModel):
     name: str = Field(min_length=1, max_length=60)
     minutes: int = Field(ge=1, le=1000000)
-    price: float = Field(ge=0)
-    currency: Literal["EUR", "CLP"] = "EUR"
-    overage_price: float = Field(0, ge=0)
+    price_eur: float = Field(ge=0)
+    price_clp: float = Field(ge=0)
+    overage_eur: float = Field(0, ge=0)
+    overage_clp: float = Field(0, ge=0)
+    features: List[str] = Field(default=[], max_length=8)
+    public: bool = True
+
+
+def plan_out(p: dict) -> dict:
+    return {**{k: v for k, v in p.items() if k != "_id"}, "id": str(p["_id"])}
+
+
+@router.get("/public/plans")
+async def public_plans():
+    return [plan_out(p) async for p in db.plans.find({"public": True}).sort("minutes", 1)]
 
 
 @router.get("/admin/plans")
 async def list_plans(user=Depends(require_admin)):
-    return [{**{k: v for k, v in p.items() if k != "_id"}, "id": str(p["_id"])} async for p in db.plans.find().sort("minutes", 1)]
+    return [plan_out(p) async for p in db.plans.find().sort("minutes", 1)]
 
 
 @router.post("/admin/plans")
 async def create_plan(body: PlanIn, user=Depends(require_admin)):
     res = await db.plans.insert_one({**body.model_dump(), "created_at": now_iso()})
     return {**body.model_dump(), "id": str(res.inserted_id)}
+
+
+@router.put("/admin/plans/{pid}")
+async def update_plan(pid: str, body: PlanIn, user=Depends(require_admin)):
+    await db.plans.update_one({"_id": oid(pid)}, {"$set": body.model_dump()})
+    return {**body.model_dump(), "id": pid}
 
 
 @router.delete("/admin/plans/{pid}")
@@ -162,6 +180,18 @@ async def admin_update_user(uid: str, body: UserUpdate, user=Depends(require_adm
     return {"ok": True}
 
 
+@router.delete("/admin/users/{uid}")
+async def admin_delete_user(uid: str, user=Depends(require_admin)):
+    if uid == user["id"]:
+        raise HTTPException(400, "No puedes eliminar tu propia cuenta.")
+    if not (await db.users.delete_one({"_id": oid(uid), "role": {"$ne": "admin"}})).deleted_count:
+        raise HTTPException(404, "Cuenta no encontrada")
+    for col in ("agents", "leads", "appointments", "dnc", "availability", "call_templates", "scheduled_calls",
+                "support_tickets", "api_keys", "ambience_files"):
+        await db[col].delete_many({"tenant_id": uid})
+    return {"ok": True}
+
+
 @router.post("/admin/users/{uid}/impersonate")
 async def impersonate(uid: str, response: Response, request: Request, user=Depends(require_admin)):
     target = await db.users.find_one({"_id": oid(uid)})
@@ -189,7 +219,10 @@ async def stop_impersonation(request: Request, response: Response):
 @router.get("/account/usage")
 async def my_usage(user=CurrentUser):
     plan = await db.plans.find_one({"_id": ObjectId(user["plan_id"])}) if user.get("plan_id") else None
-    return {"minutes_used": await minutes_used(user["id"]), "plan": plan and {"name": plan["name"], "minutes": plan["minutes"]},
+    cur = "clp" if user.get("country") == "CL" else "eur"
+    return {"minutes_used": await minutes_used(user["id"]),
+            "plan": plan and {"name": plan["name"], "minutes": plan["minutes"], "currency": cur.upper(),
+                              "price": plan.get(f"price_{cur}", 0), "overage_price": plan.get(f"overage_{cur}", 0)},
             "allow_overage": user.get("allow_overage", False)}
 
 
@@ -265,6 +298,8 @@ async def _agent(tenant_id: str, agent_id: str) -> dict:
 
 def _to_utc(local: str, country: str) -> str:
     dt = datetime.fromisoformat(local).replace(tzinfo=S.tz_of(country))
+    if dt <= datetime.now(timezone.utc):
+        raise HTTPException(422, "La fecha y hora programadas ya han pasado.")
     return dt.astimezone(timezone.utc).isoformat()
 
 

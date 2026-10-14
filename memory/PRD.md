@@ -47,8 +47,19 @@
 - Admin costs: CLP for Chilean businesses, per-country line rate, USD→CLP rate, pricing advice and plans per country
 - Chile bare national numbers only accepted starting with 9 or 2 (avoid misdialing Spanish numbers)
 
-## Pending
-- Chile number not connected yet (user to fill the +56 connect form in Telefonía)
+## Iteration 5 (2026-06) — SaaS
+- saas.py: plans (minutes/month, price EUR/CLP, overage price), super admin users (plan, overage switch, suspend, delete with cascade, impersonate via "imp" cookie + stop), monthly quota check before every dial (pause + one email alert/month)
+- Call templates (5 defaults: seguimiento, cobro, info, recordatorio, encuesta) + scheduled/immediate outbound calls per contact list in agent's country timezone; cron .emergent/crons.yml every 15 min → /api/cron/dispatch (WEBHOOK_CRON_SECRET)
+- Agent tool request_support → support_tickets + email to account owner; appointment booked → email to owner and lead (if email)
+- emailer.py: Emergent managed Resend (from_name "VozLeads"; sender address managed by platform, not notificaciones@vozleads.com)
+- Public API: per-tenant API keys (sha256), GET /api/v1/agents, POST /api/v1/calls (type, consent, context, scheduled_at), GET /api/v1/calls/{id}; developer docs page /app/api
+- Role-based UI: clients see Leads, Agentes, Llamadas salientes, Agenda, Asistencia, No llamar, API; admin also sees Super admin, Costes, Telefonía
+- New professional light landing (VozLeads)
+
+## Backlog
+- P1: Stripe card on file + automatic overage billing; client-visible plan upgrade; verify vozleads.com domain for custom sender
+- P1: Chile 600 number; legal calling hours; retries for no-answer
+- P2: webhooks to client systems on call end; CRM integrations; inbound agents
 
 ## Backlog
 - P1: Stripe plans + minute limits; auto-retries for no-answer; SMS/WhatsApp confirmation; Google Calendar; CSV campaigns

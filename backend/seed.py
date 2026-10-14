@@ -46,7 +46,19 @@ def _sample_leads(tid: str, aid: str) -> list:
     return out
 
 
+SAMPLE_PLANS = [
+    {"name": "Inicio (ejemplo)", "minutes": 100, "price_eur": 49, "price_clp": 49000, "overage_eur": 0.45, "overage_clp": 450,
+     "features": ["1 agente IA", "Formulario web", "Grabación y transcripción"]},
+    {"name": "Profesional (ejemplo)", "minutes": 500, "price_eur": 199, "price_clp": 199000, "overage_eur": 0.39, "overage_clp": 390,
+     "features": ["5 agentes IA", "Llamadas programadas", "Agenda y citas", "API"]},
+    {"name": "Empresa (ejemplo)", "minutes": 2000, "price_eur": 690, "price_clp": 690000, "overage_eur": 0.32, "overage_clp": 320,
+     "features": ["Agentes ilimitados", "Soporte prioritario", "Voces premium", "API"]},
+]
+
+
 async def seed():
+    if not await db.plans.count_documents({}):
+        await db.plans.insert_many([{**p, "public": True, "created_at": now_iso()} for p in SAMPLE_PLANS])
     email = os.environ["ADMIN_EMAIL"].lower()
     password = os.environ["ADMIN_PASSWORD"]
     user = await db.users.find_one({"email": email})
