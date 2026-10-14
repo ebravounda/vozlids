@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Panel } from "@/components/Common";
 import { CustomVoices, ElevenLabsSettings, LandingSettings, StripeSettings } from "@/components/AdminIntegrations";
+import { ZadarmaSettings } from "@/components/AdminTelephony";
 import { api, errMsg } from "@/lib/api";
 
 const EMPTY = { name: "", minutes: 100, price_eur: 49, price_clp: 49000, overage_eur: 0.45, overage_clp: 450, features: "", public: true };
@@ -115,6 +116,7 @@ export default function SuperAdmin() {
       </div>
       <p className="mt-4 text-xs text-slate-500">Con "Exceso" activo la cuenta sigue llamando al agotar el plan. Los clientes contratan su plan desde "Mi plan" y Stripe les cobra la cuota mensual.</p>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <ZadarmaSettings />
         <LandingSettings />
         <StripeSettings />
         <ElevenLabsSettings />

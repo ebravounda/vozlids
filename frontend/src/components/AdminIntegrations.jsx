@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
+import { VoiceLibrary } from "@/components/AdminTelephony";
 
 export function StripeSettings() {
   const [s, setS] = useState(null);
@@ -50,27 +51,29 @@ export function ElevenLabsSettings() {
   useEffect(() => { load(); }, []);
   const save = async () => {
     setBusy(true);
-    try { await api.put("/admin/elevenlabs", { api_key: key }); toast.success("ElevenLabs conectado"); setKey(""); load(); }
+    try { const r = await api.put("/admin/elevenlabs", { api_key: key }); r.data.vapi_linked ? toast.success("ElevenLabs conectado y vinculado a Vapi") : toast.warning("ElevenLabs conectado, pero Vapi no aceptó la clave: revisa que tenga el permiso «User» (lectura)."); setKey(""); load(); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
   const disconnect = async () => { await api.delete("/admin/elevenlabs"); load(); };
+  const link = async () => { try { await api.post("/admin/elevenlabs/link-vapi"); toast.success("ElevenLabs vinculado a Vapi"); load(); } catch (e) { toast.error(errMsg(e)); } };
   if (!s) return null;
   return (
     <Panel className="space-y-4" data-testid="elevenlabs-settings-panel">
       <div className="flex items-center gap-2"><Mic className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">ElevenLabs (audios de ejemplo)</h3></div>
       {s.connected
-        ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="elevenlabs-status-connected">Conectado · clave …{s.key_last4}. Los ejemplos suenan con la misma voz que las llamadas.</p>
+        ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="elevenlabs-status-connected">Conectado · clave …{s.key_last4}. Los ejemplos suenan con la misma voz que las llamadas.{s.vapi_linked ? " Vinculado a Vapi para las llamadas." : ""}</p>
         : <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200" data-testid="elevenlabs-status-missing">Sin conectar: los ejemplos usan una voz IA de respaldo. Conecta tu clave para oír exactamente la voz de las llamadas.</p>}
       <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Clave de API de ElevenLabs" className="bg-slate-950/60 font-mono" data-testid="elevenlabs-key-input" />
       <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
         <li>Entra en elevenlabs.io y crea una cuenta (el plan gratuito sirve para empezar).</li>
         <li>Abajo a la izquierda: tu perfil → «API Keys» → «Create API Key».</li>
-        <li>Activa el permiso «Text to Speech», crea la clave y cópiala aquí.</li>
-        <li>Para voces con acento nativo, pega también la clave en Vapi → Integrations → ElevenLabs.</li>
+        <li>Marca los permisos «Text to Speech», «Voices» (lectura y escritura) y «User» (lectura), crea la clave y cópiala aquí.</li>
+        <li>Al guardar la vinculamos también a Vapi, así las llamadas pueden usar voces con acento nativo de la biblioteca.</li>
       </ol>
       <div className="flex gap-2">
         <Button onClick={save} disabled={busy || key.length < 20} className="rounded-full" data-testid="elevenlabs-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{s.connected ? "Cambiar clave" : "Conectar ElevenLabs"}</Button>
         {s.connected && <Button variant="ghost" onClick={disconnect} className="rounded-full" data-testid="elevenlabs-disconnect-button">Desconectar</Button>}
+        {s.connected && !s.vapi_linked && <Button variant="outline" onClick={link} className="rounded-full" data-testid="elevenlabs-link-vapi-button">Vincular con Vapi</Button>}
       </div>
     </Panel>
   );
@@ -109,6 +112,7 @@ export function CustomVoices() {
         <Input value={f.tone} onChange={(e) => setF({ ...f, tone: e.target.value })} placeholder="Tono (opcional)" className="col-span-2 bg-slate-950/60" data-testid="voice-tone-input" />
       </div>
       <Button onClick={add} disabled={!f.name || f.voice_id.length < 10} className="rounded-full" data-testid="voice-add-button"><Plus className="mr-2 h-4 w-4" /> Añadir voz</Button>
+      <VoiceLibrary onAdded={load} />
     </Panel>
   );
 }

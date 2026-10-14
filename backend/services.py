@@ -137,14 +137,16 @@ async def dial(agent: dict, lead: dict):
     if err := await saas.quota_error(agent["tenant_id"]):
         await db.leads.update_one({"_id": lid}, {"$set": {"status": "fallida", "error": err, "updated_at": now_iso()}})
         return
-    if not vapi.configured(country):
+    import phone_numbers as N
+    own = await N.phone_id_for(agent["tenant_id"], country)
+    if not own and not vapi.configured(country):
         await db.leads.update_one({"_id": lid}, {"$set": {
             "status": "fallida", "updated_at": now_iso(),
             "error": f"Telefonía sin configurar para {COUNTRIES[country]['name']}: falta conectar el número "
                      f"{COUNTRIES[country]['prefix']} en Telefonía."}})
         return
     try:
-        call_id = await vapi.create_call(agent, lead, today_text(country))
+        call_id = await vapi.create_call(agent, lead, today_text(country), own)
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",
                                                           "voice_provider": vapi.voice_provider(agent["voice"]),
                                                           "updated_at": now_iso()}})
@@ -213,10 +215,15 @@ async def finalize_call(msg: dict, lead: dict):
     ended = msg.get("endedReason") or call.get("endedReason") or ""
     messages = _messages(artifact.get("messages") or msg.get("messages"))
     fresh = await db.leads.find_one({"_id": lead["_id"]}) or lead
+    is_in = fresh.get("direction") == "entrante"
     if fresh.get("status") == "no_llamar":
         status = "no_llamar"
+    elif "voicemail" in ended:
+        status = "buzon"
     elif fresh.get("appointment_id"):
         status = "cita_agendada"
+    elif is_in:
+        status = "atendida"
     elif any(h in ended for h in NO_ANSWER_HINTS) or not any(m["role"] == "lead" for m in messages):
         status = "sin_respuesta" if "error" not in ended and "failed" not in ended else "fallida"
     else:
@@ -227,7 +234,8 @@ async def finalize_call(msg: dict, lead: dict):
         await add_dnc(lead["tenant_id"], lead["phone"], "Lo pidió durante la llamada")
     score = sd.get("interest_score")
     cost = msg.get("cost", call.get("cost"))
-    await db.leads.update_one({"_id": lead["_id"]}, {"$set": {
+    named = {"name": str(sd["caller_name"])[:80]} if is_in and str(sd.get("caller_name") or "").strip() else {}
+    await db.leads.update_one({"_id": lead["_id"]}, {"$set": {**named,
         "status": status, "call_phase": "ended", "ended_reason": ended,
         "cost": cost, "cost_breakdown": msg.get("costBreakdown") or call.get("costBreakdown"),
         "transcript": artifact.get("transcript") or msg.get("transcript") or "",

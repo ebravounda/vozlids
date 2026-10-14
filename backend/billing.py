@@ -180,6 +180,9 @@ async def mark_paid(session_id: str, customer: Optional[str], subscription: Opti
                   "updated_at": now_iso()}})
     if res:
         await activate(res["user_id"], res["plan_id"], customer, subscription)
+        import phone_numbers as N
+        asyncio.create_task(N.auto_provision(res["user_id"], (await client())[2] or mode_of(
+            (await settings()).get("secret_key", "")) != "live"))
 
 
 @router.post("/billing/cancel")
@@ -232,6 +235,9 @@ async def webhook(request: Request):
             upd = {"billing_status": "canceled" if ended else obj.get("status"),
                    "cancel_at_period_end": bool(obj.get("cancel_at_period_end"))}
             await db.users.update_one({"_id": u["_id"]}, {"$set": upd})
+            if ended:
+                import phone_numbers as N
+                await N.release(str(u["_id"]))
     elif t == "invoice.payment_failed":
         u = await db.users.find_one({"stripe_customer_id": obj.get("customer")})
         if u:

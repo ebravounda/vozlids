@@ -153,7 +153,8 @@ class ElevenIn(BaseModel):
 @router.get("/admin/elevenlabs")
 async def eleven_status(user=Depends(X.require_admin)):
     k = await eleven_key()
-    return {"connected": bool(k), "key_last4": k[-4:] if k else None}
+    doc = (await db.platform_settings.find_one({"_id": "elevenlabs"})) or {}
+    return {"connected": bool(k), "key_last4": k[-4:] if k else None, "vapi_linked": bool(doc.get("vapi_linked"))}
 
 
 @router.put("/admin/elevenlabs")
@@ -162,7 +163,87 @@ async def eleven_connect(body: ElevenIn, user=Depends(X.require_admin)):
     await eleven_tts(k, vapi.ELEVEN["e_sarah"], "Hola.")
     await db.platform_settings.update_one({"_id": "elevenlabs"}, {"$set": {"api_key": k, "updated_at": now_iso()}}, upsert=True)
     _mix_cache.clear()
-    return {"ok": True, "key_last4": k[-4:]}
+    vapi_ok = await sync_vapi_credential(k)
+    return {"ok": True, "key_last4": k[-4:], "vapi_linked": vapi_ok}
+
+
+async def sync_vapi_credential(k: str) -> bool:
+    try:
+        await vapi.ensure_11labs_credential(k)
+    except vapi.VapiError as e:
+        log.warning("Vapi 11labs credential failed: %s", e)
+        await db.platform_settings.update_one({"_id": "elevenlabs"}, {"$set": {"vapi_linked": False}})
+        return False
+    await db.platform_settings.update_one({"_id": "elevenlabs"}, {"$set": {"vapi_linked": True}})
+    return True
+
+
+@router.post("/admin/elevenlabs/link-vapi")
+async def eleven_link(user=Depends(X.require_admin)):
+    k = await eleven_key()
+    if not k:
+        raise HTTPException(400, "Conecta primero tu clave de ElevenLabs.")
+    if not await sync_vapi_credential(k):
+        raise HTTPException(400, "Vapi no aceptó la clave de ElevenLabs.")
+    return {"ok": True}
+
+
+ACCENTS = {"ES": ["peninsular", "spain", "castilian", "spanish"], "CL": ["chilean", "chile", "latin american", "latin"]}
+
+
+async def _eleven_get(path: str, params: dict) -> dict:
+    key = await eleven_key()
+    if not key:
+        raise HTTPException(400, "Conecta primero tu clave de ElevenLabs.")
+    async with httpx.AsyncClient(timeout=30) as x:
+        r = await x.get(f"{ELEVEN_URL}{path}", params=params, headers={"xi-api-key": key})
+    if r.status_code >= 400:
+        detail = (r.json().get("detail") or {}) if r.headers.get("content-type", "").startswith("application/json") else {}
+        if isinstance(detail, dict) and detail.get("status") == "missing_permissions":
+            raise HTTPException(400, "Tu clave de ElevenLabs no tiene permiso de «Voices». Crea una clave nueva con permisos "
+                                     "Text to Speech y Voices (lectura y escritura) y pégala aquí.")
+        raise HTTPException(400, f"ElevenLabs respondió {r.status_code}")
+    return r.json()
+
+
+@router.get("/admin/elevenlabs/library")
+async def eleven_library(country: str = "ES", gender: str = "", user=Depends(X.require_admin)):
+    seen, out = set(), []
+    for accent in ACCENTS.get(country, ACCENTS["ES"])[:2]:
+        params = {"language": "es", "accent": accent, "page_size": 24, "sort": "cloned_by_count"}
+        if gender in ("female", "male"):
+            params["gender"] = gender
+        for v in (await _eleven_get("/shared-voices", params)).get("voices", []):
+            if v["voice_id"] in seen:
+                continue
+            seen.add(v["voice_id"])
+            out.append({"voice_id": v["voice_id"], "public_owner_id": v.get("public_owner_id"), "name": v.get("name"),
+                        "gender": v.get("gender"), "accent": v.get("accent"), "age": v.get("age"),
+                        "use_case": v.get("use_case"), "description": (v.get("description") or "")[:160],
+                        "preview_url": v.get("preview_url"), "uses": v.get("cloned_by_count")})
+    return out
+
+
+class LibraryAddIn(BaseModel):
+    public_owner_id: str = Field(min_length=5, max_length=100)
+    voice_id: str = Field(min_length=10, max_length=60)
+    name: str = Field(min_length=1, max_length=30)
+    gender: str = Field(pattern="^(Mujer|Hombre)$")
+    country: str = Field(pattern="^(ES|CL)$")
+    tone: str = Field("", max_length=80)
+
+
+@router.post("/admin/elevenlabs/library/add")
+async def eleven_library_add(body: LibraryAddIn, user=Depends(X.require_admin)):
+    key = await eleven_key()
+    async with httpx.AsyncClient(timeout=30) as x:
+        r = await x.post(f"{ELEVEN_URL}/voices/add/{body.public_owner_id}/{body.voice_id}",
+                         json={"new_name": f"VozLeads {body.name}"}, headers={"xi-api-key": key})
+    if r.status_code >= 400:
+        raise HTTPException(400, f"ElevenLabs no permitió añadir la voz ({r.status_code}): {r.text[:160]}")
+    vid = r.json().get("voice_id") or body.voice_id
+    return await X.add_custom_voice(X.CustomVoiceIn(name=body.name, gender=body.gender, country=body.country,
+                                                    voice_id=vid, tone=body.tone or "Acento nativo"), user)
 
 
 @router.delete("/admin/elevenlabs")

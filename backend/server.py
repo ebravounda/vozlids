@@ -26,6 +26,7 @@ import saas  # noqa: E402
 import billing  # noqa: E402
 import voice_preview  # noqa: E402
 import landing  # noqa: E402
+import phone_numbers  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
 from db import client, db  # noqa: E402
@@ -144,7 +145,7 @@ class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     business_name: str = Field(min_length=1, max_length=120)
     product: str = Field(min_length=1, max_length=3000)
-    objective: Literal["agendar", "calificar", "vender"]
+    objective: Literal["agendar", "calificar", "vender", "recepcion"]
     questions: List[str] = Field(default=[], max_length=10)
     country: Literal["ES", "CL"] = "ES"
     voice: str = Field(min_length=1, max_length=40)
@@ -439,6 +440,8 @@ async def vapi_webhook(request: Request, token: str = ""):
         raise HTTPException(401, "Webhook no autorizado")
     msg = (await request.json()).get("message") or {}
     typ = msg.get("type")
+    if typ == "assistant-request":
+        return await phone_numbers.assistant_request(msg)
     lead = await S.find_lead_for_call(msg.get("call") or {})
     if typ == "tool-calls":
         return await S.handle_tool_calls(msg, lead)
@@ -463,6 +466,7 @@ app.include_router(saas.router)
 app.include_router(billing.router)
 app.include_router(voice_preview.router)
 app.include_router(landing.router)
+app.include_router(phone_numbers.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

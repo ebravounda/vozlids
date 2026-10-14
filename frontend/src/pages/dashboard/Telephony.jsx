@@ -4,6 +4,7 @@ import { CheckCircle2, CircleDashed, Loader2, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 import { COUNTRIES } from "@/lib/constants";
@@ -59,6 +60,40 @@ const ChileWarning = () => (
   </div>
 );
 
+const NUM = { activo: "Activo", comprando: "Preparando tu número…", error: "Pendiente: estamos resolviendo un problema", liberado: "Liberado", sin_numero: "Se asigna al contratar un plan" };
+
+function MyNumber() {
+  const [n, setN] = useState(null);
+  const [agents, setAgents] = useState([]);
+  useEffect(() => { api.get("/my-number").then((r) => setN(r.data)); api.get("/agents").then((r) => setAgents(r.data)); }, []);
+  const setAgent = async (id) => {
+    try { const r = await api.put("/my-number", { inbound_agent_id: id === "none" ? "" : id }); setN(r.data); toast.success("Recepcionista actualizada"); }
+    catch (e) { toast.error(errMsg(e)); }
+  };
+  if (!n) return null;
+  const mine = agents.filter((a) => (a.country || "ES") === (n.country || "ES"));
+  return (
+    <Panel className="space-y-4" data-testid="my-number-panel">
+      <h3 className="text-lg font-semibold text-white">Tu número</h3>
+      <p className="font-mono text-2xl text-white" data-testid="my-number-value">{n.number || "—"}</p>
+      <p className={`text-sm ${n.status === "activo" ? "text-emerald-300" : "text-slate-400"}`} data-testid="my-number-status">{NUM[n.status] || n.status}</p>
+      {n.status === "activo" && (
+        <div className="space-y-2">
+          <Label>¿Quién contesta cuando te llaman?</Label>
+          <Select value={n.inbound_agent_id || "none"} onValueChange={setAgent}>
+            <SelectTrigger className="bg-slate-950/60" data-testid="my-number-inbound-agent-select"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Nadie (no contestar)</SelectItem>
+              {mine.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}{a.objective === "recepcion" ? " · recepcionista" : ""}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-slate-500">Recomendado: crea un agente con el objetivo «Recepcionista». Contesta, resuelve dudas, agenda citas y te avisa si piden hablar con una persona. Las llamadas entrantes cuentan como minutos de tu plan.</p>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 function BusinessCountry() {
   const { user, setUser } = useAuth();
   const change = async (country) => {
@@ -104,6 +139,7 @@ export default function Telephony() {
           {s && !s.is_admin && !s.configured && <p className="text-xs text-slate-500">Solo el administrador de la plataforma puede conectar el número.</p>}
         </Panel>
         <div className="space-y-6">
+        <MyNumber />
         <BusinessCountry />
         <Panel className="space-y-4">
           <h3 className="text-xl font-semibold text-white">Cómo conectarlo</h3>

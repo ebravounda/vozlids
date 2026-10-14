@@ -61,6 +61,7 @@ class Lead(BaseDocument):
     greeting: str = ""
     source: str = "form"
     max_seconds: int = 0
+    direction: str = "saliente"
     status: str = "llamando"
     call_phase: str = ""
     vapi_call_id: Optional[str] = None

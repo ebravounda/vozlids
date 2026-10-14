@@ -62,7 +62,7 @@ def voice_provider(voice: str) -> str:
 
 def eleven_voice(voice_id: str) -> dict:
     return {"provider": "11labs", "model": "eleven_turbo_v2_5", "language": "es", "voiceId": voice_id,
-            "stability": 0.4, "similarityBoost": 0.8, "style": 0.15, "useSpeakerBoost": True, "speed": 1.0,
+            "stability": 0.38, "similarityBoost": 0.78, "style": 0.22, "useSpeakerBoost": True, "speed": 1.02,
             "optimizeStreamingLatency": 3}
 
 
@@ -95,10 +95,10 @@ def _headers() -> dict:
     return {"Authorization": f"Bearer {os.environ['VAPI_API_KEY']}"}
 
 
-async def _post(path: str, payload: dict) -> dict:
+async def _post(path: str, payload: dict, verb: str = "POST") -> dict:
     try:
         async with httpx.AsyncClient(timeout=20) as x:
-            r = await x.post(f"{VAPI_URL}{path}", json=payload, headers=_headers())
+            r = await x.request(verb, f"{VAPI_URL}{path}", json=payload, headers=_headers())
     except httpx.HTTPError as e:
         raise VapiError(f"No se pudo contactar con Vapi: {e.__class__.__name__}")
     if r.status_code >= 400:
@@ -109,7 +109,44 @@ async def _post(path: str, payload: dict) -> dict:
         if isinstance(msg, list):
             msg = "; ".join(map(str, msg))
         raise VapiError(f"Vapi respondió con error ({r.status_code}): {str(msg)[:300]}")
-    return r.json()
+    return r.json() if r.content else {}
+
+
+async def delete(path: str) -> None:
+    async with httpx.AsyncClient(timeout=20) as x:
+        await x.delete(f"{VAPI_URL}{path}", headers=_headers())
+
+
+def server_cfg() -> dict:
+    secret = os.environ["VAPI_WEBHOOK_SECRET"]
+    return {"url": f"{webhook_url()}?token={secret}", "headers": {"x-vapi-secret": secret}}
+
+
+async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:
+    cred = await _post("/credential", {
+        "provider": "byo-sip-trunk", "name": f"VozLeads {label}"[:40],
+        "gateways": [{"ip": "sip.zadarma.com", "inboundEnabled": True}, {"ip": "pbx.zadarma.com", "inboundEnabled": True}],
+        "outboundLeadingPlusEnabled": True,
+        "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
+    })
+    phone = await _post("/phone-number", {
+        "provider": "byo-phone-number", "name": f"VozLeads {label}"[:40], "number": number.lstrip("+"),
+        "numberE164CheckEnabled": False, "credentialId": cred["id"], "server": server_cfg(),
+    })
+    return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
+
+
+def inbound_sip_uri(number: str) -> str:
+    return f"{number.lstrip('+')}@sip.vapi.ai"
+
+
+async def ensure_11labs_credential(api_key: str) -> str:
+    async with httpx.AsyncClient(timeout=20) as x:
+        r = await x.get(f"{VAPI_URL}/credential", headers=_headers())
+    for c in (r.json() if r.status_code < 400 else []):
+        if c.get("provider") == "11labs":
+            await delete(f"/credential/{c['id']}")
+    return (await _post("/credential", {"provider": "11labs", "apiKey": api_key, "name": "ElevenLabs VozLeads"}))["id"]
 
 
 async def connect_zadarma(sip_login: str, sip_password: str, number: str, country: str = "ES") -> dict:
@@ -140,8 +177,14 @@ OBJECTIVES = {
         "qué ha aceptado y explica que recibirá los siguientes pasos por email o teléfono. No pidas datos de tarjeta ni cobres en la "
         "llamada. No presiones si dice que no."
     ),
+    "recepcion": (
+        "Eres la recepcionista telefónica del negocio y atiendes llamadas ENTRANTES. Averigua con naturalidad cómo se llama y qué "
+        "necesita. Resuelve dudas solo con la información del negocio. Si quiere una cita, llama a check_availability, ofrece dos o "
+        "tres horas y reserva con book_appointment. Si pide hablar con alguien, quiere dejar un recado o no puedes resolverlo, "
+        "toma nota del motivo y de cuándo le viene bien que le llamen y usa request_human."
+    ),
 }
-OUTCOMES = ["calificado", "no_interesado", "cita_agendada", "venta", "no_llamar", "sin_respuesta"]
+OUTCOMES = ["calificado", "no_interesado", "cita_agendada", "venta", "no_llamar", "sin_respuesta", "buzon", "atendida"]
 AI_OUTCOMES = ["calificado", "no_interesado", "cita_agendada", "venta", "no_llamar"]
 
 
@@ -193,7 +236,13 @@ def first_name(name: str) -> str:
     return (name or "").strip().split(" ")[0]
 
 
+def inbound(lead: dict) -> bool:
+    return lead.get("direction") == "entrante"
+
+
 def greeting(agent: dict, lead: dict) -> str:
+    if inbound(lead):
+        return f"Hola, {agent['business_name']}, te atiende {agent['name']}, la asistente virtual. ¿En qué te puedo ayudar?"
     return (lead.get("greeting") or agent["greeting"]).replace("{nombre}", first_name(lead["name"])).strip()
 
 
@@ -201,18 +250,27 @@ def system_prompt(agent: dict, lead: dict, today: str) -> str:
     qs = "\n".join(f"- {q}" for q in agent.get("questions") or [] if q.strip()) or \
         "- Sin preguntas fijas: averigua de forma natural qué necesita, para cuándo y su presupuesto aproximado."
     extra = f"\nINSTRUCCIONES ADICIONALES DEL NEGOCIO\n{agent['extra_instructions']}\n" if agent.get("extra_instructions") else ""
-    return f"""Eres {agent['name']}, asistente virtual de {agent['business_name']}. Estás llamando por teléfono a una persona que acaba de dejar sus datos en la web pidiendo información.
+    situation = ("Estás contestando una llamada ENTRANTE al teléfono del negocio: tú no has llamado, te han llamado a ti."
+                 if inbound(lead) else
+                 "Estás llamando por teléfono a una persona que acaba de dejar sus datos en la web pidiendo información.")
+    objective = OBJECTIVES["recepcion"] if inbound(lead) else (
+        ("MOTIVO DE ESTA LLAMADA (tiene prioridad sobre el objetivo general): " + lead['purpose']) if lead.get('purpose')
+        else OBJECTIVES[agent['objective']])
+    caller = "- Teléfono de quien llama: " + (lead.get("phone") or "oculto") if inbound(lead) else \
+        f"- Nombre: {lead['name']}\n- Email: {lead.get('email') or 'no indicado'}"
+    voicemail = "" if inbound(lead) else ("\n- Si oyes un contestador o buzón de voz (\"deje su mensaje\", \"después de la señal\", "
+                                         "\"no está disponible\"), no dejes ningún mensaje: finaliza la llamada al instante.")
+    return f"""Eres {agent['name']}, asistente virtual de {agent['business_name']}. {situation}
 {today}
 
 SOBRE EL NEGOCIO Y EL PRODUCTO
 {agent['product']}
 
-DATOS DEL LEAD
-- Nombre: {lead['name']}
-- Email: {lead.get('email') or 'no indicado'}
+DATOS DE LA PERSONA
+{caller}
 
 OBJETIVO
-{("MOTIVO DE ESTA LLAMADA (tiene prioridad sobre el objetivo general): " + lead['purpose']) if lead.get('purpose') else OBJECTIVES[agent['objective']]}
+{objective}
 
 PREGUNTAS DE CALIFICACIÓN (de una en una, en orden natural, sin que suene a encuesta)
 {qs}
@@ -232,7 +290,7 @@ TRANSPARENCIA Y RESPETO (obligatorio)
 - Si el lead pide que no le llamen más o se molesta por la llamada, discúlpate, llama a mark_do_not_call y despídete.
 - Si no es buen momento, pregunta cuándo le viene mejor y despídete.
 - Si el lead pide hablar con una persona, con un humano o con alguien del equipo: no insistas. Pregúntale brevemente el motivo y cuándo le viene bien que le llamen, llama a request_human, dile que una persona del equipo le llamará lo antes posible, agradécele y despídete.
-- Cuando la conversación termine, despídete con amabilidad y finaliza la llamada.
+- Cuando la conversación termine, despídete con amabilidad y finaliza la llamada.{voicemail}
 {extra}"""
 
 
@@ -245,7 +303,7 @@ def _fn_tool(name: str, description: str, properties: dict, required: list, serv
     }
 
 
-def tools(agent: dict, server: dict) -> list:
+def tools(agent: dict, server: dict, lead: dict | None = None) -> list:
     out = [{"type": "endCall"}, _fn_tool(
         "mark_do_not_call", "Añade al lead a la lista de no llamar cuando pide que no le vuelvan a llamar.", {}, [], server),
         _fn_tool("request_support", "Registra una solicitud de asistencia técnica cuando el cliente tiene un problema o necesita ayuda.",
@@ -253,7 +311,7 @@ def tools(agent: dict, server: dict) -> list:
         _fn_tool("request_human", "Avisa a la empresa de que el lead quiere hablar con una persona y debe devolverle la llamada.",
                  {"reason": {"type": "string", "description": "Motivo por el que quiere hablar con una persona"},
                   "best_time": {"type": "string", "description": "Cuándo prefiere que le llamen (opcional)"}}, ["reason"], server)]
-    if agent["objective"] == "agendar":
+    if agent["objective"] in ("agendar", "recepcion") or inbound(lead or {}):
         out.append(_fn_tool(
             "check_availability", "Consulta los huecos libres para citas. Sin fecha devuelve los próximos días con huecos.",
             {"date": {"type": "string", "description": "Fecha en formato YYYY-MM-DD (opcional)"}}, [], server))
@@ -284,6 +342,7 @@ def analysis_plan() -> dict:
                                            "no_llamar (pidió no ser llamado)."},
                 "interest_score": {"type": "number", "description": "Interés del lead de 0 a 100"},
                 "answers": {"type": "string", "description": "Respuestas del lead a las preguntas de calificación, en español"},
+                "caller_name": {"type": "string", "description": "Nombre que dijo la persona, si lo dijo"},
             },
             "required": ["outcome", "interest_score"],
         }},
@@ -295,16 +354,21 @@ def transcriber(country: str) -> dict:
     return {"provider": "deepgram", "model": "nova-3" if lang == "es" else "nova-2", "language": lang}
 
 
+VOICEMAIL = {"provider": "vapi", "type": "audio", "beepMaxAwaitSeconds": 0,
+             "backoffPlan": {"startAtSeconds": 2, "frequencySeconds": 2.5, "maxRetries": 6}}
+
+
 def build_assistant(agent: dict, lead: dict, today: str) -> dict:
-    secret = os.environ["VAPI_WEBHOOK_SECRET"]
-    server = {"url": f"{webhook_url()}?token={secret}", "headers": {"x-vapi-secret": secret}}
-    return {
+    server = server_cfg()
+    extra = {} if inbound(lead) else {"voicemailDetection": VOICEMAIL}
+    return {**extra,
+        "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
         "name": f"{agent['name']} {agent['business_name']}"[:40],
         "firstMessage": greeting(agent, lead),
         "firstMessageMode": "assistant-speaks-first",
         "model": {"provider": "openai", "model": "gpt-4.1", "temperature": 0.6,
                   "messages": [{"role": "system", "content": system_prompt(agent, lead, today)}],
-                  "tools": tools(agent, server)},
+                  "tools": tools(agent, server, lead)},
         "voice": voice_config(agent["voice"], agent.get("country", "ES")),
         "transcriber": transcriber(agent.get("country", "ES")),
         "startSpeakingPlan": {"waitSeconds": 0.4, "transcriptionEndpointingPlan": {
@@ -320,9 +384,9 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
     }
 
 
-async def create_call(agent: dict, lead: dict, today: str) -> str:
+async def create_call(agent: dict, lead: dict, today: str, phone_id: str | None = None) -> str:
     payload = {
-        "phoneNumberId": phone_number_id(agent.get("country", "ES")),
+        "phoneNumberId": phone_id or phone_number_id(agent.get("country", "ES")),
         "customer": {"number": lead["phone"], "name": lead["name"][:40]},
         "assistant": build_assistant(agent, lead, today),
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},

@@ -58,6 +58,7 @@ export const OBJECTIVES = [
   { id: "agendar", name: "Calificar y agendar cita", desc: "Hace las preguntas y reserva un hueco de tu agenda." },
   { id: "calificar", name: "Solo calificar interés", desc: "Hace las preguntas y deja el lead listo para tu equipo." },
   { id: "vender", name: "Vender y cerrar", desc: "Presenta la oferta, resuelve objeciones y busca el sí." },
+  { id: "recepcion", name: "Recepcionista (llamadas entrantes)", desc: "Contesta tu número, resuelve dudas, agenda y toma recados." },
 ];
 
 export const STATUS = {
@@ -68,6 +69,9 @@ export const STATUS = {
   cita_agendada: { label: "Cita agendada", cls: "bg-teal-400/15 text-teal-200 border-teal-400/40", dot: "bg-teal-300" },
   venta: { label: "Venta", cls: "bg-lime-400/15 text-lime-200 border-lime-400/40", dot: "bg-lime-300" },
   no_llamar: { label: "No llamar", cls: "bg-rose-500/15 text-rose-300 border-rose-500/30", dot: "bg-rose-400" },
+  buzon: { label: "Buzón de voz", cls: "bg-slate-500/15 text-slate-300 border-slate-500/30", dot: "bg-slate-500" },
+  atendida: { label: "Entrante atendida", cls: "bg-sky-500/15 text-sky-300 border-sky-500/30", dot: "bg-sky-400" },
+  en_curso: { label: "En curso", cls: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30", dot: "bg-cyan-400 animate-pulse" },
   fallida: { label: "Fallida", cls: "bg-red-500/15 text-red-300 border-red-500/30", dot: "bg-red-400" },
 };
 
