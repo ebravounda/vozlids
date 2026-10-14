@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration-10 testing: Zadarma number provisioning + Vapi inbound Recepcionista + ElevenLabs library gating + outbound voicemail detection + my-number endpoints. Created /app/backend/tests/test_vozlead_iter10.py (22/22 pass). Verified frontend testids on /app/admin and /app/telefonia and agent-builder.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter10.py",
+    "/app/test_reports/pytest/iter10_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "phone_numbers.release() calls vapi.delete() with the literal substring check `'None' not in path` — if phone_number_id/credential_id were stored as empty strings (not None), the fallback would try to DELETE '/phone-number/' or '/credential/' with no id. Current code sets None on release but prior shapes could trip it. Low risk, best-effort anyway.",
+    "phone_numbers.provision() upserts status='comprando' BEFORE validating `direction` is set — on failure it reverts to 'error' with a Spanish message, which is correct, but the race window briefly exposes 'comprando' to concurrent provision calls. BUSY set includes 'comprando' so a second provision is skipped; good.",
+    "zadarma._sign hex-encodes HMAC-SHA1 then base64-encodes that hex string (per Zadarma docs). Confirmed format KEY:base64(hex) in the unit test. Document this in a comment to prevent future refactors.",
+    "vapi.build_assistant() uses `metadata.tenant_id` from lead; for inbound the lead is created in assistant_request so metadata is set correctly, confirmed.",
+    "voice_preview.eleven_library() swallows HTTP 400 details other than missing_permissions — the admin UI only gets a generic 'ElevenLabs respondió 400'. Consider forwarding ElevenLabs error messages verbatim.",
+    "server.py vapi_webhook: for 'end-of-call-report' and other non-assistant-request types the lead is looked up by metadata.lead_id (via S.find_lead_for_call). If Vapi omits metadata (edge case) the webhook silently returns {ok:true}; acceptable but worth logging a warning.",
+    "phone_numbers.assistant_request: UNAVAILABLE assistant for inbound without an inbound_agent_id or when quota is exceeded is correctly short-circuited; but note that this still consumes a Vapi assistant-request minute (billed by Vapi). Low-cost but worth noting.",
+    "No release of Vapi assistant/phone-number on tenant cancellation path visible from this review — release() does best-effort delete of /phone-number/{id} and /credential/{id}; Zadarma autorenew off is the mechanism to stop monthly charges. Verify billing.mark_paid regression schedules release on 'stopped paying'."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_iter10.py (new, 22 tests, all passing)"
+  ],
+  "success_rate": {"backend": "100% (22/22 iter-10 tests)", "frontend": "100% on tested testids (zadarma-api-panel, tenant-numbers-list, voice-library-panel, custom-voices-panel, my-number-panel, Recepcionista option)"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! from /app/memory/test_credentials.md. Fresh tenants are created per module via /api/auth/register (prefix tb_i10_).",
+  "seed_data_creation": "Transient only: inserts simulated tenant_numbers (phone_number_id='test-pn-1','test-pn-2','pid-es-1') for the fresh business user; module teardown deletes that user's agents, leads, tenant_numbers and user doc.",
+  "verifications": {
+    "zadarma_webhook_bad_secret": "401 as expected",
+    "assistant_request_unknown_pn": "returns short unavailable assistant with 'no podemos atenderte' + maxDurationSeconds=20",
+    "inbound_full_flow": "firstMessage starts 'Hola, Clinica Test, te atiende', metadata.lead_id present, NO voicemailDetection, tools include check_availability + book_appointment, lead created with direction='entrante', source='entrante', vapi_call_id='call-in-1'",
+    "end_of_call_inbound": "lead.status=atendida, lead.name='Pedro Gómez'",
+    "inbound_no_agent": "returns short unavailable assistant",
+    "outbound_voicemail_build_assistant": "voicemailDetection={provider:'vapi'...} present; system prompt mentions contestador/buzón",
+    "outbound_voicemail_report": "endedReason='voicemail' sets lead.status='buzon'",
+    "zadarma_admin": "GET admin requires admin (403 for member); when disconnected connected=false; PUT with invalid key returns 400 'Clave de Zadarma no válida' and does NOT overwrite stored key; PUT with empty key accepts direction fields",
+    "admin_numbers": "GET /admin/numbers includes email+business_name; POST provision returns 400 'Conecta primero la API de Zadarma' when disconnected; POST release flips status to 'liberado'",
+    "my_number": "GET returns 'sin_numero' when no record; PUT without record -> 400; PUT with another tenant's agent -> 404; PUT with own agent -> 200 and inbound_agent_id persisted",
+    "zadarma_sign_format": "KEY:base64(...) with valid base64 payload",
+    "phone_id_for": "returns phone_number_id when country matches + active; None otherwise",
+    "elevenlabs_admin_status": "returns {connected:bool, vapi_linked:bool} without exposing the key (only last4)",
+    "elevenlabs_library": "Returns either 400 with 'Voices' permission message, or 200 if the stored key now has Voices permission — both accepted (user's real key, we didn't overwrite)",
+    "agents_recepcion": "POST /api/agents with objective='recepcion' accepted (200/201)",
+    "frontend_testids": "zadarma-api-panel, tenant-numbers-list, voice-library-panel (inside custom-voices-panel), my-number-panel all present. Agent builder lists 'Recepcionista (llamadas entrantes)'. ElevenLabs panel shows 'Voices'/'Text to Speech' permission instructions.",
+    "leads_labels": "Labels 'Buzón de voz' and 'Entrante atendida' are defined in /app/frontend/src/lib/constants.js (verified by grep) and will render when leads with those statuses exist; current admin seed does not include them (not a bug)."
+  },
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `pytest /app/backend/tests/ -v --tb=short` (7 files now). Iter-10 test file: test_vozlead_iter10.py (22 tests, uses fresh tb_i10_* tenant, cleans up on teardown). Known pre-existing failures (carried over, unrelated to iter-10): test_vozlead_iter6::test_existing_agents_migrated and test_vozlead_backend::test_recording_proxy_admin_lead; test_vozlead_landing rate-limit test is flaky under xdist parallel. ElevenLabs key in platform_settings may already be connected (user's real key with TTS permission only, do NOT delete). VAPI_WEBHOOK_SECRET header name is 'x-vapi-secret'. inbound greeting pattern is `Hola, {business_name}, te atiende {agent_name}, la asistente virtual. ¿En qué te puedo ayudar?`. Simulated tenant_numbers insertion requires: tenant_id, country, number, status='activo', phone_number_id, inbound_agent_id, updated_at, created_at.",
+  "rca of the issue": "N/A — all 22 iter-10 backend tests pass and all required frontend testids are present. No bugs found in the reviewed scope."
+}
