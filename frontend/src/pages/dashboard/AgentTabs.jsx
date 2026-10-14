@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Panel } from "@/components/Common";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { CustomAmbiences } from "@/components/CustomAmbiences";
-import { AMBIENCES, OBJECTIVES, VOICES } from "@/lib/constants";
+import { AMBIENCES, COUNTRIES, DEFAULT_VOICE, OBJECTIVES, VOICES } from "@/lib/constants";
 
 const Choice = ({ active, onClick, title, desc, testid }) => (
   <button type="button" onClick={onClick} data-testid={testid}
@@ -16,8 +16,22 @@ const Choice = ({ active, onClick, title, desc, testid }) => (
   </button>
 );
 
+const CountryPick = ({ agent, update }) => (
+  <div className="space-y-3">
+    <Label>País al que llama este agente</Label>
+    <div className="grid gap-3 sm:grid-cols-2">
+      {Object.entries(COUNTRIES).map(([code, c]) => (
+        <Choice key={code} active={(agent.country || "ES") === code} testid={`agent-country-${code}`}
+          onClick={() => code !== (agent.country || "ES") && update({ country: code, voice: DEFAULT_VOICE[code] })}
+          title={`${c.name} (${c.prefix})`} desc={`Hora de ${c.city} · teléfonos ${c.example}`} />
+      ))}
+    </div>
+  </div>
+);
+
 export const GeneralTab = ({ agent, update }) => (
   <Panel className="space-y-6">
+    <CountryPick agent={agent} update={update} />
     <div className="grid gap-5 md:grid-cols-2">
       <div className="space-y-2"><Label>Nombre del agente</Label><Input value={agent.name} onChange={(e) => update({ name: e.target.value })} data-testid="agent-name-input" className="bg-slate-950/60" /></div>
       <div className="space-y-2"><Label>Nombre del negocio</Label><Input value={agent.business_name} onChange={(e) => update({ business_name: e.target.value })} data-testid="agent-business-input" className="bg-slate-950/60" /></div>
@@ -41,7 +55,7 @@ export const VoiceTab = ({ agent, update }) => {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Panel className="space-y-5">
-        <Label>Voz (español de España)</Label>
+        <Label>Voz ({(agent.country || "ES") === "CL" ? "español latino y chileno" : "español de España"})</Label>
         {[[true, "Premium · entonación ultra natural", "Algo más caras por minuto"], [false, "Estándar", "Opción más económica"]].map(([prem, title, note]) => (
           <div key={title} className="space-y-3" data-testid={prem ? "voice-group-premium" : "voice-group-standard"}>
             <div className="flex items-baseline justify-between">
@@ -49,7 +63,7 @@ export const VoiceTab = ({ agent, update }) => {
               <p className="text-xs text-slate-500">{note}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {VOICES.filter((v) => !!v.premium === prem).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
+              {VOICES.filter((v) => !!v.premium === prem && v.country === (agent.country || "ES")).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
             </div>
           </div>
         ))}

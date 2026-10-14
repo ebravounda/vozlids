@@ -1,19 +1,37 @@
 export const VOICES = [
-  { id: "p_marta", name: "Marta", gender: "Mujer", tone: "Cercana, atención al cliente", premium: true },
-  { id: "p_nuria", name: "Nuria", gender: "Mujer", tone: "Serena y profesional", premium: true },
-  { id: "p_isabel", name: "Isabel", gender: "Mujer", tone: "Castellano suave y amable", premium: true },
-  { id: "p_elena", name: "Elena", gender: "Mujer", tone: "Castellano pausado y cálido", premium: true },
-  { id: "p_marcos", name: "Marcos", gender: "Hombre", tone: "Calmado, asesor de confianza", premium: true },
-  { id: "p_gonzalo", name: "Gonzalo", gender: "Hombre", tone: "Cálido y natural", premium: true },
-  { id: "p_luis", name: "Luis", gender: "Hombre", tone: "Castellano claro y firme", premium: true },
-  { id: "p_hector", name: "Héctor", gender: "Hombre", tone: "Castellano enérgico", premium: true },
-  { id: "elvira", name: "Elvira", gender: "Mujer", tone: "Cálida y cercana" },
-  { id: "alvaro", name: "Álvaro", gender: "Hombre", tone: "Profesional y sereno" },
-  { id: "ximena", name: "Ximena", gender: "Mujer", tone: "Joven y enérgica" },
-  { id: "dario", name: "Darío", gender: "Hombre", tone: "Cercano y natural" },
-  { id: "irene", name: "Irene", gender: "Mujer", tone: "Clara y amable" },
-  { id: "arnau", name: "Arnau", gender: "Hombre", tone: "Joven y dinámico" },
+  { id: "p_marta", name: "Marta", gender: "Mujer", tone: "Cercana, atención al cliente", premium: true, country: "ES" },
+  { id: "p_nuria", name: "Nuria", gender: "Mujer", tone: "Serena y profesional", premium: true, country: "ES" },
+  { id: "p_isabel", name: "Isabel", gender: "Mujer", tone: "Castellano suave y amable", premium: true, country: "ES" },
+  { id: "p_elena", name: "Elena", gender: "Mujer", tone: "Castellano pausado y cálido", premium: true, country: "ES" },
+  { id: "p_marcos", name: "Marcos", gender: "Hombre", tone: "Calmado, asesor de confianza", premium: true, country: "ES" },
+  { id: "p_gonzalo", name: "Gonzalo", gender: "Hombre", tone: "Cálido y natural", premium: true, country: "ES" },
+  { id: "p_luis", name: "Luis", gender: "Hombre", tone: "Castellano claro y firme", premium: true, country: "ES" },
+  { id: "p_hector", name: "Héctor", gender: "Hombre", tone: "Castellano enérgico", premium: true, country: "ES" },
+  { id: "elvira", name: "Elvira", gender: "Mujer", tone: "Cálida y cercana", country: "ES" },
+  { id: "alvaro", name: "Álvaro", gender: "Hombre", tone: "Profesional y sereno", country: "ES" },
+  { id: "ximena", name: "Ximena", gender: "Mujer", tone: "Joven y enérgica", country: "ES" },
+  { id: "dario", name: "Darío", gender: "Hombre", tone: "Cercano y natural", country: "ES" },
+  { id: "irene", name: "Irene", gender: "Mujer", tone: "Clara y amable", country: "ES" },
+  { id: "arnau", name: "Arnau", gender: "Hombre", tone: "Joven y dinámico", country: "ES" },
 ];
+
+export const COUNTRIES = {
+  ES: { name: "España", prefix: "+34", example: "+34 600 000 000", city: "Madrid", currency: "EUR" },
+  CL: { name: "Chile", prefix: "+56", example: "+56 9 1234 5678", city: "Santiago", currency: "CLP" },
+};
+
+VOICES.push(
+  { id: "l_fernanda", name: "Fernanda", gender: "Mujer", tone: "Latina cercana, atención al cliente", premium: true, country: "CL" },
+  { id: "l_daniela", name: "Daniela", gender: "Mujer", tone: "Latina tranquila y de confianza", premium: true, country: "CL" },
+  { id: "l_regina", name: "Regina", gender: "Mujer", tone: "Latina profesional y clara", premium: true, country: "CL" },
+  { id: "l_eduardo", name: "Eduardo", gender: "Hombre", tone: "Latino natural y cercano", premium: true, country: "CL" },
+  { id: "l_mateo", name: "Mateo", gender: "Hombre", tone: "Latino cálido y genuino", premium: true, country: "CL" },
+  { id: "l_andres", name: "Andrés", gender: "Hombre", tone: "Latino sereno y profesional", premium: true, country: "CL" },
+  { id: "cl_catalina", name: "Catalina", gender: "Mujer", tone: "Acento chileno", country: "CL" },
+  { id: "cl_lorenzo", name: "Lorenzo", gender: "Hombre", tone: "Acento chileno", country: "CL" },
+);
+
+export const DEFAULT_VOICE = { ES: "p_marta", CL: "l_fernanda" };
 
 export const AMBIENCES = [
   { id: "oficina_real", name: "Oficina real (grabación)", desc: "Tecleo grabado de verdad + murmullo de oficina", volume: true, real: true },

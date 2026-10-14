@@ -11,6 +11,8 @@ import { fmtDate } from "@/lib/constants";
 
 const PARTS = [["voz", "Voz"], ["transcripcion", "Transcripción"], ["ia", "IA (GPT-4o)"], ["vapi", "Vapi plataforma"], ["analisis", "Resumen/análisis"], ["linea", "Línea Zadarma"], ["otros", "Otros"]];
 const eur = (usd, fx, d = 3) => (usd == null ? "—" : `${(usd * fx).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} €`);
+const clp = (usd, fx) => (usd == null ? "—" : `$${Math.round(usd * fx).toLocaleString("es-CL")} CLP`);
+const money = (usd, pricing, currency, d) => (currency === "CLP" ? clp(usd, pricing.usd_clp) : eur(usd, pricing.usd_eur, d));
 const planPrice = (v) => Math.max(9, Math.ceil(v / 10) * 10 - 1);
 
 const Stat = ({ label, value, hint, testid }) => (
@@ -27,7 +29,8 @@ function PricingForm({ pricing, onSaved }) {
   useEffect(() => setF(pricing), [pricing]);
   const save = async () => {
     setBusy(true);
-    try { await api.put("/admin/pricing", { line_rate_usd_min: Number(f.line_rate_usd_min), usd_eur: Number(f.usd_eur), margin_pct: Number(f.margin_pct) }); toast.success("Parámetros guardados"); onSaved(); }
+    const body = Object.fromEntries(["line_rate_usd_min", "line_rate_cl_usd_min", "usd_eur", "usd_clp", "margin_pct"].map((k) => [k, Number(f[k])]));
+    try { await api.put("/admin/pricing", body); toast.success("Parámetros guardados"); onSaved(); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
   const field = (k, label, step) => (
@@ -36,37 +39,52 @@ function PricingForm({ pricing, onSaved }) {
   return (
     <Panel className="space-y-4">
       <h3 className="text-lg font-semibold text-white">Parámetros</h3>
-      {field("line_rate_usd_min", "Tarifa Zadarma a móviles ($/min)", "0.001")}
+      {field("line_rate_usd_min", "Tarifa Zadarma España ($/min)", "0.001")}
+      {field("line_rate_cl_usd_min", "Tarifa Zadarma Chile ($/min)", "0.001")}
       {field("usd_eur", "Cambio 1 $ = … €", "0.01")}
+      {field("usd_clp", "Cambio 1 $ = … CLP", "1")}
       {field("margin_pct", "Margen deseado (%)", "10")}
       <Button onClick={save} disabled={busy} className="w-full rounded-full font-semibold" data-testid="pricing-save-button">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Guardar</Button>
     </Panel>
   );
 }
 
-function PriceAdvice({ d }) {
-  const fx = d.pricing.usd_eur;
-  const estimated = d.cost_per_min == null;
-  const costMin = d.cost_per_min ?? 0.11;
-  const priceMin = costMin * fx * (1 + d.pricing.margin_pct / 100);
-  const callMin = d.minutes_per_call || 1.5;
+function CountryAdvice({ d, country }) {
+  const c = d.by_country[country];
+  const isCL = country === "CL";
+  const fx = isCL ? d.pricing.usd_clp : d.pricing.usd_eur;
+  const fmt = (usd) => (isCL ? clp(usd, fx) : eur(usd, fx, 2));
+  const estimated = c.cost_per_min == null;
+  const costMin = c.cost_per_min ?? 0.09 + (isCL ? d.pricing.line_rate_cl_usd_min : d.pricing.line_rate_usd_min);
+  const priceMinUsd = costMin * (1 + d.pricing.margin_pct / 100);
+  const callMin = c.minutes_per_call || 1.5;
+  const plan = (usd) => (isCL ? `$${(Math.ceil((usd * fx) / 1000) * 1000 - 10).toLocaleString("es-CL")}` : `${planPrice(usd * fx)} €`);
   return (
-    <Panel className="space-y-4 lg:col-span-2" data-testid="pricing-advice">
-      <h3 className="text-lg font-semibold text-white">Cómo cobrar</h3>
+    <div className="space-y-3" data-testid={`pricing-advice-${country}`}>
       <p className="text-sm text-slate-400">
-        Te cuesta <span className="font-mono text-white">{eur(costMin, fx)}</span> por minuto{estimated ? " (estimado; aún no hay llamadas con coste)" : " de media"}. Con un margen del {d.pricing.margin_pct}% deberías cobrar
-        <span className="font-mono text-emerald-300"> {priceMin.toLocaleString("es-ES", { maximumFractionDigits: 2 })} €/min</span>. Cada lead llamado dura de media {callMin.toFixed(1)} min, así que te cuesta unos {eur(costMin * callMin, fx, 2)} y lo venderías a unos {(priceMin * callMin).toLocaleString("es-ES", { maximumFractionDigits: 2 })} €.
+        <span className="font-semibold text-white">{isCL ? "Chile" : "España"}:</span> te cuesta <span className="font-mono text-white">{fmt(costMin)}</span>/min{estimated ? " (estimado)" : ` de media (${c.calls} llamadas)`}. Con un margen del {d.pricing.margin_pct}% cobra
+        <span className="font-mono text-emerald-300"> {fmt(priceMinUsd)}/min</span>. Un lead llamado (~{callMin.toFixed(1)} min) te cuesta {fmt(costMin * callMin)}.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
         {[["Básico", 100], ["Pro", 300], ["Empresa", 1000]].map(([n, m]) => (
-          <div key={n} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4" data-testid={`plan-${n}`}>
+          <div key={n} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4" data-testid={`plan-${country}-${n}`}>
             <p className="text-xs uppercase tracking-widest text-slate-500">{n} · {m} min/mes</p>
-            <p className="mt-1 font-display text-2xl font-bold text-white">{planPrice(priceMin * m)} €<span className="text-sm font-normal text-slate-500">/mes</span></p>
-            <p className="text-xs text-slate-500">≈ {Math.round(m / callMin)} leads · coste {eur(costMin * m, fx, 0)}</p>
+            <p className="mt-1 font-display text-2xl font-bold text-white">{plan(priceMinUsd * m)}<span className="text-sm font-normal text-slate-500">/mes</span></p>
+            <p className="text-xs text-slate-500">≈ {Math.round(m / callMin)} leads · coste {fmt(costMin * m)}</p>
           </div>
         ))}
       </div>
-      <p className="text-xs text-slate-500">Precios sin IVA. Añade la cuota de Vapi (plan Core 29 $/mes si necesitas más de 4 llamadas simultáneas) y el número de Zadarma.</p>
+    </div>
+  );
+}
+
+function PriceAdvice({ d }) {
+  return (
+    <Panel className="space-y-6 lg:col-span-2" data-testid="pricing-advice">
+      <h3 className="text-lg font-semibold text-white">Cómo cobrar</h3>
+      <CountryAdvice d={d} country="ES" />
+      <CountryAdvice d={d} country="CL" />
+      <p className="text-xs text-slate-500">Precios sin IVA. Añade la cuota de Vapi (plan Core 29 $/mes si necesitas más de 4 llamadas simultáneas) y los números de Zadarma.</p>
     </Panel>
   );
 }
@@ -125,10 +143,10 @@ export default function AdminCosts() {
         <Panel className="overflow-x-auto p-0 lg:col-span-2">
           <h3 className="p-5 pb-2 text-lg font-semibold text-white">Por negocio</h3>
           <table className="w-full text-sm" data-testid="costs-tenants-table">
-            <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr><th className="p-4 font-medium">Negocio</th><th className="p-4 font-medium">Llamadas</th><th className="p-4 font-medium">Minutos</th><th className="p-4 font-medium">Coste</th><th className="p-4 font-medium">€/min</th></tr></thead>
+            <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr><th className="p-4 font-medium">Negocio</th><th className="p-4 font-medium">Llamadas</th><th className="p-4 font-medium">Minutos</th><th className="p-4 font-medium">Coste</th><th className="p-4 font-medium">Por min</th></tr></thead>
             <tbody>
               {d.tenants.map((x) => (
-                <tr key={x.tenant_id} className="border-t border-slate-800"><td className="p-4 text-white">{x.business}</td><td className="p-4">{x.calls}</td><td className="p-4 font-mono">{x.minutes.toFixed(1)}</td><td className="p-4 font-mono">{eur(x.total, fx, 2)}</td><td className="p-4 font-mono">{eur(x.cost_per_min, fx)}</td></tr>
+                <tr key={x.tenant_id} className="border-t border-slate-800"><td className="p-4 text-white">{x.business}</td><td className="p-4">{x.calls}</td><td className="p-4 font-mono">{x.minutes.toFixed(1)}</td><td className="p-4 font-mono">{money(x.total, d.pricing, x.currency, 2)}</td><td className="p-4 font-mono">{money(x.cost_per_min, d.pricing, x.currency)}</td></tr>
               ))}
             </tbody>
           </table>
@@ -145,11 +163,11 @@ export default function AdminCosts() {
             {d.calls.map((c) => (
               <tr key={c.id} className="border-t border-slate-800" data-testid={`costs-call-${c.id}`}>
                 <td className="p-3 text-xs text-slate-400">{fmtDate(c.created_at)}</td>
-                <td className="p-3"><p className="text-white">{c.business}</p><p className="text-xs text-slate-500">{c.lead}{c.is_test ? " · prueba" : ""}</p></td>
+                <td className="p-3"><p className="text-white">{c.business}</p><p className="text-xs text-slate-500">{c.lead}{c.is_test ? " · prueba" : ""} · {c.country === "CL" ? "Chile" : "España"}</p></td>
                 <td className="p-3"><StatusBadge status={c.status} testid={`costs-call-status-${c.id}`} /></td>
                 <td className="p-3 font-mono">{c.minutes.toFixed(2)}</td>
-                {PARTS.slice(0, 6).map(([k]) => <td key={k} className="p-3 font-mono text-xs text-slate-300">{eur(c[k], fx, 4)}</td>)}
-                <td className="p-3 font-mono font-semibold text-emerald-300">{eur(c.total, fx, 3)}</td>
+                {PARTS.slice(0, 6).map(([k]) => <td key={k} className="p-3 font-mono text-xs text-slate-300">{money(c[k], d.pricing, c.currency, 4)}</td>)}
+                <td className="p-3 font-mono font-semibold text-emerald-300">{money(c.total, d.pricing, c.currency, 3)}</td>
               </tr>
             ))}
           </tbody>

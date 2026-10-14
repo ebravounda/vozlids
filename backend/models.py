@@ -34,6 +34,7 @@ class Agent(BaseDocument):
     business_name: str
     product: str
     objective: str
+    country: str = "ES"
     questions: List[str] = []
     voice: str
     ambience: str

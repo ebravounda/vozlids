@@ -1,5 +1,6 @@
 import os
 import httpx
+from countries import COUNTRIES
 
 VAPI_URL = "https://api.vapi.ai"
 STANDARD = {
@@ -20,18 +21,36 @@ PREMIUM = {
     "p_luis": "b5aa8098-49ef-475d-89b0-c9262ecf33fd",
     "p_hector": "b042270c-d46f-4d4f-8fb0-7dd7c5fe5615",
 }
-VOICES = {**STANDARD, **PREMIUM}
-STATE = {"phone_number_id": None, "number": None}
+STANDARD_CL = {"cl_catalina": "es-CL-CatalinaNeural", "cl_lorenzo": "es-CL-LorenzoNeural"}
+PREMIUM_LATAM = {
+    "l_fernanda": "b4b8e2af-6139-466e-a93a-30c20d2e1fc5",
+    "l_daniela": "5c5ad5e7-1020-476b-8b91-fdcbe9cc313c",
+    "l_regina": "e5e5c8d7-3924-4ff6-981a-cb667034be29",
+    "l_eduardo": "3efb11f3-4c0e-43c2-bad5-85ab99e993e2",
+    "l_mateo": "2fc4f1ec-bfd0-46f1-8e6d-d4279eaaf838",
+    "l_andres": "d46e87a1-7c6d-4b18-9359-926f4a35ffdf",
+}
+VOICES_BY_COUNTRY = {"ES": {**PREMIUM, **STANDARD}, "CL": {**PREMIUM_LATAM, **STANDARD_CL}}
+VOICES = {**STANDARD, **PREMIUM, **STANDARD_CL, **PREMIUM_LATAM}
+STATE = {"numbers": {}}
 
 
 def voice_config(voice: str) -> dict:
-    if voice in PREMIUM:
-        return {"provider": "cartesia", "model": "sonic-3", "language": "es", "voiceId": PREMIUM[voice]}
-    return {"provider": "azure", "voiceId": STANDARD[voice]}
+    premium = {**PREMIUM, **PREMIUM_LATAM}
+    if voice in premium:
+        return {"provider": "cartesia", "model": "sonic-3", "language": "es", "voiceId": premium[voice]}
+    return {"provider": "azure", "voiceId": {**STANDARD, **STANDARD_CL}[voice]}
 
 
-def phone_number_id():
-    return os.environ.get("VAPI_PHONE_NUMBER_ID") or STATE["phone_number_id"]
+def number_info(country: str) -> dict:
+    info = dict(STATE["numbers"].get(country) or {})
+    if country == "ES" and os.environ.get("VAPI_PHONE_NUMBER_ID"):
+        info["phone_number_id"] = os.environ["VAPI_PHONE_NUMBER_ID"]
+    return info
+
+
+def phone_number_id(country: str = "ES"):
+    return number_info(country).get("phone_number_id")
 
 
 def _headers() -> dict:
@@ -55,15 +74,15 @@ async def _post(path: str, payload: dict) -> dict:
     return r.json()
 
 
-async def connect_zadarma(sip_login: str, sip_password: str, number: str) -> dict:
+async def connect_zadarma(sip_login: str, sip_password: str, number: str, country: str = "ES") -> dict:
     cred = await _post("/credential", {
-        "provider": "byo-sip-trunk", "name": "Zadarma Trunk",
+        "provider": "byo-sip-trunk", "name": f"Zadarma Trunk {country}",
         "gateways": [{"ip": "sip.zadarma.com", "inboundEnabled": False}],
         "outboundLeadingPlusEnabled": True,
         "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
     })
     phone = await _post("/phone-number", {
-        "provider": "byo-phone-number", "name": "Zadarma +34", "number": number.lstrip("+"),
+        "provider": "byo-phone-number", "name": f"Zadarma {COUNTRIES[country]['prefix']}", "number": number.lstrip("+"),
         "numberE164CheckEnabled": False, "credentialId": cred["id"],
     })
     return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
@@ -92,8 +111,8 @@ class VapiError(Exception):
     pass
 
 
-def configured() -> bool:
-    return bool(os.environ.get("VAPI_API_KEY")) and bool(phone_number_id())
+def configured(country: str = "ES") -> bool:
+    return bool(os.environ.get("VAPI_API_KEY")) and bool(phone_number_id(country))
 
 
 def public_url() -> str:
@@ -161,9 +180,8 @@ PREGUNTAS DE CALIFICACIÓN (de una en una, en orden natural, sin que suene a enc
 {qs}
 
 CÓMO HABLAS
-- Español de España, tuteo cercano y profesional (pasa a "usted" si el lead lo usa).
+- {COUNTRIES[agent.get('country', 'ES')]['style']}
 - Frases cortas: como máximo dos frases por turno y termina casi siempre con una pregunta.
-- Suena natural: de vez en cuando usa expresiones como "vale", "perfecto", "genial", "entiendo" o "mmm, déjame ver", sin exagerar.
 - Nunca leas listas ni uses formato. Di números y horas como se dicen en voz alta ("a las diez y media").
 - Si el lead te interrumpe, para y responde a lo que dice.
 - No inventes precios, plazos ni datos que no estén arriba; si no lo sabes, di que lo consultará el equipo.
@@ -237,7 +255,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
                   "messages": [{"role": "system", "content": system_prompt(agent, lead, today)}],
                   "tools": tools(agent, server)},
         "voice": voice_config(agent["voice"]),
-        "transcriber": {"provider": "deepgram", "model": "nova-2", "language": "es"},
+        "transcriber": {"provider": "deepgram", "model": "nova-2", "language": COUNTRIES[agent.get("country", "ES")]["stt"]},
         "backgroundSound": background_sound(agent),
         "silenceTimeoutSeconds": 30,
         "maxDurationSeconds": 900,
@@ -250,7 +268,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
 
 async def create_call(agent: dict, lead: dict, today: str) -> str:
     payload = {
-        "phoneNumberId": phone_number_id(),
+        "phoneNumberId": phone_number_id(agent.get("country", "ES")),
         "customer": {"number": lead["phone"], "name": lead["name"][:40]},
         "assistant": build_assistant(agent, lead, today),
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},

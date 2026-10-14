@@ -17,7 +17,8 @@ from models import now_iso
 router = APIRouter(prefix="/api")
 CurrentUser = Depends(A.get_current_user)
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
-DEFAULT_PRICING = {"line_rate_usd_min": 0.025, "usd_eur": 0.92, "margin_pct": 150}
+DEFAULT_PRICING = {"line_rate_usd_min": 0.025, "line_rate_cl_usd_min": 0.05, "usd_eur": 0.92, "usd_clp": 950,
+                   "margin_pct": 150}
 _custom_cache: "OrderedDict[str, object]" = OrderedDict()
 
 
@@ -118,7 +119,9 @@ async def lead_recording(lead_id: str, user=CurrentUser):
 # ---------- Admin: costs & pricing ----------
 class PricingIn(BaseModel):
     line_rate_usd_min: float = Field(ge=0, le=2)
+    line_rate_cl_usd_min: float = Field(ge=0, le=2)
     usd_eur: float = Field(gt=0, le=2)
+    usd_clp: float = Field(gt=100, le=5000)
     margin_pct: float = Field(ge=0, le=1000)
 
 
@@ -159,13 +162,20 @@ async def admin_costs(days: int = 30, user=Depends(require_admin)):
     since = (datetime.now(timezone.utc) - timedelta(days=max(1, min(days, 365)))).isoformat()
     leads = await db.leads.find({"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}},
                                 {"messages": 0, "transcript": 0}).sort("created_at", -1).to_list(5000)
-    users = {str(u["_id"]): u.get("business_name") or u["email"]
-             async for u in db.users.find({}, {"business_name": 1, "email": 1})}
+    users = {str(u["_id"]): u async for u in db.users.find({}, {"business_name": 1, "email": 1, "country": 1})}
+    agent_country = {str(a["_id"]): a.get("country", "ES") async for a in db.agents.find({}, {"country": 1})}
+    rates = {"ES": pricing["line_rate_usd_min"], "CL": pricing["line_rate_cl_usd_min"]}
+    by_country = {c: {"calls": 0, "minutes": 0.0, "total": 0.0} for c in rates}
     calls, tenants, totals = [], {}, {"calls": 0, "minutes": 0.0, "total": 0.0, "missing_cost": 0}
     keys = ["voz", "transcripcion", "ia", "vapi", "analisis", "linea", "otros"]
     breakdown = dict.fromkeys(keys, 0.0)
     for ld in leads:
-        p = _parts(ld, pricing["line_rate_usd_min"])
+        country = agent_country.get(ld["agent_id"], "ES")
+        p = _parts(ld, rates[country])
+        bc = by_country[country]
+        bc["calls"] += 1
+        bc["minutes"] += p["minutes"]
+        bc["total"] += p["total"]
         if ld.get("cost") is None:
             totals["missing_cost"] += 1
         totals["calls"] += 1
@@ -173,17 +183,23 @@ async def admin_costs(days: int = 30, user=Depends(require_admin)):
         totals["total"] += p["total"]
         for k in keys:
             breakdown[k] += p[k]
-        t = tenants.setdefault(ld["tenant_id"], {"tenant_id": ld["tenant_id"], "business": users.get(ld["tenant_id"], "—"),
-                                                 "calls": 0, "minutes": 0.0, "total": 0.0})
+        u = users.get(ld["tenant_id"], {})
+        currency = "CLP" if u.get("country") == "CL" else "EUR"
+        t = tenants.setdefault(ld["tenant_id"], {"tenant_id": ld["tenant_id"], "business": u.get("business_name") or "—",
+                                                 "currency": currency, "calls": 0, "minutes": 0.0, "total": 0.0})
         t["calls"] += 1
         t["minutes"] += p["minutes"]
         t["total"] += p["total"]
         if len(calls) < 300:
             calls.append({"id": str(ld["_id"]), "created_at": ld["created_at"], "business": t["business"],
-                          "lead": ld["name"], "status": ld["status"], "is_test": ld.get("is_test", False), **p})
+                          "lead": ld["name"], "status": ld["status"], "is_test": ld.get("is_test", False),
+                          "country": country, "currency": currency, **p})
     for t in tenants.values():
         t["cost_per_min"] = t["total"] / t["minutes"] if t["minutes"] else None
-    return {"pricing": pricing, "totals": totals, "breakdown": breakdown,
+    for bc in by_country.values():
+        bc["cost_per_min"] = bc["total"] / bc["minutes"] if bc["minutes"] else None
+        bc["minutes_per_call"] = bc["minutes"] / bc["calls"] if bc["calls"] else None
+    return {"pricing": pricing, "totals": totals, "breakdown": breakdown, "by_country": by_country,
             "cost_per_min": totals["total"] / totals["minutes"] if totals["minutes"] else None,
             "cost_per_call": totals["total"] / totals["calls"] if totals["calls"] else None,
             "minutes_per_call": totals["minutes"] / totals["calls"] if totals["calls"] else None,

@@ -54,7 +54,7 @@ export default function PublicForm() {
               </div>
             </div>
             <input required className={input} placeholder="Nombre y apellidos" value={form.name} onChange={set("name")} data-testid="public-form-name-input" />
-            <input required className={input} type="tel" placeholder="Teléfono (+34 600 000 000)" value={form.phone} onChange={set("phone")} data-testid="public-form-phone-input" />
+            <input required className={input} type="tel" placeholder={`Teléfono (${agent?.phone_example || "+34 600 000 000"})`} value={form.phone} onChange={set("phone")} data-testid="public-form-phone-input" />
             <input className={input} type="email" placeholder="Email (opcional)" value={form.email} onChange={set("email")} data-testid="public-form-email-input" />
             <label className="flex gap-3 text-xs leading-relaxed text-slate-600">
               <input type="checkbox" required checked={form.consent} onChange={set("consent")} className="mt-0.5 h-4 w-4 accent-emerald-600" data-testid="public-form-consent-checkbox" />

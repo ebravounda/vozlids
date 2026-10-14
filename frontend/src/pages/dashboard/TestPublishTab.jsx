@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel, StatusBadge } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
+import { COUNTRIES } from "@/lib/constants";
 
-export const TestPublishTab = ({ agentId }) => {
+export const TestPublishTab = ({ agentId, country }) => {
   const [phone, setPhone] = useState("");
   const [calling, setCalling] = useState(false);
   const [result, setResult] = useState(null);
@@ -42,7 +43,7 @@ export const TestPublishTab = ({ agentId }) => {
         <h3 className="text-xl font-semibold text-white">Llamarme ahora</h3>
         <p className="text-sm text-slate-400">Recibe una llamada real del agente en tu móvil, con su voz y su ambiente. Guarda antes los cambios.</p>
         <div className="flex gap-2">
-          <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+34 600 000 000" className="h-11 bg-slate-950/60 font-mono" data-testid="agent-test-phone-input" />
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={COUNTRIES[country].example} className="h-11 bg-slate-950/60 font-mono" data-testid="agent-test-phone-input" />
           <Button onClick={callMe} disabled={calling || !phone} className="h-11 rounded-full px-5 font-semibold" data-testid="agent-builder-call-me-button">
             {calling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PhoneCall className="mr-2 h-4 w-4" />} Llamarme
           </Button>

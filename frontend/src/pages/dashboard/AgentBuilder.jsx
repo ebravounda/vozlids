@@ -8,13 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api, errMsg } from "@/lib/api";
-import { DEFAULT_GREETING } from "@/lib/constants";
+import { DEFAULT_GREETING, DEFAULT_VOICE } from "@/lib/constants";
 import { GeneralTab, ScriptTab, VoiceTab } from "@/pages/dashboard/AgentTabs";
 import { TestPublishTab } from "@/pages/dashboard/TestPublishTab";
 
-const blank = (business) => ({
+const blank = (business, country = "ES") => ({
+  country,
   name: "Marta", business_name: business || "", product: "", objective: "agendar", questions: [""],
-  voice: "p_marta", ambience: "oficina", ambience_volume: 35,
+  voice: DEFAULT_VOICE[country], ambience: "oficina_real", ambience_volume: 35,
   greeting: DEFAULT_GREETING.replace("tu negocio", business || "tu negocio"), extra_instructions: "", active: true,
 });
 
@@ -22,7 +23,7 @@ export default function AgentBuilder() {
   const { agentId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [agent, setAgent] = useState(agentId ? null : blank(user?.business_name));
+  const [agent, setAgent] = useState(agentId ? null : blank(user?.business_name, user?.country || "ES"));
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState("general");
 
@@ -79,7 +80,7 @@ export default function AgentBuilder() {
         <TabsContent value="general"><GeneralTab agent={agent} update={update} /></TabsContent>
         <TabsContent value="voice"><VoiceTab agent={agent} update={update} /></TabsContent>
         <TabsContent value="script"><ScriptTab agent={agent} update={update} /></TabsContent>
-        <TabsContent value="test"><TestPublishTab agentId={agentId} /></TabsContent>
+        <TabsContent value="test"><TestPublishTab agentId={agentId} country={agent.country || "ES"} /></TabsContent>
       </Tabs>
     </div>
   );

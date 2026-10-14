@@ -9,6 +9,7 @@ from pymongo.errors import DuplicateKeyError
 from db import db
 from models import Appointment, DncEntry, now_iso
 import vapi
+from countries import COUNTRIES
 
 log = logging.getLogger("vozlead")
 TZ = ZoneInfo("Europe/Madrid")
@@ -23,9 +24,19 @@ def madrid_now() -> datetime:
     return datetime.now(TZ)
 
 
-def today_text() -> str:
-    n = madrid_now()
-    return f"Hoy es {DIAS[n.weekday()]}, {n.day} de {MESES[n.month - 1]} de {n.year}, y son las {n:%H:%M} (hora de Madrid)."
+def tz_of(country: str) -> ZoneInfo:
+    return ZoneInfo(COUNTRIES[country or "ES"]["tz"])
+
+
+def today_text(country: str = "ES") -> str:
+    n = datetime.now(tz_of(country))
+    return (f"Hoy es {DIAS[n.weekday()]}, {n.day} de {MESES[n.month - 1]} de {n.year}, y son las {n:%H:%M} "
+            f"(hora de {COUNTRIES[country]['city']}). Todas las horas de la agenda son hora local de {COUNTRIES[country]['city']}.")
+
+
+async def lead_country(lead: dict) -> str:
+    agent = await db.agents.find_one({"_id": ObjectId(lead["agent_id"])}, {"country": 1}) if ObjectId.is_valid(lead["agent_id"]) else None
+    return (agent or {}).get("country", "ES")
 
 
 async def get_availability(tenant_id: str) -> dict:
@@ -36,15 +47,16 @@ async def get_availability(tenant_id: str) -> dict:
     return av
 
 
-async def free_slots(tenant_id: str, d: date) -> list:
+async def free_slots(tenant_id: str, d: date, country: str = "ES") -> list:
     av = await get_availability(tenant_id)
     day = av["days"][d.weekday()]
     if not day.get("enabled"):
         return []
     step = timedelta(minutes=av["slot_minutes"])
-    cur = datetime.combine(d, datetime.strptime(day["start"], "%H:%M").time(), TZ)
-    end = datetime.combine(d, datetime.strptime(day["end"], "%H:%M").time(), TZ)
-    min_start = madrid_now() + timedelta(minutes=60)
+    tz = tz_of(country)
+    cur = datetime.combine(d, datetime.strptime(day["start"], "%H:%M").time(), tz)
+    end = datetime.combine(d, datetime.strptime(day["end"], "%H:%M").time(), tz)
+    min_start = datetime.now(tz) + timedelta(minutes=60)
     booked = {a["start"] async for a in db.appointments.find(
         {"tenant_id": tenant_id, "start": {"$regex": f"^{d.isoformat()}"}}, {"start": 1})}
     slots = []
@@ -62,17 +74,18 @@ def _day_label(d: date) -> str:
 
 async def tool_check_availability(lead: dict, args: dict) -> dict:
     tid = lead["tenant_id"]
+    country = await lead_country(lead)
     if args.get("date"):
         try:
             d = date.fromisoformat(args["date"])
         except ValueError:
             return {"error": "Fecha no válida, usa YYYY-MM-DD"}
-        slots = await free_slots(tid, d)
+        slots = await free_slots(tid, d, country)
         return {"fecha": d.isoformat(), "dia": _day_label(d), "huecos": slots[:10],
                 "nota": "" if slots else "No hay huecos ese día; ofrece otro día."}
-    days, d = [], madrid_now().date()
+    days, d = [], datetime.now(tz_of(country)).date()
     for _ in range(21):
-        slots = await free_slots(tid, d)
+        slots = await free_slots(tid, d, country)
         if slots:
             days.append({"fecha": d.isoformat(), "dia": _day_label(d), "huecos": slots[:5]})
         if len(days) == 3:
@@ -87,7 +100,7 @@ async def tool_book(lead: dict, args: dict) -> dict:
         t = datetime.strptime(args.get("time", ""), "%H:%M").strftime("%H:%M")
     except ValueError:
         return {"ok": False, "error": "Fecha u hora no válidas"}
-    if t not in await free_slots(lead["tenant_id"], d):
+    if t not in await free_slots(lead["tenant_id"], d, await lead_country(lead)):
         return {"ok": False, "error": "Ese hueco no está disponible. Vuelve a consultar check_availability."}
     appt = Appointment(tenant_id=lead["tenant_id"], lead_id=str(lead["_id"]), lead_name=lead["name"],
                        lead_phone=lead["phone"], agent_id=lead["agent_id"], start=f"{d.isoformat()}T{t}",
@@ -117,13 +130,15 @@ TOOLS = {"check_availability": tool_check_availability, "book_appointment": tool
 
 async def dial(agent: dict, lead: dict):
     lid = lead["_id"]
-    if not vapi.configured():
+    country = agent.get("country", "ES")
+    if not vapi.configured(country):
         await db.leads.update_one({"_id": lid}, {"$set": {
             "status": "fallida", "updated_at": now_iso(),
-            "error": "Telefonía sin configurar: falta la clave de Vapi o el número de Zadarma (ver Telefonía)."}})
+            "error": f"Telefonía sin configurar para {COUNTRIES[country]['name']}: falta conectar el número "
+                     f"{COUNTRIES[country]['prefix']} en Telefonía."}})
         return
     try:
-        call_id = await vapi.create_call(agent, lead, today_text())
+        call_id = await vapi.create_call(agent, lead, today_text(country))
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",
                                                           "updated_at": now_iso()}})
     except vapi.VapiError as e:

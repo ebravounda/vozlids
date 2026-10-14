@@ -27,13 +27,13 @@ import threading  # noqa: E402
 from db import client, db  # noqa: E402
 from models import Agent, Appointment, DncEntry, Lead, now_iso  # noqa: E402
 from seed import seed  # noqa: E402
+from countries import COUNTRIES, norm_any_phone, norm_phone  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 app = FastAPI()
 api = APIRouter(prefix="/api")
 CurrentUser = Depends(A.get_current_user)
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-PHONE_RE = re.compile(r"^\+34[6789]\d{8}$")
 LIST_PROJECTION = {"messages": 0, "transcript": 0}
 
 
@@ -44,22 +44,10 @@ def oid(v: str) -> ObjectId:
         raise HTTPException(404, "No encontrado")
 
 
-def norm_phone(p: str) -> str:
-    p = re.sub(r"[\s\-\.\(\)]", "", p or "")
-    if p.startswith("0034"):
-        p = "+34" + p[4:]
-    elif p.startswith("34") and len(p) == 11:
-        p = "+" + p
-    elif re.fullmatch(r"[6789]\d{8}", p):
-        p = "+34" + p
-    if not PHONE_RE.match(p):
-        raise HTTPException(422, "Teléfono no válido: usa un número español (+34 y 9 cifras).")
-    return p
-
-
 def user_out(u: dict) -> dict:
     return {"id": str(u.get("id") or u.get("_id")), "email": u["email"], "name": u.get("name", ""),
-            "business_name": u.get("business_name", ""), "role": u.get("role", "business")}
+            "business_name": u.get("business_name", ""), "role": u.get("role", "business"),
+            "country": u.get("country", "ES")}
 
 
 def ago(minutes: int) -> str:
@@ -72,6 +60,7 @@ class RegisterIn(BaseModel):
     business_name: str = Field(min_length=1, max_length=120)
     email: str = Field(min_length=3, max_length=200)
     password: str = Field(min_length=8, max_length=128)
+    country: Literal["ES", "CL"] = "ES"
 
 
 class LoginIn(BaseModel):
@@ -87,7 +76,8 @@ async def register(body: RegisterIn, response: Response):
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Ya existe una cuenta con ese email")
     doc = {"email": email, "password_hash": A.hash_password(body.password), "name": body.name.strip(),
-           "business_name": body.business_name.strip(), "role": "business", "created_at": now_iso()}
+           "business_name": body.business_name.strip(), "role": "business", "country": body.country,
+           "created_at": now_iso()}
     res = await db.users.insert_one(doc)
     uid = str(res.inserted_id)
     await S.get_availability(uid)
@@ -135,6 +125,16 @@ async def me(user=CurrentUser):
     return user_out(user)
 
 
+class CountryIn(BaseModel):
+    country: Literal["ES", "CL"]
+
+
+@api.put("/account/country")
+async def set_country(body: CountryIn, user=CurrentUser):
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"country": body.country}})
+    return user_out({**user, "country": body.country})
+
+
 # ---------- Agents ----------
 class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
@@ -142,6 +142,7 @@ class AgentIn(BaseModel):
     product: str = Field(min_length=1, max_length=3000)
     objective: Literal["agendar", "calificar", "vender"]
     questions: List[str] = Field(default=[], max_length=10)
+    country: Literal["ES", "CL"] = "ES"
     voice: Literal[tuple(vapi.VOICES.keys())]
     ambience: str = Field(pattern=r"^(oficina|teclados|call_center|oficina_real|teclado_real|vapi_office|none|custom:[0-9a-f]{32})$")
     ambience_volume: int = Field(35, ge=0, le=100)
@@ -164,6 +165,8 @@ async def list_agents(user=CurrentUser):
 
 
 async def check_ambience(user: dict, body: AgentIn):
+    if body.voice not in vapi.VOICES_BY_COUNTRY[body.country]:
+        raise HTTPException(422, f"Esa voz no está disponible para {COUNTRIES[body.country]['name']}.")
     if body.ambience.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], body.ambience[7:]):
         raise HTTPException(422, "Esa grabación de ambiente no existe.")
 
@@ -217,7 +220,7 @@ class TestCallIn(BaseModel):
 @api.post("/agents/{agent_id}/test-call")
 async def test_call(agent_id: str, body: TestCallIn, user=CurrentUser):
     agent = await get_agent(user["id"], agent_id)
-    phone = norm_phone(body.phone)
+    phone = norm_phone(body.phone, agent.get("country", "ES"))
     if await is_dnc(user["id"], phone):
         raise HTTPException(400, "Ese número está en tu lista de no llamar.")
     return await create_and_dial(agent, user.get("name") or "Prueba", phone, user["email"], True)
@@ -236,7 +239,9 @@ async def public_agent(agent_id: str):
     agent = await db.agents.find_one({"_id": oid(agent_id)})
     if not agent:
         raise HTTPException(404, "Formulario no encontrado")
-    return {"id": agent_id, "name": agent["name"], "business_name": agent["business_name"], "active": agent["active"]}
+    country = agent.get("country", "ES")
+    return {"id": agent_id, "name": agent["name"], "business_name": agent["business_name"], "active": agent["active"],
+            "country": country, "phone_example": COUNTRIES[country]["example"]}
 
 
 @api.post("/public/agents/{agent_id}/leads")
@@ -249,7 +254,7 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
     email = body.email.strip().lower()
     if email and not EMAIL_RE.match(email):
         raise HTTPException(422, "Email no válido")
-    phone = norm_phone(body.phone)
+    phone = norm_phone(body.phone, agent.get("country", "ES"))
     ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
     if ip and await db.leads.count_documents({"source_ip": ip, "created_at": {"$gt": ago(60)}}) >= 10:
         raise HTTPException(429, "Demasiadas solicitudes. Inténtalo más tarde.")
@@ -359,7 +364,7 @@ async def list_dnc(user=CurrentUser):
 
 @api.post("/dnc")
 async def add_dnc(body: DncIn, user=CurrentUser):
-    phone = norm_phone(body.phone)
+    phone = norm_any_phone(body.phone)
     entry = DncEntry(tenant_id=user["id"], phone=phone, reason=body.reason.strip() or "Añadido manualmente")
     try:
         await db.dnc.insert_one(entry.to_mongo())
@@ -379,8 +384,12 @@ async def delete_dnc(entry_id: str, user=CurrentUser):
 # ---------- Telephony / ambience / webhook ----------
 @api.get("/telephony/status")
 async def telephony_status(user=CurrentUser):
-    return {"configured": vapi.configured(), "has_api_key": bool(os.environ.get("VAPI_API_KEY")),
-            "has_phone_number": bool(vapi.phone_number_id()), "number": vapi.STATE["number"],
+    countries = {c: {"name": COUNTRIES[c]["name"], "prefix": COUNTRIES[c]["prefix"], "configured": vapi.configured(c),
+                     "number": vapi.number_info(c).get("number")} for c in COUNTRIES}
+    own = user.get("country", "ES")
+    return {"configured": vapi.configured(own), "has_api_key": bool(os.environ.get("VAPI_API_KEY")),
+            "has_phone_number": bool(vapi.phone_number_id(own)), "number": vapi.number_info(own).get("number"),
+            "countries": countries, "country": own,
             "is_admin": user.get("role") == "admin", "webhook_url": vapi.webhook_url()}
 
 
@@ -388,6 +397,7 @@ class ZadarmaIn(BaseModel):
     sip_login: str = Field(min_length=2, max_length=80)
     sip_password: str = Field(min_length=1, max_length=200)
     number: str
+    country: Literal["ES", "CL"] = "ES"
 
 
 @api.post("/telephony/zadarma")
@@ -396,15 +406,15 @@ async def connect_zadarma(body: ZadarmaIn, user=CurrentUser):
         raise HTTPException(403, "Solo el administrador de la plataforma puede conectar la telefonía.")
     if not os.environ.get("VAPI_API_KEY"):
         raise HTTPException(400, "Falta la clave de Vapi.")
-    number = norm_phone(body.number)
+    number = norm_phone(body.number, body.country)
     try:
-        res = await vapi.connect_zadarma(body.sip_login.strip(), body.sip_password, number)
+        res = await vapi.connect_zadarma(body.sip_login.strip(), body.sip_password, number, body.country)
     except vapi.VapiError as e:
         raise HTTPException(400, str(e))
-    await db.platform_settings.update_one({"_id": "telephony"}, {"$set": {
-        "phone_number_id": res["phone_number_id"], "credential_id": res["credential_id"],
-        "number": number, "updated_at": now_iso()}}, upsert=True)
-    vapi.STATE.update(phone_number_id=res["phone_number_id"], number=number)
+    info = {"phone_number_id": res["phone_number_id"], "credential_id": res["credential_id"], "number": number,
+            "updated_at": now_iso()}
+    await db.platform_settings.update_one({"_id": "telephony"}, {"$set": {f"numbers.{body.country}": info}}, upsert=True)
+    vapi.STATE["numbers"][body.country] = info
     return {"ok": True, "number": number}
 
 
@@ -470,9 +480,12 @@ async def startup():
         storage.init_storage()
     except Exception as e:  # noqa: BLE001
         logging.getLogger("vozlead").error("Storage init failed: %s", e)
-    tel = await db.platform_settings.find_one({"_id": "telephony"})
-    if tel:
-        vapi.STATE.update(phone_number_id=tel.get("phone_number_id"), number=tel.get("number"))
+    tel = await db.platform_settings.find_one({"_id": "telephony"}) or {}
+    if tel.get("phone_number_id") and "ES" not in (tel.get("numbers") or {}):
+        legacy = {k: tel[k] for k in ("phone_number_id", "credential_id", "number") if k in tel}
+        await db.platform_settings.update_one({"_id": "telephony"}, {"$set": {"numbers.ES": legacy}})
+        tel.setdefault("numbers", {})["ES"] = legacy
+    vapi.STATE["numbers"] = tel.get("numbers") or {}
 
 
 @app.on_event("shutdown")

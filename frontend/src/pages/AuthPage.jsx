@@ -20,7 +20,7 @@ export default function AuthPage({ mode }) {
   const isLogin = mode === "login";
   const { login, register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", business_name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", business_name: "", email: "", password: "", country: "ES" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -63,6 +63,17 @@ export default function AuthPage({ mode }) {
                 <Field id="name" label="Tu nombre" value={form.name} onChange={set("name")} placeholder="Laura García" />
                 <Field id="business" label="Nombre del negocio" value={form.business_name} onChange={set("business_name")} placeholder="Clínica Dental Sonrisa" />
               </>
+            )}
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label className="text-slate-300">País del negocio</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[["ES", "España"], ["CL", "Chile"]].map(([c, n]) => (
+                    <button key={c} type="button" onClick={() => setForm({ ...form, country: c })} data-testid={`auth-country-${c}`}
+                      className={`h-11 rounded-lg border text-sm font-semibold transition-colors ${form.country === c ? "border-emerald-500 bg-emerald-500/10 text-emerald-200" : "border-slate-700 text-slate-300 hover:border-slate-500"}`}>{n}</button>
+                  ))}
+                </div>
+              </div>
             )}
             <Field id="email" label="Email" type="email" value={form.email} onChange={set("email")} placeholder="tu@negocio.es" />
             <Field id="password" label="Contraseña" type="password" minLength={isLogin ? undefined : 8} value={form.password} onChange={set("password")} placeholder={isLogin ? "" : "Mínimo 8 caracteres"} />

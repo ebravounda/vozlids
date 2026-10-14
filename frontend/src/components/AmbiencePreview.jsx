@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { API } from "@/lib/api";
 
-const MALE = ["alvaro", "dario", "arnau", "p_marcos", "p_gonzalo", "p_luis", "p_hector"];
+const MALE = ["alvaro", "dario", "arnau", "p_marcos", "p_gonzalo", "p_luis", "p_hector", "l_eduardo", "l_mateo", "l_andres", "cl_lorenzo"];
 
 function pickVoice(voiceId) {
   const voices = window.speechSynthesis?.getVoices() || [];
-  const es = voices.filter((v) => v.lang?.toLowerCase().startsWith("es-es"));
+  const latam = /^(l_|cl_)/.test(voiceId || "");
+  const es = voices.filter((v) => (latam ? /^es-(cl|419|mx|us)/i : /^es-es/i).test(v.lang || ""));
   const pool = es.length ? es : voices.filter((v) => v.lang?.startsWith("es"));
   const male = MALE.includes(voiceId);
   const re = male ? /(jorge|pablo|alvaro|álvaro|dario|male|hombre|diego|enrique)/i : /(monica|mónica|elvira|lucia|laura|helena|female|mujer|marisol)/i;
@@ -43,7 +44,7 @@ export const AmbiencePreview = ({ ambience, volume, text, voice, label = "Escuch
     const synth = window.speechSynthesis;
     if (text && synth) {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = "es-ES";
+      u.lang = /^(l_|cl_)/.test(voice || "") ? "es-CL" : "es-ES";
       u.rate = 1.03;
       const v = pickVoice(voice);
       if (v) u.voice = v;
