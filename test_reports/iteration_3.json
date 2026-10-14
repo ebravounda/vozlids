@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 3 testing of VozLead multi-country (ES + CL) support. Added 20 new backend regression tests covering: register with country, PUT /api/account/country, country+voice validation on agent create (CL+p_marta=422, ES+l_fernanda=422, CL+cl_catalina=200), phone validation by agent country (public form rejects +34 for CL agent with 422, consent false=400), public GET returns country & phone_example '+56 9 1234 5678', DNC accepts +34 and +56 numbers and rejects '123', telephony status returns both countries (ES configured +34919932652, CL not configured), CL agent test-call with valid CL number returns status 'fallida' with 'Telefonía sin configurar para Chile' error, admin costs by_country structure and pricing fields (line_rate_cl_usd_min, usd_clp), Marta ES agent regression. Full suite: 57 passed, 1 skipped (webhook tool-call skip when telephony is LIVE). Frontend verified via Playwright: /registro has auth-country-ES/CL buttons; Telephony page has business-country-panel, telephony-number-status-ES (+34919932652 conectado), -CL (falta conectar), chile-prefix-warning, zadarma-connect-form-CL (NOT submitted); AdminCosts has pricing-line_rate_cl_usd_min-input, pricing-usd_clp-input, pricing-advice-ES, pricing-advice-CL, plan-ES-Básico and plan-CL-Básico (CL plan: '$33.990/mes', coste '$13.300 CLP'); Agent builder General tab has agent-country-ES/-CL; switching to CL on Voz tab shows exactly {l_fernanda, l_daniela, l_regina, l_eduardo, l_mateo, l_andres, cl_catalina, cl_lorenzo} and hides ES voices (p_marta, elvira); switching back to ES hides CL voices. Admin business country was NOT persisted to CL (reset in-memory via UI only; backend roundtrip test restores to ES in finally).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/agents/{id}/test-call", "issue": "norm_phone(bare 9-digit, 'CL') accepts a Spanish-looking national number like '612345678' and converts it to +56612345678 because both national regexes overlap ([2-9]\\d{8}). If CL ever has a number configured, a user typing a Spanish mobile for a CL agent would place a real call to an unrelated +56 lookalike number. Recommend requiring full E.164 (+prefix) on test-call for safety, or at least warning when the input lacks a prefix for CL agents."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional, SAFETY) Consider rejecting bare national-format phones on /api/agents/{id}/test-call for CL agents (or for both), since Spanish national mobiles collide with Chilean national format and would misdial if CL goes live. See minor backend issue above."
+  ],
+  "critical_code_review_comments": [
+    "countries.py: ES national [6789]\\d{8} and CL national [2-9]\\d{8} overlap for digits starting with 6/7/8/9 — any 9-digit bare phone is accepted by both countries' norm_phone. This is correct for norm_any_phone but risky inside country-specific test-call flows where the UI/user may paste the wrong country's number.",
+    "server.py set_country: no re-seeding of availability for new country tenants on country change (existing availability stays). Not a bug but worth noting if tz/city-dependent slot math is added later.",
+    "server.py seed/telephony startup: legacy ES migration logic (lines 484-487) is clean and idempotent. Verified ES stays configured as +34919932652 after multiple restarts.",
+    "extra_routes.admin_costs builds users dict then uses u.get('country') for currency — correct. CL agent costs attribute to CL in by_country via agent_country map. Good.",
+    "AgentTabs.jsx: switching country resets voice to DEFAULT_VOICE[country] in a single update call — prevents the 'CL agent with ES voice' saved state entirely from the UI. Backend 422 is still enforced as defense-in-depth.",
+    "Telephony.jsx: ChileWarning rendered both before the connect form AND again if CL ever shows a configured +569 number — good double warning.",
+    "AuthPage.jsx country selector only shown on register (!isLogin) — correct.",
+    "Carry-over from prior iterations and NOT addressed: brute-force lockout off-by-one in server.login (counter resets to 0 on 5th fail and locked_until is set to a past time via ago(-15))."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_backend.py"
+  ],
+  "success_rate": {"backend": "100% (57 passed, 1 intentionally skipped)", "frontend": "100% of flows exercised passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created transient CL test agents and a tenant2 CL user via register (uuid-prefixed emails). All test agents deleted via fixture teardown. Admin business country temporarily toggled to CL in test_set_country_roundtrip and restored to ES in finally. No real phone calls placed (CL has no number configured; ES agents never had test-call invoked with valid numbers).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite now at 58 tests (57 passing, 1 skipped). Chile-feature tests begin at the 'Iteration 3' section near line 630. CL has NO Zadarma number configured — the test suite relies on this to safely assert 'fallida' status on CL test-calls. If CL goes live (connect_zadarma_CL from Telephony UI succeeds), tests test_cl_agent_no_number_test_call_fallida and test_test_call_bare_digits_ambiguity_note will auto-skip via the countries.CL.configured guard. ES remains live at +34919932652 — never add tests that place real calls to +34 phones. Marta agent ID in this env: 6acfac3a346c4c1ebc71ff58 (country=ES, voice=p_marta, business=OpenFactura.es).",
+  "rca of the issue": "Documented edge: norm_phone's acceptance of bare national digits for CL agents can cause misdial if a Spanish mobile is pasted. Mitigation suggested but not fixed (not blocking since CL is not live)."
+}

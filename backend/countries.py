@@ -7,7 +7,7 @@ COUNTRIES = {
            "example": "+34 600 000 000",
            "style": "Español de España, tuteo cercano y profesional (pasa a \"usted\" si el lead lo usa). De vez en cuando "
                     "usa expresiones como \"vale\", \"perfecto\", \"genial\", \"entiendo\" o \"mmm, déjame ver\", sin exagerar."},
-    "CL": {"name": "Chile", "prefix": "+56", "regex": r"^\+56[2-9]\d{8}$", "national": r"[2-9]\d{8}",
+    "CL": {"name": "Chile", "prefix": "+56", "regex": r"^\+56[2-9]\d{8}$", "national": r"[29]\d{8}",
            "tz": "America/Santiago", "city": "Santiago de Chile", "currency": "CLP", "stt": "es-419", "line_rate": 0.05,
            "example": "+56 9 1234 5678",
            "style": "Español de Chile, cercano y profesional; tutea salvo que el lead use \"usted\". Usa expresiones naturales "

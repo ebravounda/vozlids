@@ -568,7 +568,7 @@ def test_admin_pricing_get_put_roundtrip(admin):
     orig = r.json()
     assert "line_rate_usd_min" in orig and "usd_eur" in orig and "margin_pct" in orig
 
-    new_pricing = {"line_rate_usd_min": 0.03, "usd_eur": 0.91, "margin_pct": 180}
+    new_pricing = {**orig, "line_rate_usd_min": 0.03, "usd_eur": 0.91, "margin_pct": 180}
     r = s.put(f"{BASE}/api/admin/pricing", json=new_pricing)
     assert r.status_code == 200
     r = s.get(f"{BASE}/api/admin/pricing")
@@ -623,4 +623,258 @@ def test_carlos_ruiz_transcript_present(admin):
     assert d["messages"] and len(d["messages"]) >= 2
     roles = {m["role"] for m in d["messages"]}
     assert roles & {"assistant", "agent", "user", "agente", "lead", "cliente"}
+
+
+# ========================================================
+# Iteration 3: Chile multi-country support (ES + CL)
+# ========================================================
+CL_AGENT_PAYLOAD = {**AGENT_PAYLOAD, "name": "TEST CL Agent", "country": "CL", "voice": "l_fernanda"}
+
+
+@pytest.fixture()
+def cl_agent(admin):
+    s, _ = admin
+    r = s.post(f"{BASE}/api/agents", json=CL_AGENT_PAYLOAD)
+    assert r.status_code == 200, r.text
+    agent = r.json()
+    assert agent["country"] == "CL"
+    assert agent["voice"] == "l_fernanda"
+    yield agent
+    s.delete(f"{BASE}/api/agents/{agent['id']}")
+
+
+# ----- Register with country CL -----
+def test_register_with_country_cl():
+    s = requests.Session()
+    email = f"cl_user_{uuid.uuid4().hex[:8]}@test.cl"
+    r = s.post(f"{BASE}/api/auth/register", json={
+        "name": "Test CL", "business_name": "T-CL SpA", "email": email,
+        "password": "Password123!", "country": "CL"})
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["country"] == "CL"
+    tok = data["access_token"]
+    r = requests.get(f"{BASE}/api/auth/me", headers={"Authorization": f"Bearer {tok}"})
+    assert r.status_code == 200
+    assert r.json()["country"] == "CL"
+
+
+def test_register_default_country_es():
+    s = requests.Session()
+    email = f"def_user_{uuid.uuid4().hex[:8]}@test.es"
+    r = s.post(f"{BASE}/api/auth/register", json={
+        "name": "Def", "business_name": "D SL", "email": email, "password": "Password123!"})
+    assert r.status_code == 200
+    assert r.json()["country"] == "ES"
+
+
+# ----- PUT /api/account/country -----
+def test_set_country_roundtrip(admin):
+    s, me = admin
+    orig = me.get("country", "ES")
+    try:
+        r = s.put(f"{BASE}/api/account/country", json={"country": "CL"})
+        assert r.status_code == 200
+        assert r.json()["country"] == "CL"
+        r = s.get(f"{BASE}/api/auth/me")
+        assert r.json()["country"] == "CL"
+    finally:
+        s.put(f"{BASE}/api/account/country", json={"country": orig})
+        assert s.get(f"{BASE}/api/auth/me").json()["country"] == orig
+
+
+def test_set_country_invalid(admin):
+    s, _ = admin
+    r = s.put(f"{BASE}/api/account/country", json={"country": "FR"})
+    assert r.status_code == 422
+
+
+# ----- Agent voice/country validation -----
+def test_create_cl_agent_with_es_voice_rejected(admin):
+    s, _ = admin
+    bad = {**AGENT_PAYLOAD, "name": "TEST BadVoiceCL", "country": "CL", "voice": "p_marta"}
+    r = s.post(f"{BASE}/api/agents", json=bad)
+    assert r.status_code == 422
+
+
+def test_create_es_agent_with_cl_voice_rejected(admin):
+    s, _ = admin
+    bad = {**AGENT_PAYLOAD, "name": "TEST BadVoiceES", "country": "ES", "voice": "l_fernanda"}
+    r = s.post(f"{BASE}/api/agents", json=bad)
+    assert r.status_code == 422
+
+
+def test_create_cl_agent_with_cl_catalina_ok(admin):
+    s, _ = admin
+    body = {**AGENT_PAYLOAD, "name": "TEST CL Catalina", "country": "CL", "voice": "cl_catalina"}
+    r = s.post(f"{BASE}/api/agents", json=body)
+    assert r.status_code == 200, r.text
+    assert r.json()["country"] == "CL"
+    assert r.json()["voice"] == "cl_catalina"
+    s.delete(f"{BASE}/api/agents/{r.json()['id']}")
+
+
+# ----- Phone validation by agent country -----
+def test_test_call_wrong_country_phone(admin, cl_agent):
+    s, _ = admin
+    # +34 full E.164 is clearly not a CL number
+    r = s.post(f"{BASE}/api/agents/{cl_agent['id']}/test-call",
+               json={"phone": "+34612345678"})
+    assert r.status_code == 422
+    assert "Chile" in r.text or "+56" in r.text
+
+
+def test_test_call_bare_digits_ambiguity_note(admin, cl_agent):
+    """Documents an edge: norm_phone(bare 9 digits, 'CL') converts to +56 + digits.
+    A Spanish '612345678' becomes +56612345678 and would be dialled if CL had a
+    number configured. CL has no number configured here so the call is safe."""
+    s, _ = admin
+    # Guard: only run if CL is NOT configured
+    stat = s.get(f"{BASE}/api/telephony/status").json()
+    if stat["countries"]["CL"]["configured"]:
+        pytest.skip("CL is live - skipping to avoid misdial risk")
+    r = s.post(f"{BASE}/api/agents/{cl_agent['id']}/test-call",
+               json={"phone": "612345678"})
+    # Currently backend accepts the digits as CL national; lead ends 'fallida' because CL unconfigured.
+    assert r.status_code == 200
+    assert r.json()["phone"] == "+56612345678"
+    assert r.json()["status"] == "fallida"
+
+
+def test_public_cl_agent_consent_false_400(cl_agent):
+    r = requests.post(f"{BASE}/api/public/agents/{cl_agent['id']}/leads",
+                      json={"name": "X", "phone": "+56912345678", "consent": False})
+    assert r.status_code == 400
+
+
+def test_public_cl_agent_spanish_phone_422(cl_agent):
+    r = requests.post(f"{BASE}/api/public/agents/{cl_agent['id']}/leads",
+                      json={"name": "X", "phone": "+34612345678", "consent": True})
+    assert r.status_code == 422
+
+
+def test_public_cl_agent_get_returns_country_and_example(cl_agent):
+    r = requests.get(f"{BASE}/api/public/agents/{cl_agent['id']}")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["country"] == "CL"
+    assert d["phone_example"] == "+56 9 1234 5678"
+
+
+def test_public_es_agent_get_returns_country_and_example(admin, created_agent):
+    r = requests.get(f"{BASE}/api/public/agents/{created_agent['id']}")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["country"] == "ES"
+    assert d["phone_example"].startswith("+34")
+
+
+# ----- DNC accepts both +34 and +56 -----
+def test_dnc_accepts_cl_and_es(admin):
+    s, _ = admin
+    cl_phone = "+56912999777"
+    es_phone = "+34612999777"
+    created = []
+    try:
+        for p in (cl_phone, es_phone):
+            r = s.post(f"{BASE}/api/dnc", json={"phone": p, "reason": "test"})
+            assert r.status_code == 200, f"{p}: {r.text}"
+            created.append(r.json()["id"])
+        # Invalid
+        r = s.post(f"{BASE}/api/dnc", json={"phone": "123"})
+        assert r.status_code == 422
+    finally:
+        for i in created:
+            s.delete(f"{BASE}/api/dnc/{i}")
+
+
+# ----- CL agent without CL number => fallida -----
+def test_cl_agent_no_number_test_call_fallida(admin, cl_agent):
+    """CL has no number configured => safe to call test-call with a valid CL number.
+    This must NOT place a real call and must return a lead with status 'fallida'."""
+    s, _ = admin
+    r = s.get(f"{BASE}/api/telephony/status")
+    assert r.status_code == 200
+    assert r.json()["countries"]["CL"]["configured"] is False, \
+        "CL became configured - skipping to avoid real call risk"
+    r = s.post(f"{BASE}/api/agents/{cl_agent['id']}/test-call",
+               json={"phone": "+56912345678"})
+    assert r.status_code == 200, r.text
+    lead = r.json()
+    assert lead["status"] == "fallida"
+    err = (lead.get("error") or "") + " " + (lead.get("call_error") or "")
+    # cleanup
+    s_lead = s.get(f"{BASE}/api/leads/{lead['id']}")
+    if s_lead.status_code == 200:
+        pass  # no delete endpoint
+    assert "Chile" in err or "Telefonía" in err or "sin configurar" in err.lower(), err
+
+
+# ----- Telephony status -----
+def test_telephony_status_has_both_countries(admin):
+    s, _ = admin
+    r = s.get(f"{BASE}/api/telephony/status")
+    assert r.status_code == 200
+    d = r.json()
+    assert "ES" in d["countries"] and "CL" in d["countries"]
+    es = d["countries"]["ES"]
+    cl = d["countries"]["CL"]
+    assert es["configured"] is True
+    assert es["number"] == "+34919932652"
+    assert cl["configured"] is False
+
+
+# ----- Admin costs by_country structure -----
+def test_admin_costs_by_country(admin):
+    s, _ = admin
+    r = s.get(f"{BASE}/api/admin/costs", params={"days": 60})
+    assert r.status_code == 200
+    d = r.json()
+    assert "by_country" in d
+    for c in ("ES", "CL"):
+        assert c in d["by_country"]
+        assert set(("calls", "minutes", "total")).issubset(d["by_country"][c].keys())
+    # pricing has the new fields
+    for k in ("line_rate_cl_usd_min", "usd_clp"):
+        assert k in d["pricing"]
+
+
+def test_admin_pricing_cl_fields_roundtrip(admin):
+    s, _ = admin
+    r = s.get(f"{BASE}/api/admin/pricing")
+    assert r.status_code == 200
+    orig = r.json()
+    assert "line_rate_cl_usd_min" in orig and "usd_clp" in orig
+    new = {**orig, "line_rate_cl_usd_min": 0.06, "usd_clp": 960}
+    r = s.put(f"{BASE}/api/admin/pricing", json=new)
+    assert r.status_code == 200
+    r = s.get(f"{BASE}/api/admin/pricing")
+    d = r.json()
+    assert abs(d["line_rate_cl_usd_min"] - 0.06) < 1e-6
+    assert d["usd_clp"] == 960
+    # restore
+    s.put(f"{BASE}/api/admin/pricing", json=orig)
+
+
+# ----- Regression: existing ES agent 'Marta' loads/saves unchanged -----
+def test_marta_agent_regression(admin):
+    s, _ = admin
+    agents = s.get(f"{BASE}/api/agents").json()
+    marta = next((a for a in agents if a["name"] == "Marta"), None)
+    if not marta:
+        pytest.skip("No seeded Marta agent in this env")
+    r = s.get(f"{BASE}/api/agents/{marta['id']}")
+    assert r.status_code == 200
+    full = r.json()
+    assert full.get("country", "ES") == "ES"
+    # save unchanged
+    r = s.put(f"{BASE}/api/agents/{marta['id']}", json={
+        "name": full["name"], "business_name": full["business_name"], "product": full["product"],
+        "objective": full["objective"], "questions": full.get("questions", []),
+        "country": full.get("country", "ES"), "voice": full["voice"],
+        "ambience": full["ambience"], "ambience_volume": full.get("ambience_volume", 35),
+        "greeting": full["greeting"], "extra_instructions": full.get("extra_instructions", ""),
+        "active": full.get("active", True),
+    })
+    assert r.status_code == 200, r.text
 

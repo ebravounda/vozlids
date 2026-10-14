@@ -39,8 +39,16 @@
 - Status fix: AI can no longer mark a call where the customer spoke as sin_respuesta; summary without preamble; successEvaluation disabled (saves cost)
 - NOTE: testing agent accidentally placed 1–2 real calls to fake numbers (+34612000222 no answer); tests now skip live call paths
 
-## Pending / blockers
-- None blocking. Telephony live (Zadarma +34919932652 connected)
+## Iteration 4 (2026-06) — Spain + Chile
+- countries.py: ES/CL phone formats, timezone (Madrid/Santiago), STT language (es / es-419), speaking style, Zadarma line rate
+- Business country (register + Telefonía) and per-agent country override; voices filtered by country (CL: Cartesia Latin premium Fernanda/Daniela/Regina/Eduardo/Mateo/Andrés + Azure es-CL Catalina/Lorenzo)
+- Numbers per country in platform_settings.telephony.numbers.{ES,CL}; connect form per country; SUBTEL 600-prefix warning for Chile (user chose Zadarma +56 at own risk)
+- Agenda slots interpreted in the agent's country timezone
+- Admin costs: CLP for Chilean businesses, per-country line rate, USD→CLP rate, pricing advice and plans per country
+- Chile bare national numbers only accepted starting with 9 or 2 (avoid misdialing Spanish numbers)
+
+## Pending
+- Chile number not connected yet (user to fill the +56 connect form in Telefonía)
 
 ## Backlog
 - P1: Stripe plans + minute limits; auto-retries for no-answer; SMS/WhatsApp confirmation; Google Calendar; CSV campaigns
