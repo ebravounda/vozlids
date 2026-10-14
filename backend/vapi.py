@@ -156,7 +156,7 @@ def first_name(name: str) -> str:
 
 
 def greeting(agent: dict, lead: dict) -> str:
-    return agent["greeting"].replace("{nombre}", first_name(lead["name"])).strip()
+    return (lead.get("greeting") or agent["greeting"]).replace("{nombre}", first_name(lead["name"])).strip()
 
 
 def system_prompt(agent: dict, lead: dict, today: str) -> str:
@@ -174,7 +174,7 @@ DATOS DEL LEAD
 - Email: {lead.get('email') or 'no indicado'}
 
 OBJETIVO
-{OBJECTIVES[agent['objective']]}
+{("MOTIVO DE ESTA LLAMADA (tiene prioridad sobre el objetivo general): " + lead['purpose']) if lead.get('purpose') else OBJECTIVES[agent['objective']]}
 
 PREGUNTAS DE CALIFICACIÓN (de una en una, en orden natural, sin que suene a encuesta)
 {qs}
@@ -206,7 +206,9 @@ def _fn_tool(name: str, description: str, properties: dict, required: list, serv
 
 def tools(agent: dict, server: dict) -> list:
     out = [{"type": "endCall"}, _fn_tool(
-        "mark_do_not_call", "Añade al lead a la lista de no llamar cuando pide que no le vuelvan a llamar.", {}, [], server)]
+        "mark_do_not_call", "Añade al lead a la lista de no llamar cuando pide que no le vuelvan a llamar.", {}, [], server),
+        _fn_tool("request_support", "Registra una solicitud de asistencia técnica cuando el cliente tiene un problema o necesita ayuda.",
+                 {"issue": {"type": "string", "description": "Descripción breve del problema del cliente"}}, ["issue"], server)]
     if agent["objective"] == "agendar":
         out.append(_fn_tool(
             "check_availability", "Consulta los huecos libres para citas. Sin fecha devuelve los próximos días con huecos.",

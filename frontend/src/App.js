@@ -13,6 +13,10 @@ import Agenda from "@/pages/dashboard/Agenda";
 import DoNotCall from "@/pages/dashboard/DoNotCall";
 import Telephony from "@/pages/dashboard/Telephony";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
+import Outbound from "@/pages/dashboard/Outbound";
+import Support from "@/pages/dashboard/Support";
+import Developers from "@/pages/dashboard/Developers";
+import SuperAdmin from "@/pages/dashboard/SuperAdmin";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -40,6 +44,10 @@ function App() {
             <Route path="no-llamar" element={<DoNotCall />} />
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
+            <Route path="llamadas" element={<Outbound />} />
+            <Route path="asistencia" element={<Support />} />
+            <Route path="api" element={<Developers />} />
+            <Route path="admin" element={<SuperAdmin />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

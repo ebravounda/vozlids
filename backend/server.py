@@ -22,6 +22,7 @@ import auth as A  # noqa: E402
 import services as S  # noqa: E402
 import vapi  # noqa: E402
 import extra_routes as X  # noqa: E402
+import saas  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
 from db import client, db  # noqa: E402
@@ -121,8 +122,8 @@ async def logout(response: Response):
 
 
 @api.get("/auth/me")
-async def me(user=CurrentUser):
-    return user_out(user)
+async def me(request: Request, user=CurrentUser):
+    return {**user_out(user), "impersonating": bool(request.cookies.get("imp"))}
 
 
 class CountryIn(BaseModel):
@@ -455,6 +456,7 @@ async def root():
 
 app.include_router(api)
 app.include_router(X.router)
+app.include_router(saas.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

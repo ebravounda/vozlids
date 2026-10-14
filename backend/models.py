@@ -57,6 +57,9 @@ class Lead(BaseDocument):
     consent: bool = True
     is_test: bool = False
     is_sample: bool = False
+    purpose: str = ""
+    greeting: str = ""
+    source: str = "form"
     status: str = "llamando"
     call_phase: str = ""
     vapi_call_id: Optional[str] = None

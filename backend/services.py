@@ -111,6 +111,8 @@ async def tool_book(lead: dict, args: dict) -> dict:
         return {"ok": False, "error": "Ese hueco se acaba de ocupar. Ofrece otro."}
     await db.leads.update_one({"_id": lead["_id"]}, {"$set": {
         "appointment_id": str(res.inserted_id), "status": "cita_agendada", "updated_at": now_iso()}})
+    import saas
+    asyncio.create_task(saas.notify_appointment(lead, f"{_day_label(d)} a las {t} (hora de {COUNTRIES[await lead_country(lead)]['city']})"))
     return {"ok": True, "cita": f"{_day_label(d)} a las {t}"}
 
 
@@ -131,6 +133,10 @@ TOOLS = {"check_availability": tool_check_availability, "book_appointment": tool
 async def dial(agent: dict, lead: dict):
     lid = lead["_id"]
     country = agent.get("country", "ES")
+    import saas
+    if err := await saas.quota_error(agent["tenant_id"]):
+        await db.leads.update_one({"_id": lid}, {"$set": {"status": "fallida", "error": err, "updated_at": now_iso()}})
+        return
     if not vapi.configured(country):
         await db.leads.update_one({"_id": lid}, {"$set": {
             "status": "fallida", "updated_at": now_iso(),

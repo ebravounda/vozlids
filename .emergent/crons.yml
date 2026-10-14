@@ -1,0 +1,8 @@
+crons:
+  - name: dispatch-calls
+    description: "Launches scheduled outbound calls whose date and time have arrived (every 15 minutes)"
+    cron: "*/15 * * * *"
+    endpoint: "{{BASE_URL}}/api/cron/dispatch"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

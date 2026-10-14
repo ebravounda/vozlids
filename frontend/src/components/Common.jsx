@@ -19,7 +19,7 @@ export const Logo = ({ className = "" }) => (
         ))}
       </span>
     </span>
-    VozLead
+    VozLeads
   </span>
 );
 
