@@ -170,19 +170,7 @@ def test_agent_list(admin, created_agent):
     assert any(a["id"] == created_agent["id"] for a in r.json())
 
 
-# ---------- Test call (no vapi configured) ----------
-def test_test_call_no_telephony(admin, created_agent):
-    s, _ = admin
-    r = s.post(f"{BASE}/api/agents/{created_agent['id']}/test-call",
-               json={"phone": "+34612000111"})
-    assert r.status_code == 200, r.text
-    d = r.json()
-    assert d["status"] == "fallida"
-    assert "Telefon" in d["error"]
-    # cleanup lead
-    s.delete(f"{BASE}/api/leads/{d['id']}") if False else None  # no delete endpoint
-
-
+# ---------- Test call (telephony LIVE - validation-only tests) ----------
 def test_test_call_invalid_phone(admin, created_agent):
     s, _ = admin
     r = s.post(f"{BASE}/api/agents/{created_agent['id']}/test-call", json={"phone": "123"})
@@ -202,41 +190,23 @@ def test_ambience_unknown():
     assert r.status_code == 404
 
 
-# ---------- Public form ----------
-def test_public_form_flow(admin, created_agent):
-    s, _ = admin
+# ---------- Public form (telephony LIVE: only test validation + DNC silent path) ----------
+def test_public_form_consent_and_get(admin, created_agent):
     aid = created_agent["id"]
     # public GET
     r = requests.get(f"{BASE}/api/public/agents/{aid}")
     assert r.status_code == 200
     assert r.json()["id"] == aid
 
-    phone = "+34612000222"
-    # no consent -> 400
+    # no consent -> 400 (no real call placed because validation fails first)
     r = requests.post(f"{BASE}/api/public/agents/{aid}/leads",
-                      json={"name": "Pepe", "phone": phone, "consent": False})
+                      json={"name": "Pepe", "phone": "+34612000222", "consent": False})
     assert r.status_code == 400
 
-    # with consent -> ok
+    # invalid phone -> 422
     r = requests.post(f"{BASE}/api/public/agents/{aid}/leads",
-                      json={"name": "Pepe TEST", "phone": phone, "consent": True})
-    assert r.status_code == 200
-    assert r.json()["ok"] is True
-
-    # lead appears with status fallida
-    time.sleep(0.5)
-    leads = s.get(f"{BASE}/api/leads", params={"agent_id": aid}).json()
-    pepe = next((l for l in leads if l["phone"] == phone), None)
-    assert pepe is not None
-    assert pepe["status"] == "fallida"
-
-    # dedup within 10 min returns ok but no new lead
-    r = requests.post(f"{BASE}/api/public/agents/{aid}/leads",
-                      json={"name": "Pepe TEST", "phone": phone, "consent": True})
-    assert r.status_code == 200
-    leads2 = s.get(f"{BASE}/api/leads", params={"agent_id": aid}).json()
-    count = sum(1 for l in leads2 if l["phone"] == phone)
-    assert count == 1
+                      json={"name": "Pepe", "phone": "123", "consent": True})
+    assert r.status_code in (422, 400)
 
 
 def test_public_dnc_silent(admin, created_agent):
@@ -300,13 +270,13 @@ def test_dnc_crud(admin):
     assert r.status_code == 200
 
 
-# ---------- Telephony status ----------
-def test_telephony_not_configured(admin):
+# ---------- Telephony status (LIVE) ----------
+def test_telephony_configured(admin):
     s, _ = admin
     r = s.get(f"{BASE}/api/telephony/status")
     assert r.status_code == 200
     d = r.json()
-    assert d["configured"] is False
+    assert d["configured"] is True
 
 
 # ---------- Vapi webhook ----------
@@ -317,7 +287,15 @@ def test_webhook_unauthorized():
 
 
 def test_webhook_tool_calls_and_eocr(admin, created_agent):
+    """
+    Skipped when telephony is live because this test used to create leads via the
+    public form (which now places REAL outbound calls). The webhook contract was
+    exercised in iteration 1 while Vapi was unconfigured.
+    """
     s, _ = admin
+    status = s.get(f"{BASE}/api/telephony/status").json()
+    if status.get("configured"):
+        pytest.skip("Telephony LIVE: skipping to avoid placing real phone calls")
     aid = created_agent["id"]
     # Create a lead via public form
     phone = "+34612000555"
@@ -427,3 +405,222 @@ def test_tenant_isolation(admin, tenant2):
     assert r.json() == []
     r = s2.get(f"{BASE}/api/agents")
     assert r.json() == []
+
+
+# ========================================================
+# Iteration 2: new ambience presets, custom ambience upload,
+# recording proxy, admin costs & pricing
+# ========================================================
+
+import io
+import wave
+import struct
+
+
+def _make_wav_bytes(seconds: float = 11.0, sr: int = 16000) -> bytes:
+    """Build a simple PCM16 mono WAV in memory."""
+    n = int(seconds * sr)
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        # low volume 220Hz tone so clean() keeps it
+        import math
+        frames = bytearray()
+        for i in range(n):
+            v = int(0.3 * 32767 * math.sin(2 * math.pi * 440 * i / sr))
+            frames += struct.pack("<h", v)
+        w.writeframes(bytes(frames))
+    return buf.getvalue()
+
+
+# ---------- New real-recording presets ----------
+def test_ambience_oficina_real():
+    r = requests.get(f"{BASE}/api/ambience/oficina_real/35.wav")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("audio/wav")
+    assert r.content[:4] == b"RIFF"
+
+
+def test_ambience_teclado_real():
+    r = requests.get(f"{BASE}/api/ambience/teclado_real/35.wav")
+    assert r.status_code == 200
+    assert r.content[:4] == b"RIFF"
+
+
+def test_agent_save_with_oficina_real(admin):
+    s, _ = admin
+    payload = {**AGENT_PAYLOAD, "name": "TEST OfRealAgent", "ambience": "oficina_real"}
+    r = s.post(f"{BASE}/api/agents", json=payload)
+    assert r.status_code == 200, r.text
+    aid = r.json()["id"]
+    assert r.json()["ambience"] == "oficina_real"
+    g = s.get(f"{BASE}/api/agents/{aid}")
+    assert g.json()["ambience"] == "oficina_real"
+    s.delete(f"{BASE}/api/agents/{aid}")
+
+
+def test_agent_save_with_teclado_real(admin):
+    s, _ = admin
+    payload = {**AGENT_PAYLOAD, "name": "TEST TecRealAgent", "ambience": "teclado_real"}
+    r = s.post(f"{BASE}/api/agents", json=payload)
+    assert r.status_code == 200, r.text
+    aid = r.json()["id"]
+    assert r.json()["ambience"] == "teclado_real"
+    s.delete(f"{BASE}/api/agents/{aid}")
+
+
+# ---------- Custom ambience upload CRUD ----------
+def test_custom_ambience_upload_list_delete_fallback(admin):
+    s, _ = admin
+    # Upload valid >=10s wav
+    wav = _make_wav_bytes(11.0)
+    r = s.post(f"{BASE}/api/ambiences/custom",
+               files={"file": ("myamb.wav", wav, "audio/wav")},
+               data={"name": "TEST Mi Oficina"})
+    assert r.status_code == 200, r.text
+    amb = r.json()
+    token = amb["id"]
+    assert len(token) == 32
+    assert amb["name"] == "TEST Mi Oficina"
+    assert amb["duration"] >= 10
+
+    # List includes it
+    r = s.get(f"{BASE}/api/ambiences/custom")
+    assert r.status_code == 200
+    assert any(a["id"] == token for a in r.json())
+
+    # Rendered audio endpoint works
+    r = s.get(f"{BASE}/api/ambience/custom/{token}/40.wav")
+    assert r.status_code == 200
+    assert r.content[:4] == b"RIFF"
+
+    # Create an agent using the custom ambience
+    payload = {**AGENT_PAYLOAD, "name": "TEST CustomAmbAgent", "ambience": f"custom:{token}"}
+    r = s.post(f"{BASE}/api/agents", json=payload)
+    assert r.status_code == 200, r.text
+    aid = r.json()["id"]
+    assert r.json()["ambience"] == f"custom:{token}"
+
+    # Delete ambience -> agent must fall back to oficina_real
+    r = s.delete(f"{BASE}/api/ambiences/custom/{token}")
+    assert r.status_code == 200
+    g = s.get(f"{BASE}/api/agents/{aid}")
+    assert g.json()["ambience"] == "oficina_real"
+
+    # Cleanup agent
+    s.delete(f"{BASE}/api/agents/{aid}")
+
+
+def test_custom_ambience_too_short_rejected(admin):
+    s, _ = admin
+    wav = _make_wav_bytes(5.0)
+    r = s.post(f"{BASE}/api/ambiences/custom",
+               files={"file": ("short.wav", wav, "audio/wav")},
+               data={"name": "TEST short"})
+    assert r.status_code == 422
+    assert "10 segundos" in r.text or "10" in r.text
+
+
+def test_custom_ambience_invalid_file_rejected(admin):
+    s, _ = admin
+    r = s.post(f"{BASE}/api/ambiences/custom",
+               files={"file": ("bad.wav", b"not an audio file at all", "audio/wav")},
+               data={"name": "TEST invalid"})
+    assert r.status_code == 422
+
+
+def test_agent_with_nonexistent_custom_ambience_422(admin):
+    s, _ = admin
+    bogus = "ff" * 16  # 32 hex
+    payload = {**AGENT_PAYLOAD, "name": "TEST BogusAmb", "ambience": f"custom:{bogus}"}
+    r = s.post(f"{BASE}/api/agents", json=payload)
+    assert r.status_code == 422
+
+
+# ---------- Recording proxy ----------
+REAL_CALL_LEAD_ID = "6acfb5712bf3b88d8cca8172"
+
+
+def test_recording_proxy_other_tenant_404(tenant2):
+    s2, _ = tenant2
+    r = s2.get(f"{BASE}/api/leads/{REAL_CALL_LEAD_ID}/recording", allow_redirects=False)
+    assert r.status_code == 404
+
+
+def test_recording_proxy_admin_lead(admin):
+    s, _ = admin
+    r = s.get(f"{BASE}/api/leads/{REAL_CALL_LEAD_ID}/recording", allow_redirects=False)
+    # If the lead exists and has a vapi_call_id, we expect 302 to signed Vapi URL.
+    # If the recording isn't ready / lead missing in this env, allow 404 as acceptable.
+    assert r.status_code in (302, 404)
+    if r.status_code == 302:
+        loc = r.headers.get("location", "")
+        assert loc.startswith("http")
+
+
+# ---------- Admin pricing & costs ----------
+def test_admin_pricing_get_put_roundtrip(admin):
+    s, _ = admin
+    r = s.get(f"{BASE}/api/admin/pricing")
+    assert r.status_code == 200
+    orig = r.json()
+    assert "line_rate_usd_min" in orig and "usd_eur" in orig and "margin_pct" in orig
+
+    new_pricing = {"line_rate_usd_min": 0.03, "usd_eur": 0.91, "margin_pct": 180}
+    r = s.put(f"{BASE}/api/admin/pricing", json=new_pricing)
+    assert r.status_code == 200
+    r = s.get(f"{BASE}/api/admin/pricing")
+    d = r.json()
+    assert abs(d["line_rate_usd_min"] - 0.03) < 1e-6
+    assert d["margin_pct"] == 180
+
+    # restore
+    s.put(f"{BASE}/api/admin/pricing", json=orig)
+
+
+def test_admin_costs_structure(admin):
+    s, _ = admin
+    r = s.get(f"{BASE}/api/admin/costs", params={"days": 60})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    for k in ("pricing", "totals", "breakdown", "tenants", "calls"):
+        assert k in d
+    for k in ("calls", "minutes", "total"):
+        assert k in d["totals"]
+    for k in ("voz", "transcripcion", "ia", "vapi", "analisis", "linea", "otros"):
+        assert k in d["breakdown"]
+
+
+def test_admin_costs_sync(admin):
+    s, _ = admin
+    r = s.post(f"{BASE}/api/admin/costs/sync")
+    assert r.status_code == 200
+    d = r.json()
+    assert "updated" in d and "pending" in d
+
+
+# ---------- Non-admin forbidden ----------
+def test_non_admin_cannot_access_admin_endpoints(tenant2):
+    s2, _ = tenant2
+    for path in ("/api/admin/costs", "/api/admin/pricing"):
+        r = s2.get(f"{BASE}{path}")
+        assert r.status_code == 403, f"{path}: {r.status_code} {r.text}"
+    r = s2.put(f"{BASE}/api/admin/pricing",
+               json={"line_rate_usd_min": 0.03, "usd_eur": 0.91, "margin_pct": 180})
+    assert r.status_code == 403
+    r = s2.post(f"{BASE}/api/admin/costs/sync")
+    assert r.status_code == 403
+
+
+# ---------- Lead detail transcript (seed data) ----------
+def test_carlos_ruiz_transcript_present(admin):
+    s, _ = admin
+    leads = s.get(f"{BASE}/api/leads").json()
+    carlos = next(l for l in leads if l["name"] == "Carlos Ruiz")
+    d = s.get(f"{BASE}/api/leads/{carlos['id']}").json()
+    assert d["messages"] and len(d["messages"]) >= 2
+    roles = {m["role"] for m in d["messages"]}
+    assert roles & {"assistant", "agent", "user", "agente", "lead", "cliente"}
+

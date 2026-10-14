@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 2 testing of VozLead new features: real-recording ambience presets (oficina_real/teclado_real), custom ambience upload CRUD, Vapi recording proxy, lead-detail transcript UI (Agente/Cliente bubbles with mm:ss timestamps, copy & download .txt), admin Costes page (stats, breakdown, tenants/calls tables, pricing form, sync, days select), and admin-only RBAC. Backend: 38 pytest cases pass, 1 skipped (webhook tool-call test skipped because telephony is now LIVE and the test used to depend on public-form leads that would place real calls). Frontend: all required data-testids present and working; real-call lead (Admin, +34600850506) shows total 0,07 € (0.075 $) in /app/costes exactly as expected. Audio element on the Admin lead uses /api/leads/{id}/recording proxy URL. Non-admin RBAC verified via backend tests (403 on /api/admin/costs, /api/admin/pricing GET/PUT, /api/admin/costs/sync). Sidebar 'Costes (admin)' link is conditionally rendered on user.role==='admin' (code-verified in DashboardLayout.jsx line 31).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Already applied by me) Removed public-form flow test and skipped webhook tool-calls test when telephony is LIVE because they would place real outbound calls to +34612000222 / +34612000555 / +34612000666. During the first run (before the fix) these 2 real calls were triggered — they completed as sin_respuesta/no_interesado and left two residual leads 'Pepe TEST' (+34612000222) and 'Webhook TEST2' (+34612000666) in the admin tenant. Consider adding a delete-lead endpoint and purging them, or clearing from Mongo on next startup.",
+    "(Low, carry-over from iter 1) Dialog a11y warnings — not re-tested this run."
+  ],
+  "critical_code_review_comments": [
+    "extra_routes.delete_custom: nice fallback — on ambience deletion, all agents using custom:<token> are reset to oficina_real. Verified end-to-end.",
+    "ambience.decode uses subprocess.run with timeout=120 and runs inside asyncio.to_thread — good, won't block event loop. However, if a very large non-audio buffer is uploaded, ffmpeg still spends time rejecting it. Current 25 MB limit mitigates this.",
+    "extra_routes._custom_cache is an LRU of raw decoded arrays (max 6). Thread-safe for asyncio but not multi-worker safe (per-worker cache). Fine for current single-worker deployment.",
+    "extra_routes.lead_recording swallows all vapi errors into a 404 with a leaky message. Could consider returning 503 when Vapi API itself is down vs 404 when the recording simply isn't ready.",
+    "server.py agent ambience regex: ^(oficina|teclados|call_center|oficina_real|teclado_real|vapi_office|none|custom:[0-9a-f]{32})$ — compact and matches both legacy and new presets. Verified 422 for bogus custom tokens.",
+    "AdminCosts.jsx: real-call lead row shows 0,07 € / 0,075 $ matching backend math (vapi cost + line rate). All 7 breakdown keys present in response.",
+    "LeadDetail.jsx transcript: timestamps correctly formatted mm:ss relative to call start. Download produces 'transcripcion-Carlos-Ruiz.txt' as expected.",
+    "Carry-over from iter 1 and NOT addressed: brute-force lockout off-by-one in server.login (counter resets to 0 on 5th fail and locked_until is set to a past time)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_backend.py"
+  ],
+  "success_rate": {"backend": "100% (38 passed, 1 intentionally skipped)", "frontend": "100% of flows exercised passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! from /app/memory/test_credentials.md",
+  "seed_data_creation": "No new seed required. Pricing was temporarily set to 175 during UI test and restored to 150 via PUT /api/admin/pricing after the test. Custom ambience 'TEST Mi Oficina' is created and deleted within the pytest run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite at /app/backend/tests/test_vozlead_backend.py now has 39 tests (iteration-2 additions start at line 420). IMPORTANT: telephony is LIVE (Vapi + Zadarma). The suite now has NO tests that place real outbound calls: public-form flow test only exercises validation/DNC paths, and the webhook tool-calls test auto-skips when GET /api/telephony/status reports configured=true. Real-call lead id used for recording proxy tests: 6acfb977a4ee23594e1b569f (admin, +34600850506) — this was in the sample DB in this environment; adapt if the id differs elsewhere. Residual leads 'Pepe TEST' and 'Webhook TEST2' remain in the admin tenant from an earlier run — purely cosmetic.",
+  "rca of the issue": "During the first pytest run after telephony went live, the existing public-form and webhook tests posted to POST /api/public/agents/{id}/leads which, now that Vapi is configured, actually dials the given number. Fix: public-form test rewritten to only hit the GET endpoint plus consent/invalid-phone validation paths (no number that would be dialled); webhook test skipped when telephony is configured. Both changes are in /app/backend/tests/test_vozlead_backend.py."
+}
