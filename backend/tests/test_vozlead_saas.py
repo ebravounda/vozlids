@@ -69,12 +69,12 @@ class TestPlans:
     def test_create_list_assign_blocked_delete(self, admin, test_business):
         s, _ = admin
         body = {"name": f"TEST Plan {uuid.uuid4().hex[:4]}", "minutes": 10,
-                "price": 29.0, "currency": "EUR", "overage_price": 0.5}
+                "price_eur": 29.0, "price_clp": 29000, "overage_eur": 0.5, "overage_clp": 500}
         r = s.post(f"{BASE}/api/admin/plans", json=body)
         assert r.status_code == 200, r.text
         plan = r.json()
         pid = plan["id"]
-        assert plan["minutes"] == 10 and plan["currency"] == "EUR"
+        assert plan["minutes"] == 10 and plan["price_clp"] == 29000
 
         plans = s.get(f"{BASE}/api/admin/plans").json()
         assert any(p["id"] == pid for p in plans)
@@ -102,7 +102,7 @@ class TestPlans:
         assert s.get(f"{BASE}/api/admin/users").status_code == 403
         assert s.get(f"{BASE}/api/admin/plans").status_code == 403
         assert s.post(f"{BASE}/api/admin/plans",
-                      json={"name": "X", "minutes": 10, "price": 1.0}).status_code == 403
+                      json={"name": "X", "minutes": 10, "price_eur": 1.0, "price_clp": 1000}).status_code == 403
 
 
 # ---------- admin users / quota / suspend ----------
@@ -128,7 +128,7 @@ class TestAdminUsersAndQuota:
 
     def test_assign_1min_plan_and_usage(self, admin, test_business):
         s, _ = admin
-        body = {"name": "TEST 1min", "minutes": 1, "price": 0, "currency": "EUR"}
+        body = {"name": "TEST 1min", "minutes": 1, "price_eur": 0, "price_clp": 0}
         plan = s.post(f"{BASE}/api/admin/plans", json=body).json()
         try:
             s.put(f"{BASE}/api/admin/users/{test_business['uid']}",
