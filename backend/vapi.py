@@ -30,12 +30,50 @@ PREMIUM_LATAM = {
     "l_mateo": "2fc4f1ec-bfd0-46f1-8e6d-d4279eaaf838",
     "l_andres": "d46e87a1-7c6d-4b18-9359-926f4a35ffdf",
 }
-VOICES_BY_COUNTRY = {"ES": {**PREMIUM, **STANDARD}, "CL": {**PREMIUM_LATAM, **STANDARD_CL}}
-VOICES = {**STANDARD, **PREMIUM, **STANDARD_CL, **PREMIUM_LATAM}
-STATE = {"numbers": {}}
+ELEVEN = {
+    "e_sarah": "EXAVITQu4vr4xnSDxMaL",
+    "e_matilda": "XrExE9yKIg1WjnnlVkGX",
+    "e_jessica": "cgSgspJ2msm6clMCkdW9",
+    "e_laura": "FGY2WhTYpPnrIDTdsKH5",
+    "e_chris": "iP95p4xoKVk53GoZ742B",
+    "e_eric": "cjVigY5qzO86Huf0OWal",
+    "e_roger": "CwhRBWXzGAHq8TQ4Fs17",
+    "e_will": "bIHbv24MWmeRgasZH58o",
+}
+FEMALE = {"p_marta", "p_nuria", "p_isabel", "p_elena", "elvira", "ximena", "irene", "l_fernanda", "l_daniela", "l_regina",
+          "cl_catalina", "e_sarah", "e_matilda", "e_jessica", "e_laura"}
+VOICES_BY_COUNTRY = {"ES": {**ELEVEN, **PREMIUM, **STANDARD}, "CL": {**ELEVEN, **PREMIUM_LATAM, **STANDARD_CL}}
+VOICES = {**STANDARD, **PREMIUM, **STANDARD_CL, **PREMIUM_LATAM, **ELEVEN}
+STATE = {"numbers": {}, "custom_voices": {}}
+ACK_ES = ["sí", "si", "vale", "ajá", "aja", "ya", "claro", "ok", "okey", "mmm", "mhm", "entiendo", "perfecto", "bueno",
+          "de acuerdo", "sí sí", "ya ya", "correcto", "exacto", "cierto"]
 
 
-def voice_config(voice: str) -> dict:
+def voice_allowed(voice: str, country: str) -> bool:
+    custom = STATE["custom_voices"].get(voice)
+    return voice in VOICES_BY_COUNTRY[country] or bool(custom and custom["country"] == country)
+
+
+def voice_provider(voice: str) -> str:
+    if voice in ELEVEN or voice in STATE["custom_voices"]:
+        return "11labs"
+    return "cartesia" if voice in PREMIUM or voice in PREMIUM_LATAM else "azure"
+
+
+def eleven_voice(voice_id: str) -> dict:
+    return {"provider": "11labs", "model": "eleven_turbo_v2_5", "language": "es", "voiceId": voice_id,
+            "stability": 0.4, "similarityBoost": 0.8, "style": 0.15, "useSpeakerBoost": True, "speed": 1.0,
+            "optimizeStreamingLatency": 3}
+
+
+def voice_config(voice: str, country: str = "ES") -> dict:
+    custom = STATE["custom_voices"].get(voice)
+    if voice in ELEVEN or custom:
+        female = custom["gender"] == "Mujer" if custom else voice in FEMALE
+        backup = (PREMIUM_LATAM if country == "CL" else PREMIUM)["l_fernanda" if country == "CL" else "p_marta"] if female \
+            else (PREMIUM_LATAM if country == "CL" else PREMIUM)["l_mateo" if country == "CL" else "p_gonzalo"]
+        return {**eleven_voice(custom["voice_id"] if custom else ELEVEN[voice]),
+                "fallbackPlan": {"voices": [{"provider": "cartesia", "model": "sonic-3", "language": "es", "voiceId": backup}]}}
     premium = {**PREMIUM, **PREMIUM_LATAM}
     if voice in premium:
         return {"provider": "cartesia", "model": "sonic-3", "language": "es", "voiceId": premium[voice]}
@@ -184,6 +222,8 @@ CÓMO HABLAS
 - Frases cortas: como máximo dos frases por turno y termina casi siempre con una pregunta.
 - Nunca leas listas ni uses formato. Di números y horas como se dicen en voz alta ("a las diez y media").
 - Si el lead te interrumpe, para y responde a lo que dice.
+- Habla como una persona real al teléfono: frases naturales y variadas, alguna pausa breve ("mmm...", "a ver..."), reacciona a lo que te dicen ("ah, genial", "claro, entiendo") y usa su nombre de vez en cuando. Nunca repitas la misma frase dos veces seguidas.
+- Responde rápido y al grano: nada de párrafos largos ni explicaciones que nadie ha pedido.
 - No inventes precios, plazos ni datos que no estén arriba; si no lo sabes, di que lo consultará el equipo.
 
 TRANSPARENCIA Y RESPETO (obligatorio)
@@ -191,6 +231,7 @@ TRANSPARENCIA Y RESPETO (obligatorio)
 - La llamada se graba para mejorar el servicio; si lo preguntan, confírmalo.
 - Si el lead pide que no le llamen más o se molesta por la llamada, discúlpate, llama a mark_do_not_call y despídete.
 - Si no es buen momento, pregunta cuándo le viene mejor y despídete.
+- Si el lead pide hablar con una persona, con un humano o con alguien del equipo: no insistas. Pregúntale brevemente el motivo y cuándo le viene bien que le llamen, llama a request_human, dile que una persona del equipo le llamará lo antes posible, agradécele y despídete.
 - Cuando la conversación termine, despídete con amabilidad y finaliza la llamada.
 {extra}"""
 
@@ -208,7 +249,10 @@ def tools(agent: dict, server: dict) -> list:
     out = [{"type": "endCall"}, _fn_tool(
         "mark_do_not_call", "Añade al lead a la lista de no llamar cuando pide que no le vuelvan a llamar.", {}, [], server),
         _fn_tool("request_support", "Registra una solicitud de asistencia técnica cuando el cliente tiene un problema o necesita ayuda.",
-                 {"issue": {"type": "string", "description": "Descripción breve del problema del cliente"}}, ["issue"], server)]
+                 {"issue": {"type": "string", "description": "Descripción breve del problema del cliente"}}, ["issue"], server),
+        _fn_tool("request_human", "Avisa a la empresa de que el lead quiere hablar con una persona y debe devolverle la llamada.",
+                 {"reason": {"type": "string", "description": "Motivo por el que quiere hablar con una persona"},
+                  "best_time": {"type": "string", "description": "Cuándo prefiere que le llamen (opcional)"}}, ["reason"], server)]
     if agent["objective"] == "agendar":
         out.append(_fn_tool(
             "check_availability", "Consulta los huecos libres para citas. Sin fecha devuelve los próximos días con huecos.",
@@ -246,6 +290,11 @@ def analysis_plan() -> dict:
     }
 
 
+def transcriber(country: str) -> dict:
+    lang = COUNTRIES[country]["stt"]
+    return {"provider": "deepgram", "model": "nova-3" if lang == "es" else "nova-2", "language": lang}
+
+
 def build_assistant(agent: dict, lead: dict, today: str) -> dict:
     secret = os.environ["VAPI_WEBHOOK_SECRET"]
     server = {"url": f"{webhook_url()}?token={secret}", "headers": {"x-vapi-secret": secret}}
@@ -253,11 +302,14 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         "name": f"{agent['name']} {agent['business_name']}"[:40],
         "firstMessage": greeting(agent, lead),
         "firstMessageMode": "assistant-speaks-first",
-        "model": {"provider": "openai", "model": "gpt-4o", "temperature": 0.5,
+        "model": {"provider": "openai", "model": "gpt-4.1", "temperature": 0.6,
                   "messages": [{"role": "system", "content": system_prompt(agent, lead, today)}],
                   "tools": tools(agent, server)},
-        "voice": voice_config(agent["voice"]),
-        "transcriber": {"provider": "deepgram", "model": "nova-2", "language": COUNTRIES[agent.get("country", "ES")]["stt"]},
+        "voice": voice_config(agent["voice"], agent.get("country", "ES")),
+        "transcriber": transcriber(agent.get("country", "ES")),
+        "startSpeakingPlan": {"waitSeconds": 0.4, "transcriptionEndpointingPlan": {
+            "onPunctuationSeconds": 0.1, "onNoPunctuationSeconds": 1.2, "onNumberSeconds": 0.6}},
+        "stopSpeakingPlan": {"numWords": 2, "voiceSeconds": 0.3, "backoffSeconds": 1, "acknowledgementPhrases": ACK_ES},
         "backgroundSound": background_sound(agent),
         "silenceTimeoutSeconds": 30,
         "maxDurationSeconds": 900,

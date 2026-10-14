@@ -2,6 +2,7 @@ import os
 from datetime import timedelta
 import auth as A
 import services as S
+import vapi
 from db import db
 from models import Agent, Appointment, Lead, now_iso
 
@@ -56,7 +57,16 @@ SAMPLE_PLANS = [
 ]
 
 
+async def migrate_voices():
+    if await db.platform_settings.find_one({"_id": "migrations", "voices_11labs": True}):
+        return
+    async for a in db.agents.find({"voice": {"$not": {"$regex": "^(e_|x_)"}}}, {"voice": 1}):
+        await db.agents.update_one({"_id": a["_id"]}, {"$set": {"voice": "e_sarah" if a["voice"] in vapi.FEMALE else "e_chris"}})
+    await db.platform_settings.update_one({"_id": "migrations"}, {"$set": {"voices_11labs": True}}, upsert=True)
+
+
 async def seed():
+    await migrate_voices()
     if not await db.plans.count_documents({}):
         await db.plans.insert_many([{**p, "public": True, "created_at": now_iso()} for p in SAMPLE_PLANS])
     email = os.environ["ADMIN_EMAIL"].lower()
@@ -75,7 +85,7 @@ async def seed():
     if await db.agents.count_documents({"tenant_id": tid}):
         return
     agent = Agent(tenant_id=tid, name="Marta", business_name="Clínica Dental Sonrisa", product=SAMPLE_PRODUCT,
-                  objective="agendar", voice="p_marta", ambience="oficina", ambience_volume=35, is_sample=True,
+                  objective="agendar", voice="e_sarah", ambience="oficina", ambience_volume=35, is_sample=True,
                   questions=["¿El tratamiento es para ti o para otra persona?", "¿Qué te gustaría mejorar de tu sonrisa?",
                              "¿Cuándo te gustaría empezar?"],
                   greeting="Hola {nombre}, soy Marta, la asistente virtual de Clínica Dental Sonrisa. Te llamo porque acabas "

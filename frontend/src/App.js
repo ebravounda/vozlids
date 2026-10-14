@@ -17,6 +17,7 @@ import Outbound from "@/pages/dashboard/Outbound";
 import Support from "@/pages/dashboard/Support";
 import Developers from "@/pages/dashboard/Developers";
 import SuperAdmin from "@/pages/dashboard/SuperAdmin";
+import Billing from "@/pages/dashboard/Billing";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -48,6 +49,7 @@ function App() {
             <Route path="asistencia" element={<Support />} />
             <Route path="api" element={<Developers />} />
             <Route path="admin" element={<SuperAdmin />} />
+            <Route path="plan" element={<Billing />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

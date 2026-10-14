@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration-5 testing of multi-currency pricing (EUR/CLP) per country for VozLead SaaS. Added 8 new backend tests in /app/backend/tests/test_vozlead_pricing.py (all 8 passing): public plans shape+sort, admin plan CRUD with price_eur/price_clp/overage_eur/overage_clp/features/public, non-admin 403, public=false hides plan from /api/public/plans, /api/account/usage returns CLP for CL users and EUR for ES users with correct price/overage_price values. Frontend Playwright: (1) Landing /#precios shows pricing-section with 3 seeded sample plans in EUR for Europe/Madrid es-ES AND America/New_York en-US (default), and in CLP for America/Santiago es-CL — plan prices rendered '49 €'/'$49.000' etc, and the pricing-currency-eur/clp toggle shows the correct active state matching detection. (2) Clicking pricing-currency-clp from EUR context updates all plan prices to CLP, writes localStorage.vl_currency='CLP', and persists across page reload. (3) Admin /app/admin Plans panel: created TEST_UI_Plan with price_eur=89 price_clp=89000 overage_eur=0.42 overage_clp=420 features='feat1,feat2,feat3' — plan-row renders both currencies as 'España 89 €/mes (extra 0,42 €/min) · Chile $89.000/mes (extra $420/min)'; edited price_eur to 99 and toggled plan-public-switch off — label '(oculto en la web)' appears and price updated to 99; deleted plan — row removed. Backend regression intact (prior 89 tests not re-run per request).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_pricing.py",
+    "/app/test_reports/pytest/pricing_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "saas.py my_usage: currency inferred solely from user.country ('CL' -> clp, else eur). Correct per spec but note: if a plan has price_clp=0 (edge case where super admin forgot to set CLP price for a CL user's plan), the client will see $0 /mes which can mislead. Consider validating price_clp>0 and price_eur>0 at plan create/update time (currently ge=0 allows 0).",
+    "frontend/src/lib/currency.js detectCurrency: checks tz against CL_ZONES OR navigator.languages ending with -CL. Reasonable, but a user on a VPN in Chile with en-US locale will fall through to EUR despite being in CL — expected per spec (manual selector + persist handles this).",
+    "Pricing.jsx: `plans.length === 0` renders null (hidden pricing section). If /api/public/plans ever returns [] (e.g. all plans toggled public=false), the entire pricing-section vanishes with no empty state. Minor UX concern, not a blocker.",
+    "SuperAdmin.jsx EMPTY defaults: price_eur=49, price_clp=49000 — reasonable seed defaults but admin could accidentally keep CLP=49000 while changing name/minutes/eur and forget to update CLP. Not a bug.",
+    "saas.py PlanIn: all 4 money fields are ge=0, which permits 0 — acceptable for 'free' plans but see first comment above."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_pricing.py (new)"
+  ],
+  "success_rate": {"backend": "100% (8/8 new pricing tests)", "frontend": "100% (landing currency detection + switch + persistence + admin plan CRUD UI)"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). ES/CL test tenants created ad-hoc with tb_{es,cl}_<uuid>@example.com.",
+  "seed_data_creation": "Backend test created transient TEST_UI_Plan_* via admin UI (deleted end-of-test), TEST_PlanCurrency + TEST_Usage_CL + TEST_Usage_ES plans (all deleted in finally blocks). Fresh ES and CL business tenants per module. Seeded SAMPLE_PLANS (Inicio/Profesional/Empresa ejemplo) left intact as required.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite now 97 tests across three files: test_vozlead_backend.py (iter 1-3) + test_vozlead_saas.py (iter 4) + test_vozlead_pricing.py (iter 5, 8 tests). Run all with `pytest /app/backend/tests/ -v`. For currency UI testing use Playwright `browser.new_context(timezone_id=..., locale=...)` — the detectCurrency helper reads Intl timezone + navigator.languages. localStorage key is 'vl_currency' with values 'EUR'|'CLP'. Admin plan form test-ids follow pattern plan-{field}-input where field ∈ {name, minutes, price_eur, price_clp, overage_eur, overage_clp, features} plus plan-public-switch, plan-create-button, plan-edit-{id}, plan-delete-{id}, plan-row-{id}. CL has no Zadarma number — do NOT trigger real calls on CL agents either (they would fail now that services.dial would attempt it); use scheduled_at future or admin-side flows only.",
+  "rca of the issue": "No bugs found. Multi-currency per-country pricing (EUR for ES/non-CL, CLP for CL) works end-to-end: detection on landing by timezone/locale, manual override via switch persisted in localStorage, super admin CRUD stores price_eur+price_clp+overage_eur+overage_clp independently, /api/account/usage selects the correct currency based on user.country, DashboardLayout usage-badge renders formatPrice with that currency."
+}

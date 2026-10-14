@@ -52,6 +52,8 @@ async def quota_error(tenant_id: str) -> Optional[str]:
         return "Cuenta no encontrada"
     if user.get("suspended"):
         return "Cuenta suspendida por el administrador."
+    if user.get("billing_status") == "canceled":
+        return "Tu suscripción está cancelada. Contrata un plan para volver a llamar."
     plan = await db.plans.find_one({"_id": ObjectId(user["plan_id"])}) if user.get("plan_id") else None
     if not plan or user.get("allow_overage"):
         return None
@@ -92,7 +94,32 @@ async def tool_support(lead: dict, args: dict) -> dict:
     return {"ok": True, "mensaje": "Solicitud registrada; el equipo técnico contactará pronto."}
 
 
+async def tool_human(lead: dict, args: dict) -> dict:
+    reason = str(args.get("reason", ""))[:1000] or "Quiere hablar con una persona"
+    best = str(args.get("best_time", ""))[:200]
+    await db.support_tickets.insert_one({"tenant_id": lead["tenant_id"], "lead_id": str(lead["_id"]), "lead_name": lead["name"],
+                                         "lead_phone": lead["phone"], "issue": reason, "best_time": best, "kind": "humano",
+                                         "status": "abierta", "created_at": now_iso()})
+    await db.leads.update_one({"_id": lead["_id"]}, {"$set": {"wants_human": True, "updated_at": now_iso()}})
+    owner = await db.users.find_one({"_id": ObjectId(lead["tenant_id"])})
+    if owner:
+        rows = [("Cliente", lead["name"]), ("Teléfono", lead["phone"]), ("Motivo", reason)]
+        if best:
+            rows.append(("Mejor momento para llamar", best))
+        await emailer.send(owner["email"], f"{lead['name']} quiere hablar con una persona",
+                           "Uno de tus clientes necesita asistencia", rows, os.environ["APP_PUBLIC_URL"] + "/app/asistencia")
+    return {"ok": True, "mensaje": "Aviso enviado; una persona del equipo le llamará lo antes posible."}
+
+
 S.TOOLS["request_support"] = tool_support
+S.TOOLS["request_human"] = tool_human
+
+
+@router.get("/support-tickets/open-count")
+async def open_tickets(user=CurrentUser):
+    flt = {"tenant_id": user["id"], "status": "abierta"}
+    return {"open": await db.support_tickets.count_documents(flt),
+            "human": await db.support_tickets.count_documents({**flt, "kind": "humano"})}
 
 
 @router.get("/support-tickets")

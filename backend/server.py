@@ -23,6 +23,7 @@ import services as S  # noqa: E402
 import vapi  # noqa: E402
 import extra_routes as X  # noqa: E402
 import saas  # noqa: E402
+import billing  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
 from db import client, db  # noqa: E402
@@ -144,7 +145,7 @@ class AgentIn(BaseModel):
     objective: Literal["agendar", "calificar", "vender"]
     questions: List[str] = Field(default=[], max_length=10)
     country: Literal["ES", "CL"] = "ES"
-    voice: Literal[tuple(vapi.VOICES.keys())]
+    voice: str = Field(min_length=1, max_length=40)
     ambience: str = Field(pattern=r"^(oficina|teclados|call_center|oficina_real|teclado_real|vapi_office|none|custom:[0-9a-f]{32})$")
     ambience_volume: int = Field(35, ge=0, le=100)
     greeting: str = Field(min_length=1, max_length=600)
@@ -166,7 +167,7 @@ async def list_agents(user=CurrentUser):
 
 
 async def check_ambience(user: dict, body: AgentIn):
-    if body.voice not in vapi.VOICES_BY_COUNTRY[body.country]:
+    if not vapi.voice_allowed(body.voice, body.country):
         raise HTTPException(422, f"Esa voz no está disponible para {COUNTRIES[body.country]['name']}.")
     if body.ambience.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], body.ambience[7:]):
         raise HTTPException(422, "Esa grabación de ambiente no existe.")
@@ -457,6 +458,7 @@ async def root():
 app.include_router(api)
 app.include_router(X.router)
 app.include_router(saas.router)
+app.include_router(billing.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -488,6 +490,7 @@ async def startup():
         await db.platform_settings.update_one({"_id": "telephony"}, {"$set": {"numbers.ES": legacy}})
         tel.setdefault("numbers", {})["ES"] = legacy
     vapi.STATE["numbers"] = tel.get("numbers") or {}
+    await X.load_custom_voices()
 
 
 @app.on_event("shutdown")

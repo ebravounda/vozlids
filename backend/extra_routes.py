@@ -18,7 +18,8 @@ router = APIRouter(prefix="/api")
 CurrentUser = Depends(A.get_current_user)
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 DEFAULT_PRICING = {"line_rate_usd_min": 0.025, "line_rate_cl_usd_min": 0.05, "usd_eur": 0.92, "usd_clp": 950,
-                   "margin_pct": 150}
+                   "margin_pct": 150, "voice_11labs_usd_min": 0.036, "voice_cartesia_usd_min": 0.022,
+                   "voice_azure_usd_min": 0.011}
 _custom_cache: "OrderedDict[str, object]" = OrderedDict()
 
 
@@ -102,6 +103,42 @@ async def custom_wav(token: str, volume: int):
     return Response(wav, media_type="audio/wav", headers={"Cache-Control": "public, max-age=86400"})
 
 
+# ---------- Custom ElevenLabs voices (admin) ----------
+class CustomVoiceIn(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+    gender: str = Field(pattern=r"^(Mujer|Hombre)$")
+    country: str = Field(pattern=r"^(ES|CL)$")
+    voice_id: str = Field(pattern=r"^[A-Za-z0-9]{10,40}$")
+    tone: str = Field("", max_length=60)
+
+
+async def load_custom_voices():
+    doc = await db.platform_settings.find_one({"_id": "voices"}) or {}
+    vapi.STATE["custom_voices"] = {v["id"]: v for v in doc.get("items", [])}
+
+
+@router.get("/voices/custom")
+async def list_custom_voices(user=CurrentUser):
+    return list(vapi.STATE["custom_voices"].values())
+
+
+@router.post("/admin/voices")
+async def add_custom_voice(body: CustomVoiceIn, user=Depends(require_admin)):
+    item = {"id": f"x_{uuid.uuid4().hex[:10]}", **body.model_dump(), "created_at": now_iso()}
+    await db.platform_settings.update_one({"_id": "voices"}, {"$push": {"items": item}}, upsert=True)
+    await load_custom_voices()
+    return item
+
+
+@router.delete("/admin/voices/{vid}")
+async def delete_custom_voice(vid: str, user=Depends(require_admin)):
+    if await db.agents.count_documents({"voice": vid}):
+        raise HTTPException(400, "Hay agentes usando esta voz. Cámbiales la voz antes de borrarla.")
+    await db.platform_settings.update_one({"_id": "voices"}, {"$pull": {"items": {"id": vid}}})
+    await load_custom_voices()
+    return {"ok": True}
+
+
 # ---------- Recording proxy ----------
 @router.get("/leads/{lead_id}/recording")
 async def lead_recording(lead_id: str, user=CurrentUser):
@@ -123,6 +160,9 @@ class PricingIn(BaseModel):
     usd_eur: float = Field(gt=0, le=2)
     usd_clp: float = Field(gt=100, le=5000)
     margin_pct: float = Field(ge=0, le=1000)
+    voice_11labs_usd_min: float = Field(0.036, ge=0, le=1)
+    voice_cartesia_usd_min: float = Field(0.022, ge=0, le=1)
+    voice_azure_usd_min: float = Field(0.011, ge=0, le=1)
 
 
 async def get_pricing() -> dict:
@@ -165,7 +205,8 @@ async def admin_costs(days: int = 30, user=Depends(require_admin)):
     users = {str(u["_id"]): u async for u in db.users.find({}, {"business_name": 1, "email": 1, "country": 1})}
     agent_country = {str(a["_id"]): a.get("country", "ES") async for a in db.agents.find({}, {"country": 1})}
     rates = {"ES": pricing["line_rate_usd_min"], "CL": pricing["line_rate_cl_usd_min"]}
-    by_country = {c: {"calls": 0, "minutes": 0.0, "total": 0.0} for c in rates}
+    by_country = {c: {"calls": 0, "minutes": 0.0, "total": 0.0, "voz": 0.0} for c in rates}
+    voices = {k: {"minutes": 0.0, "voz": 0.0, "calls": 0} for k in ("11labs", "cartesia", "azure")}
     calls, tenants, totals = [], {}, {"calls": 0, "minutes": 0.0, "total": 0.0, "missing_cost": 0}
     keys = ["voz", "transcripcion", "ia", "vapi", "analisis", "linea", "otros"]
     breakdown = dict.fromkeys(keys, 0.0)
@@ -176,6 +217,12 @@ async def admin_costs(days: int = 30, user=Depends(require_admin)):
         bc["calls"] += 1
         bc["minutes"] += p["minutes"]
         bc["total"] += p["total"]
+        bc["voz"] += p["voz"]
+        vp = voices.get(ld.get("voice_provider") or "")
+        if vp is not None and p["minutes"]:
+            vp["calls"] += 1
+            vp["minutes"] += p["minutes"]
+            vp["voz"] += p["voz"]
         if ld.get("cost") is None:
             totals["missing_cost"] += 1
         totals["calls"] += 1
@@ -199,7 +246,11 @@ async def admin_costs(days: int = 30, user=Depends(require_admin)):
     for bc in by_country.values():
         bc["cost_per_min"] = bc["total"] / bc["minutes"] if bc["minutes"] else None
         bc["minutes_per_call"] = bc["minutes"] / bc["calls"] if bc["calls"] else None
-    return {"pricing": pricing, "totals": totals, "breakdown": breakdown, "by_country": by_country,
+        bc["base_per_min"] = (bc["total"] - bc["voz"]) / bc["minutes"] if bc["minutes"] else None
+    for k, vp in voices.items():
+        vp["measured_per_min"] = vp["voz"] / vp["minutes"] if vp["minutes"] else None
+        vp["per_min"] = vp["measured_per_min"] if vp["minutes"] >= 5 else pricing[f"voice_{k}_usd_min"]
+    return {"pricing": pricing, "totals": totals, "voices": voices, "breakdown": breakdown, "by_country": by_country,
             "cost_per_min": totals["total"] / totals["minutes"] if totals["minutes"] else None,
             "cost_per_call": totals["total"] / totals["calls"] if totals["calls"] else None,
             "minutes_per_call": totals["minutes"] / totals["calls"] if totals["calls"] else None,

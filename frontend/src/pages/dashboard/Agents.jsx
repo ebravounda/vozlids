@@ -5,7 +5,7 @@ import { PageHeader, Panel } from "@/components/Common";
 import { api } from "@/lib/api";
 import { AMBIENCES, OBJECTIVES, VOICES } from "@/lib/constants";
 
-const name = (list, id) => list.find((x) => x.id === id)?.name || (id?.startsWith("custom:") ? "Grabación propia" : id);
+const name = (list, id) => list.find((x) => x.id === id)?.name || (id?.startsWith("custom:") ? "Grabación propia" : id?.startsWith("x_") ? "Voz ElevenLabs propia" : id);
 
 export default function Agents() {
   const [agents, setAgents] = useState(null);

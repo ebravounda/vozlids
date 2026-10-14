@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
+import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -6,7 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Panel } from "@/components/Common";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { CustomAmbiences } from "@/components/CustomAmbiences";
-import { AMBIENCES, COUNTRIES, DEFAULT_VOICE, OBJECTIVES, VOICES } from "@/lib/constants";
+import { AMBIENCES, COUNTRIES, DEFAULT_VOICE, OBJECTIVES, TIER, VOICES } from "@/lib/constants";
+
+const GROUPS = [
+  ["eleven", "ElevenLabs · las más naturales", "Recomendado · algo más caro por minuto", "text-emerald-300"],
+  ["premium", "Premium", "Buena calidad, más económica", "text-amber-300"],
+  ["standard", "Estándar", "Opción más barata, suena más robótica", "text-slate-400"],
+];
 
 const Choice = ({ active, onClick, title, desc, testid }) => (
   <button type="button" onClick={onClick} data-testid={testid}
@@ -52,18 +60,22 @@ export const GeneralTab = ({ agent, update }) => (
 
 export const VoiceTab = ({ agent, update }) => {
   const amb = agent.ambience.startsWith("custom:") ? { volume: true } : AMBIENCES.find((a) => a.id === agent.ambience);
+  const [custom, setCustom] = useState([]);
+  useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map((v) => ({ ...v, eleven: true, tone: v.tone || "Voz ElevenLabs propia" })))).catch(() => {}); }, []);
+  const country = agent.country || "ES";
+  const list = [...custom, ...VOICES].filter((v) => v.country === country || v.country === "ALL");
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Panel className="space-y-5">
         <Label>Voz ({(agent.country || "ES") === "CL" ? "español latino y chileno" : "español de España"})</Label>
-        {[[true, "Premium · entonación ultra natural", "Algo más caras por minuto"], [false, "Estándar", "Opción más económica"]].map(([prem, title, note]) => (
-          <div key={title} className="space-y-3" data-testid={prem ? "voice-group-premium" : "voice-group-standard"}>
+        {GROUPS.map(([tier, title, note, color]) => (
+          <div key={tier} className="space-y-3" data-testid={`voice-group-${tier}`}>
             <div className="flex items-baseline justify-between">
-              <p className={`text-xs font-semibold uppercase tracking-widest ${prem ? "text-amber-300" : "text-slate-400"}`}>{title}</p>
+              <p className={`text-xs font-semibold uppercase tracking-widest ${color}`}>{title}</p>
               <p className="text-xs text-slate-500">{note}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {VOICES.filter((v) => !!v.premium === prem && v.country === (agent.country || "ES")).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
+              {list.filter((v) => TIER(v) === tier).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
             </div>
           </div>
         ))}

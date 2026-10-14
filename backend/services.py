@@ -146,6 +146,7 @@ async def dial(agent: dict, lead: dict):
     try:
         call_id = await vapi.create_call(agent, lead, today_text(country))
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",
+                                                          "voice_provider": vapi.voice_provider(agent["voice"]),
                                                           "updated_at": now_iso()}})
     except vapi.VapiError as e:
         log.warning("Vapi call failed: %s", e)

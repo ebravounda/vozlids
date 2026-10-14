@@ -9,11 +9,14 @@ import { PageHeader, Panel, StatusBadge } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 
-const PARTS = [["voz", "Voz"], ["transcripcion", "Transcripción"], ["ia", "IA (GPT-4o)"], ["vapi", "Vapi plataforma"], ["analisis", "Resumen/análisis"], ["linea", "Línea Zadarma"], ["otros", "Otros"]];
+const PARTS = [["voz", "Voz"], ["transcripcion", "Transcripción"], ["ia", "IA (GPT-4.1)"], ["vapi", "Vapi plataforma"], ["analisis", "Resumen/análisis"], ["linea", "Línea Zadarma"], ["otros", "Otros"]];
 const eur = (usd, fx, d = 3) => (usd == null ? "—" : `${(usd * fx).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} €`);
 const clp = (usd, fx) => (usd == null ? "—" : `$${Math.round(usd * fx).toLocaleString("es-CL")} CLP`);
 const money = (usd, pricing, currency, d) => (currency === "CLP" ? clp(usd, pricing.usd_clp) : eur(usd, pricing.usd_eur, d));
 const planPrice = (v) => Math.max(9, Math.ceil(v / 10) * 10 - 1);
+const VOICE_NAMES = [["11labs", "ElevenLabs (más natural)"], ["cartesia", "Premium"], ["azure", "Estándar"]];
+const baseMin = (d, country) => d.by_country[country].base_per_min ?? 0.07 + (country === "CL" ? d.pricing.line_rate_cl_usd_min : d.pricing.line_rate_usd_min);
+const costWith = (d, country, provider) => baseMin(d, country) + d.voices[provider].per_min;
 
 const Stat = ({ label, value, hint, testid }) => (
   <Panel className="p-5" data-testid={testid}>
@@ -29,7 +32,7 @@ function PricingForm({ pricing, onSaved }) {
   useEffect(() => setF(pricing), [pricing]);
   const save = async () => {
     setBusy(true);
-    const body = Object.fromEntries(["line_rate_usd_min", "line_rate_cl_usd_min", "usd_eur", "usd_clp", "margin_pct"].map((k) => [k, Number(f[k])]));
+    const body = Object.fromEntries(["line_rate_usd_min", "line_rate_cl_usd_min", "usd_eur", "usd_clp", "margin_pct", "voice_11labs_usd_min", "voice_cartesia_usd_min", "voice_azure_usd_min"].map((k) => [k, Number(f[k])]));
     try { await api.put("/admin/pricing", body); toast.success("Parámetros guardados"); onSaved(); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
@@ -44,6 +47,9 @@ function PricingForm({ pricing, onSaved }) {
       {field("usd_eur", "Cambio 1 $ = … €", "0.01")}
       {field("usd_clp", "Cambio 1 $ = … CLP", "1")}
       {field("margin_pct", "Margen deseado (%)", "10")}
+      {field("voice_11labs_usd_min", "Voz ElevenLabs estimada ($/min)", "0.001")}
+      {field("voice_cartesia_usd_min", "Voz Premium estimada ($/min)", "0.001")}
+      {field("voice_azure_usd_min", "Voz Estándar estimada ($/min)", "0.001")}
       <Button onClick={save} disabled={busy} className="w-full rounded-full font-semibold" data-testid="pricing-save-button">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Guardar</Button>
     </Panel>
   );
@@ -55,14 +61,14 @@ function CountryAdvice({ d, country }) {
   const fx = isCL ? d.pricing.usd_clp : d.pricing.usd_eur;
   const fmt = (usd) => (isCL ? clp(usd, fx) : eur(usd, fx, 2));
   const estimated = c.cost_per_min == null;
-  const costMin = c.cost_per_min ?? 0.09 + (isCL ? d.pricing.line_rate_cl_usd_min : d.pricing.line_rate_usd_min);
+  const costMin = costWith(d, country, "11labs");
   const priceMinUsd = costMin * (1 + d.pricing.margin_pct / 100);
   const callMin = c.minutes_per_call || 1.5;
   const plan = (usd) => (isCL ? `$${(Math.ceil((usd * fx) / 1000) * 1000 - 10).toLocaleString("es-CL")}` : `${planPrice(usd * fx)} €`);
   return (
     <div className="space-y-3" data-testid={`pricing-advice-${country}`}>
       <p className="text-sm text-slate-400">
-        <span className="font-semibold text-white">{isCL ? "Chile" : "España"}:</span> te cuesta <span className="font-mono text-white">{fmt(costMin)}</span>/min{estimated ? " (estimado)" : ` de media (${c.calls} llamadas)`}. Con un margen del {d.pricing.margin_pct}% cobra
+        <span className="font-semibold text-white">{isCL ? "Chile" : "España"}:</span> con voces ElevenLabs te cuesta <span className="font-mono text-white">{fmt(costMin)}</span>/min{estimated ? " (estimado)" : ` (según ${c.calls} llamadas reales)`}. Con un margen del {d.pricing.margin_pct}% cobra
         <span className="font-mono text-emerald-300"> {fmt(priceMinUsd)}/min</span>. Un lead llamado (~{callMin.toFixed(1)} min) te cuesta {fmt(costMin * callMin)}.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -75,6 +81,34 @@ function CountryAdvice({ d, country }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function VoiceCompare({ d }) {
+  const fx = d.pricing;
+  const m = 1 + fx.margin_pct / 100;
+  return (
+    <Panel className="overflow-x-auto p-0 lg:col-span-3" data-testid="voice-cost-compare">
+      <div className="p-5 pb-2"><h3 className="text-lg font-semibold text-white">Coste por tipo de voz</h3>
+        <p className="text-xs text-slate-500">Coste total por minuto (Vapi + IA + transcripción + voz + línea). Se recalcula solo con las llamadas reales a partir de 5 minutos por tipo de voz.</p></div>
+      <table className="w-full min-w-[760px] text-sm">
+        <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr><th className="p-4">Voz</th><th className="p-4">Solo voz /min</th><th className="p-4">Coste total España</th><th className="p-4">Cobrar España</th><th className="p-4">Coste total Chile</th><th className="p-4">Cobrar Chile</th></tr></thead>
+        <tbody>{VOICE_NAMES.map(([k, n]) => {
+          const v = d.voices[k];
+          return (
+            <tr key={k} className="border-t border-slate-800" data-testid={`voice-cost-${k}`}>
+              <td className="p-4 text-white">{n}</td>
+              <td className="p-4 font-mono">{eur(v.per_min, fx.usd_eur, 3)} <span className="text-xs text-slate-500">{v.measured_per_min != null && v.minutes >= 5 ? `medido (${v.minutes.toFixed(0)} min)` : "estimado"}</span></td>
+              <td className="p-4 font-mono">{eur(costWith(d, "ES", k), fx.usd_eur, 3)}</td>
+              <td className="p-4 font-mono text-emerald-300">{eur(costWith(d, "ES", k) * m, fx.usd_eur, 2)}/min</td>
+              <td className="p-4 font-mono">{clp(costWith(d, "CL", k), fx.usd_clp)}</td>
+              <td className="p-4 font-mono text-emerald-300">{clp(costWith(d, "CL", k) * m, fx.usd_clp)}/min</td>
+            </tr>
+          );
+        })}</tbody>
+      </table>
+      <p className="p-4 pt-2 text-xs text-slate-400">ElevenLabs cuesta unos {eur(d.voices["11labs"].per_min - d.voices.cartesia.per_min, fx.usd_eur, 3)} más por minuto que la voz Premium: en un plan de 500 minutos son ≈ {eur((d.voices["11labs"].per_min - d.voices.cartesia.per_min) * 500, fx.usd_eur, 0)} al mes.</p>
+    </Panel>
   );
 }
 
@@ -126,6 +160,7 @@ export default function AdminCosts() {
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
         <PriceAdvice d={d} />
         <PricingForm pricing={d.pricing} onSaved={load} />
+        <VoiceCompare d={d} />
       </div>
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
         <Panel data-testid="costs-breakdown">

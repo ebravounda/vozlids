@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bot, CalendarDays, Code2, Euro, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
+import { BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/app/asistencia", label: "Asistencia técnica", icon: LifeBuoy, id: "support" },
   { to: "/app/no-llamar", label: "No llamar", icon: PhoneOff, id: "donotcall" },
   { to: "/app/api", label: "API desarrolladores", icon: Code2, id: "api" },
+  { to: "/app/plan", label: "Mi plan", icon: CreditCard, id: "plan" },
 ];
 const ADMIN_NAV = [
   { to: "/app/admin", label: "Super admin", icon: Shield, id: "superadmin" },
@@ -29,6 +30,23 @@ function UsageBadge() {
   return <span data-testid="usage-badge" className={`rounded-full border px-3 py-1 text-xs font-semibold ${over ? "border-rose-500/40 text-rose-300" : "border-slate-700 text-slate-300"}`}>Plan {u.plan.name} ({formatPrice(u.plan.price, u.plan.currency)}/mes): {u.minutes_used} / {u.plan.minutes} min{over && !u.allow_overage ? " · llamadas en pausa" : ""}</span>;
 }
 
+function useOpenTickets(path) {
+  const [c, setC] = useState({ open: 0, human: 0 });
+  useEffect(() => {
+    const load = () => api.get("/support-tickets/open-count").then((r) => setC(r.data)).catch(() => {});
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [path]);
+  return c;
+}
+
+const HumanAlert = ({ n }) => (
+  <Link to="/app/asistencia" data-testid="human-request-alert" className="flex items-center justify-center gap-2 bg-rose-500/15 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/25">
+    <BellRing className="h-4 w-4 animate-pulse" /> {n === 1 ? "Un cliente quiere hablar con una persona" : `${n} clientes quieren hablar con una persona`}. Llámales cuanto antes →
+  </Link>
+);
+
 function ImpersonationBar() {
   const stop = async () => { await api.post("/auth/stop-impersonation"); window.location.href = "/app/admin"; };
   return (
@@ -43,6 +61,7 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const [tel, setTel] = useState(null);
   const location = useLocation();
+  const tickets = useOpenTickets(location.pathname);
 
   useEffect(() => {
     if (user?.role === "admin") api.get("/telephony/status").then((r) => setTel(r.data)).catch(() => {});
@@ -57,6 +76,7 @@ export default function DashboardLayout() {
             <NavLink key={n.to} to={n.to} end={n.end} data-testid={`sidebar-nav-${n.id}`}
               className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-emerald-500/10 text-emerald-300" : "text-slate-400 hover:bg-slate-900 hover:text-white"}`}>
               <n.icon className="h-4 w-4" /> {n.label}
+              {n.id === "support" && tickets.open > 0 && <span className="ml-auto rounded-full bg-rose-500 px-2 text-xs font-bold text-white" data-testid="sidebar-support-count">{tickets.open}</span>}
             </NavLink>
           ))}
         </nav>
@@ -70,6 +90,7 @@ export default function DashboardLayout() {
       </aside>
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         {user?.impersonating && <ImpersonationBar />}
+        {tickets.human > 0 && <HumanAlert n={tickets.human} />}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur-xl md:px-10">
           <div className="flex items-center gap-3 md:hidden"><Logo /></div>
           {user?.role === "admin" ? <Link to="/app/telefonia" data-testid="telephony-status-badge"

@@ -31,7 +31,18 @@ VOICES.push(
   { id: "cl_lorenzo", name: "Lorenzo", gender: "Hombre", tone: "Acento chileno", country: "CL" },
 );
 
-export const DEFAULT_VOICE = { ES: "p_marta", CL: "l_fernanda" };
+VOICES.unshift(
+  { id: "e_sarah", name: "Sara", gender: "Mujer", tone: "Cálida y segura, muy natural", eleven: true, country: "ALL" },
+  { id: "e_matilda", name: "Matilde", gender: "Mujer", tone: "Profesional y cercana", eleven: true, country: "ALL" },
+  { id: "e_jessica", name: "Jéssica", gender: "Mujer", tone: "Joven y simpática", eleven: true, country: "ALL" },
+  { id: "e_laura", name: "Laura", gender: "Mujer", tone: "Alegre y entusiasta", eleven: true, country: "ALL" },
+  { id: "e_chris", name: "Cristian", gender: "Hombre", tone: "Natural y cercano", eleven: true, country: "ALL" },
+  { id: "e_eric", name: "Eric", gender: "Hombre", tone: "Sereno, de confianza", eleven: true, country: "ALL" },
+  { id: "e_roger", name: "Roger", gender: "Hombre", tone: "Relajado y conversador", eleven: true, country: "ALL" },
+  { id: "e_will", name: "Guille", gender: "Hombre", tone: "Optimista y tranquilo", eleven: true, country: "ALL" },
+);
+
+export const DEFAULT_VOICE = { ES: "e_sarah", CL: "e_sarah" };
 
 export const AMBIENCES = [
   { id: "oficina_real", name: "Oficina real (grabación)", desc: "Tecleo grabado de verdad + murmullo de oficina", volume: true, real: true },
@@ -61,6 +72,8 @@ export const STATUS = {
 };
 
 export const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+export const TIER = (v) => (v.eleven ? "eleven" : v.premium ? "premium" : "standard");
 
 export const DEFAULT_GREETING =
   "Hola {nombre}, soy Marta, la asistente virtual de tu negocio. Te llamo porque acabas de pedir información en nuestra web. La llamada se graba para mejorar el servicio. ¿Tienes un minuto?";
