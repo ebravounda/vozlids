@@ -75,3 +75,6 @@
 ## Backlog
 - P1: Google Calendar sync; bulk CSV lead upload for campaigns; Stripe Tax/IVA
 - P2: WhatsApp/SMS follow-ups; CRM integrations; inbound agents; live call transfer to human
+
+## Update — session 2 (cont.)
+- Bug fix: landing/agent voice preview was silent on iPhone (speechSynthesis blocked). Now backend voice_preview.py generates real voice (ElevenLabs with admin key from Super admin panel, fallback OpenAI TTS tts-1-hd via Emergent key) mixed server-side with ambience into one WAV; cached in object storage (tts_cache) + memory. Endpoints: GET /api/voice-preview/demo.wav (public), GET /api/voice-preview (auth), GET/PUT/DELETE /api/admin/elevenlabs. (iteration_7 PASS)
