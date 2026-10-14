@@ -64,3 +64,14 @@
 ## Backlog
 - P1: Stripe plans + minute limits; auto-retries for no-answer; SMS/WhatsApp confirmation; Google Calendar; CSV campaigns
 - P2: WhatsApp AI follow-up; human handoff; CRM/webhooks; SaaS admin panel with usage/costs; inbound agents
+
+## Update — Oct 2026 (session 2)
+- Geo pricing: Landing pricing section (auto EUR/CLP by timezone/locale + manual switch, persisted), super admin plan editor with price_eur/price_clp/overage per country, client usage badge in own currency. 3 sample plans seeded. (iteration_5 PASS)
+- ElevenLabs voices via Vapi (eleven_turbo_v2_5, language es, Cartesia fallback), GPT-4.1, Deepgram nova-3 (ES), tuned start/stop speaking plans + Spanish acknowledgement phrases, more human prompt. Existing agents migrated to e_sarah/e_chris. Admin can add custom ElevenLabs voice IDs (native accents; needs ElevenLabs key in Vapi).
+- Human handoff: tool request_human → support ticket kind=humano, email to business, red header alert + sidebar counter, /app/asistencia badge.
+- Stripe subscriptions (billing.py): admin pastes secret key in Super admin (auto-creates webhook /api/billing/webhook); fallback shared test key. /app/plan "Mi plan": checkout (monthly, EUR or CLP by country), status polling, cancel at period end, billing portal (real key only). No automatic tax (Stripe only processes payment).
+- Costs page: per-voice cost comparison (measured or estimated) and suggested price per minute ES/CL. (iteration_6 PASS, 101 backend tests)
+
+## Backlog
+- P1: Google Calendar sync; bulk CSV lead upload for campaigns; Stripe Tax/IVA
+- P2: WhatsApp/SMS follow-ups; CRM integrations; inbound agents; live call transfer to human
