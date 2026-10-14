@@ -21,6 +21,9 @@ import ambience  # noqa: E402
 import auth as A  # noqa: E402
 import services as S  # noqa: E402
 import vapi  # noqa: E402
+import extra_routes as X  # noqa: E402
+import storage  # noqa: E402
+import threading  # noqa: E402
 from db import client, db  # noqa: E402
 from models import Agent, Appointment, DncEntry, Lead, now_iso  # noqa: E402
 from seed import seed  # noqa: E402
@@ -140,7 +143,7 @@ class AgentIn(BaseModel):
     objective: Literal["agendar", "calificar", "vender"]
     questions: List[str] = Field(default=[], max_length=10)
     voice: Literal[tuple(vapi.VOICES.keys())]
-    ambience: Literal["oficina", "teclados", "call_center", "vapi_office", "none"]
+    ambience: str = Field(pattern=r"^(oficina|teclados|call_center|oficina_real|teclado_real|vapi_office|none|custom:[0-9a-f]{32})$")
     ambience_volume: int = Field(35, ge=0, le=100)
     greeting: str = Field(min_length=1, max_length=600)
     extra_instructions: str = Field("", max_length=2000)
@@ -160,8 +163,14 @@ async def list_agents(user=CurrentUser):
     return [Agent.from_mongo(d).out() for d in docs]
 
 
+async def check_ambience(user: dict, body: AgentIn):
+    if body.ambience.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], body.ambience[7:]):
+        raise HTTPException(422, "Esa grabación de ambiente no existe.")
+
+
 @api.post("/agents")
 async def create_agent(body: AgentIn, user=CurrentUser):
+    await check_ambience(user, body)
     agent = Agent(tenant_id=user["id"], **body.model_dump())
     res = await db.agents.insert_one(agent.to_mongo())
     return Agent.from_mongo(await db.agents.find_one({"_id": res.inserted_id})).out()
@@ -175,6 +184,7 @@ async def read_agent(agent_id: str, user=CurrentUser):
 @api.put("/agents/{agent_id}")
 async def update_agent(agent_id: str, body: AgentIn, user=CurrentUser):
     await get_agent(user["id"], agent_id)
+    await check_ambience(user, body)
     await db.agents.update_one({"_id": oid(agent_id)}, {"$set": {**body.model_dump(), "updated_at": now_iso()}})
     return Agent.from_mongo(await get_agent(user["id"], agent_id)).out()
 
@@ -434,6 +444,7 @@ async def root():
 
 
 app.include_router(api)
+app.include_router(X.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -454,6 +465,11 @@ async def startup():
     await db.dnc.create_index([("tenant_id", 1), ("phone", 1)], unique=True)
     await db.availability.create_index("tenant_id", unique=True)
     await seed()
+    threading.Thread(target=lambda: [ambience.render(p, 35) for p in ("oficina_real", "teclado_real")], daemon=True).start()
+    try:
+        storage.init_storage()
+    except Exception as e:  # noqa: BLE001
+        logging.getLogger("vozlead").error("Storage init failed: %s", e)
     tel = await db.platform_settings.find_one({"_id": "telephony"})
     if tel:
         vapi.STATE.update(phone_number_id=tel.get("phone_number_id"), number=tel.get("number"))

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CalendarCheck } from "lucide-react";
+import { toast } from "sonner";
+import { AlertTriangle, CalendarCheck, Copy, Download } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/Common";
-import { api } from "@/lib/api";
+import { API, api } from "@/lib/api";
 import { fmtDate, fmtSlot } from "@/lib/constants";
 
 const Score = ({ value }) => (
@@ -14,12 +15,35 @@ const Score = ({ value }) => (
   </div>
 );
 
+const mmss = (t) => (t == null ? "" : `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`);
+
+const asText = (lead) =>
+  [`Llamada con ${lead.name} (${lead.phone}) · Agente ${lead.agent_name} · ${fmtDate(lead.created_at)}`, "",
+    ...lead.messages.map((m) => `[${mmss(m.t)}] ${m.role === "lead" ? "Cliente" : "Agente"}: ${m.text}`)].join("\n");
+
+const TranscriptActions = ({ lead }) => {
+  const copy = () => { navigator.clipboard?.writeText(asText(lead)); toast.success("Transcripción copiada"); };
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([asText(lead)], { type: "text/plain;charset=utf-8" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: `transcripcion-${lead.name.replace(/\s+/g, "-")}.txt` });
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const cls = "inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:text-white";
+  return (
+    <div className="flex gap-2">
+      <button onClick={copy} className={cls} data-testid="transcript-copy-button"><Copy className="h-3.5 w-3.5" /> Copiar</button>
+      <button onClick={download} className={cls} data-testid="transcript-download-button"><Download className="h-3.5 w-3.5" /> Descargar .txt</button>
+    </div>
+  );
+};
+
 const Transcript = ({ messages }) => (
   <div className="space-y-3" data-testid="lead-transcript">
     {messages.map((m, i) => (
       <div key={i} className={`flex ${m.role === "lead" ? "justify-end" : ""}`}>
         <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${m.role === "lead" ? "rounded-tr-sm bg-emerald-500/15 text-emerald-50" : "rounded-tl-sm bg-slate-800 text-slate-200"}`}>
-          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider opacity-60">{m.role === "lead" ? "Lead" : "Agente"}</p>
+          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider opacity-60">{m.role === "lead" ? "Cliente" : "Agente"} {m.t != null && <span className="font-mono">· {mmss(m.t)}</span>}</p>
           {m.text}
         </div>
       </div>
@@ -65,7 +89,7 @@ export const LeadDetail = ({ id, onClose }) => {
               </div>
             )}
             {lead.recording_url ? (
-              <audio controls src={lead.recording_url} className="w-full" data-testid="lead-details-audio-play" />
+              <audio controls preload="none" src={`${API}/leads/${lead.id}/recording`} className="w-full" data-testid="lead-details-audio-play" />
             ) : lead.call_phase === "ended" && <p className="text-xs text-slate-500">Sin grabación disponible.</p>}
             <Score value={lead.interest_score} />
             {lead.summary && (
@@ -79,7 +103,10 @@ export const LeadDetail = ({ id, onClose }) => {
             )}
             {lead.messages?.length > 0 && (
               <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-emerald-400">Transcripción</p>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">Transcripción completa</p>
+                  <TranscriptActions lead={lead} />
+                </div>
                 <Transcript messages={lead.messages} />
               </div>
             )}

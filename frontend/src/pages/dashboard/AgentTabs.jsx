@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Panel } from "@/components/Common";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
+import { CustomAmbiences } from "@/components/CustomAmbiences";
 import { AMBIENCES, OBJECTIVES, VOICES } from "@/lib/constants";
 
 const Choice = ({ active, onClick, title, desc, testid }) => (
@@ -36,7 +37,7 @@ export const GeneralTab = ({ agent, update }) => (
 );
 
 export const VoiceTab = ({ agent, update }) => {
-  const amb = AMBIENCES.find((a) => a.id === agent.ambience);
+  const amb = agent.ambience.startsWith("custom:") ? { volume: true } : AMBIENCES.find((a) => a.id === agent.ambience);
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Panel className="space-y-5">
@@ -56,7 +57,8 @@ export const VoiceTab = ({ agent, update }) => {
       <Panel className="space-y-4">
         <Label>Ambiente de fondo</Label>
         <div className="grid gap-2" data-testid="audio-ambience-select">
-          {AMBIENCES.map((a) => <Choice key={a.id} active={agent.ambience === a.id} onClick={() => update({ ambience: a.id })} title={a.name} desc={a.desc} testid={`agent-ambience-${a.id}`} />)}
+          {AMBIENCES.map((a) => <Choice key={a.id} active={agent.ambience === a.id} onClick={() => update({ ambience: a.id })} title={a.real ? `${a.name} ★` : a.name} desc={a.desc} testid={`agent-ambience-${a.id}`} />)}
+          <CustomAmbiences value={agent.ambience} onSelect={(id) => update({ ambience: id })} />
         </div>
         {amb?.volume && (
           <div className="space-y-3 pt-2">

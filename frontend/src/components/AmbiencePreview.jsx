@@ -34,7 +34,8 @@ export const AmbiencePreview = ({ ambience, volume, text, voice, label = "Escuch
     if (playing) return stop();
     setPlaying(true);
     if (!["none", "vapi_office"].includes(ambience) && volume > 0) {
-      const a = new Audio(`${API}/ambience/${ambience}/${volume}.wav?v=2`);
+      const src = ambience.startsWith("custom:") ? `${API}/ambience/custom/${ambience.slice(7)}/${volume}.wav` : `${API}/ambience/${ambience}/${volume}.wav?v=2`;
+      const a = new Audio(src);
       a.loop = true;
       a.play().catch(() => {});
       audioRef.current = a;

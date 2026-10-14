@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bot, CalendarDays, LogOut, PhoneCall, PhoneOff, Plus, Radio } from "lucide-react";
+import { Bot, CalendarDays, Euro, LogOut, PhoneCall, PhoneOff, Plus, Radio } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -12,6 +12,7 @@ const NAV = [
   { to: "/app/no-llamar", label: "No llamar", icon: PhoneOff, id: "donotcall" },
   { to: "/app/telefonia", label: "Telefonía", icon: Radio, id: "settings" },
 ];
+const ADMIN_NAV = { to: "/app/costes", label: "Costes (admin)", icon: Euro, id: "costs" };
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -27,7 +28,7 @@ export default function DashboardLayout() {
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-950/80 p-5 md:flex">
         <Link to="/" className="mb-10 px-2"><Logo /></Link>
         <nav className="flex flex-1 flex-col gap-1">
-          {NAV.map((n) => (
+          {(user?.role === "admin" ? [...NAV, ADMIN_NAV] : NAV).map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} data-testid={`sidebar-nav-${n.id}`}
               className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-emerald-500/10 text-emerald-300" : "text-slate-400 hover:bg-slate-900 hover:text-white"}`}>
               <n.icon className="h-4 w-4" /> {n.label}

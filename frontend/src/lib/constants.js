@@ -16,6 +16,8 @@ export const VOICES = [
 ];
 
 export const AMBIENCES = [
+  { id: "oficina_real", name: "Oficina real (grabación)", desc: "Tecleo grabado de verdad + murmullo de oficina", volume: true, real: true },
+  { id: "teclado_real", name: "Teclado real (grabación)", desc: "Tecleo grabado de un portátil, sin voces", volume: true, real: true },
   { id: "oficina", name: "Oficina con teclados", desc: "Teclados y murmullo lejano de compañeros", volume: true },
   { id: "teclados", name: "Solo teclado", desc: "Tecleo suave de escritorio mientras habla", volume: true },
   { id: "call_center", name: "Call center", desc: "Muchas voces de fondo y actividad", volume: true },

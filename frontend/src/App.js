@@ -12,6 +12,7 @@ import AgentBuilder from "@/pages/dashboard/AgentBuilder";
 import Agenda from "@/pages/dashboard/Agenda";
 import DoNotCall from "@/pages/dashboard/DoNotCall";
 import Telephony from "@/pages/dashboard/Telephony";
+import AdminCosts from "@/pages/dashboard/AdminCosts";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -38,6 +39,7 @@ function App() {
             <Route path="agenda" element={<Agenda />} />
             <Route path="no-llamar" element={<DoNotCall />} />
             <Route path="telefonia" element={<Telephony />} />
+            <Route path="costes" element={<AdminCosts />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -85,6 +85,7 @@ OBJECTIVES = {
     ),
 }
 OUTCOMES = ["calificado", "no_interesado", "cita_agendada", "venta", "no_llamar", "sin_respuesta"]
+AI_OUTCOMES = ["calificado", "no_interesado", "cita_agendada", "venta", "no_llamar"]
 
 
 class VapiError(Exception):
@@ -109,7 +110,26 @@ def background_sound(agent: dict) -> str:
         return "off"
     if a == "vapi_office":
         return "office"
-    return f"{public_url()}/api/ambience/{a}/{int(agent.get('ambience_volume', 35))}.wav?v=2"
+    vol = int(agent.get("ambience_volume", 35))
+    if a.startswith("custom:"):
+        return f"{public_url()}/api/ambience/custom/{a[7:]}/{vol}.wav"
+    return f"{public_url()}/api/ambience/{a}/{vol}.wav?v=2"
+
+
+async def get_call(call_id: str) -> dict:
+    async with httpx.AsyncClient(timeout=20) as x:
+        r = await x.get(f"{VAPI_URL}/call/{call_id}", headers=_headers())
+    if r.status_code >= 400:
+        raise VapiError(f"Vapi no devolvió la llamada ({r.status_code})")
+    return r.json()
+
+
+async def recording_url(call_id: str) -> str:
+    async with httpx.AsyncClient(timeout=20, follow_redirects=False) as x:
+        r = await x.get(f"{VAPI_URL}/call/{call_id}/mono-recording", headers=_headers())
+    if r.status_code in (301, 302, 303, 307, 308) and r.headers.get("location"):
+        return r.headers["location"]
+    raise VapiError("La grabación aún no está disponible")
 
 
 def first_name(name: str) -> str:
@@ -186,15 +206,18 @@ def analysis_plan() -> dict:
     return {
         "summaryPlan": {"enabled": True, "messages": [
             {"role": "system", "content": "Eres analista comercial. Resume la llamada en español de España en 2 a 4 frases: "
-                                          "interés del lead, respuestas clave, objeciones y siguiente paso acordado."},
+                                          "interés del lead, respuestas clave, objeciones y siguiente paso acordado. "
+                                          "Escribe directamente el resumen, sin introducciones, títulos ni formato."},
             {"role": "user", "content": "Transcripción:\n\n{{transcript}}\n\nMotivo de fin: {{endedReason}}"},
         ]},
+        "successEvaluationPlan": {"enabled": False},
         "structuredDataPlan": {"enabled": True, "schema": {
             "type": "object",
             "properties": {
-                "outcome": {"type": "string", "enum": OUTCOMES,
-                            "description": "Resultado: calificado (interesado y encaja), no_interesado, cita_agendada, venta "
-                                           "(aceptó comprar), no_llamar (pidió no ser llamado), sin_respuesta (no habló nadie)."},
+                "outcome": {"type": "string", "enum": AI_OUTCOMES,
+                            "description": "Resultado: calificado (interesado y encaja), no_interesado (no le interesa o "
+                                           "colgó sin mostrar interés), cita_agendada, venta (aceptó comprar), "
+                                           "no_llamar (pidió no ser llamado)."},
                 "interest_score": {"type": "number", "description": "Interés del lead de 0 a 100"},
                 "answers": {"type": "string", "description": "Respuestas del lead a las preguntas de calificación, en español"},
             },

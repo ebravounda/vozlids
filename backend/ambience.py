@@ -1,7 +1,13 @@
 import io
+import subprocess
 import wave
 from functools import lru_cache
+from pathlib import Path
+import imageio_ffmpeg
 import numpy as np
+
+ASSETS = Path(__file__).parent / "assets" / "ambience"
+MAX_UPLOAD_SECONDS = 180
 
 SR = 16000
 DUR = 30
@@ -9,6 +15,8 @@ PRESETS = {
     "oficina": {"voices": 4, "voice_gain": 0.35, "keys": 0.6, "room": 0.25, "seed": 11},
     "teclados": {"voices": 0, "voice_gain": 0.0, "keys": 1.0, "room": 0.18, "seed": 23},
     "call_center": {"voices": 9, "voice_gain": 0.75, "keys": 0.3, "room": 0.3, "seed": 37},
+    "oficina_real": {"real": "Computer_keyboard", "voices": 4, "voice_gain": 0.3, "keys": 0.8, "room": 0.15, "seed": 5},
+    "teclado_real": {"real": "Laptop_keyboard", "voices": 0, "voice_gain": 0.0, "keys": 1.0, "room": 0.1, "seed": 7},
 }
 
 
@@ -67,21 +75,36 @@ def _room(rng, n):
     return _norm(_band(brown, 25, 300))
 
 
-@lru_cache(maxsize=48)
-def render(preset: str, volume: int) -> bytes:
-    cfg = PRESETS[preset]
-    rng = np.random.default_rng(cfg["seed"])
-    n = SR * DUR
-    mix = cfg["room"] * _room(rng, n)
-    if cfg["voices"]:
-        mix += cfg["voice_gain"] * _norm(sum(_voice(rng, n) for _ in range(cfg["voices"])))
-    mix += cfg["keys"] * _norm(_keys(rng, n))
+def clean(x):
+    spec = np.fft.rfft(x)
+    f = np.fft.rfftfreq(len(x), 1 / SR)
+    spec[f < 220] = 0
+    for width in (80, 30):
+        lm = np.log(np.abs(spec) + 1e-9)
+        bw = int(width / (SR / len(x))) | 1
+        base = np.convolve(lm, np.ones(bw) / bw, mode="same")
+        mask = (lm - base > np.log(2)) & (f < 5000) & (f >= 220)
+        spec[mask] *= np.exp(base[mask] - lm[mask])
+    return np.fft.irfft(spec, len(x))
+
+
+def decode(data: bytes):
+    """Any audio format -> cleaned mono float array at SR (max MAX_UPLOAD_SECONDS)."""
+    cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-i", "pipe:0", "-t", str(MAX_UPLOAD_SECONDS),
+           "-ac", "1", "-ar", str(SR), "-f", "s16le", "pipe:1"]
+    out = subprocess.run(cmd, input=data, capture_output=True, timeout=120)
+    if out.returncode != 0 or not out.stdout:
+        raise ValueError("No se pudo leer el audio. Usa MP3, M4A, WAV u OGG.")
+    return np.frombuffer(out.stdout, np.int16).astype(float) / 32768
+
+
+def to_wav(x, volume: int, gain: float = 0.7) -> bytes:
+    x = x.copy()
     fade = int(0.08 * SR)
     ramp = np.linspace(0, 1, fade)
-    mix[:fade] *= ramp
-    mix[-fade:] *= ramp[::-1]
-    mix = _norm(mix) * 0.7 * (volume / 100)
-    pcm = (mix * 32767).astype(np.int16).tobytes()
+    x[:fade] *= ramp
+    x[-fade:] *= ramp[::-1]
+    pcm = (_norm(x) * gain * (volume / 100) * 32767).astype(np.int16).tobytes()
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
         w.setnchannels(1)
@@ -89,3 +112,22 @@ def render(preset: str, volume: int) -> bytes:
         w.setframerate(SR)
         w.writeframes(pcm)
     return buf.getvalue()
+
+
+@lru_cache(maxsize=4)
+def _real(name: str):
+    with open(ASSETS / f"{name}.wav", "rb") as fh:
+        return clean(decode(fh.read()))
+
+
+@lru_cache(maxsize=48)
+def render(preset: str, volume: int) -> bytes:
+    cfg = PRESETS[preset]
+    rng = np.random.default_rng(cfg["seed"])
+    real = _real(cfg["real"]) if cfg.get("real") else None
+    n = len(real) if real is not None else SR * DUR
+    mix = cfg["room"] * _room(rng, n)
+    if cfg["voices"]:
+        mix += cfg["voice_gain"] * _norm(sum(_voice(rng, n) for _ in range(cfg["voices"])))
+    mix += cfg["keys"] * _norm(real if real is not None else _keys(rng, n))
+    return to_wav(mix, volume)

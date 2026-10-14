@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from datetime import date, datetime, timedelta
@@ -197,17 +198,44 @@ async def finalize_call(msg: dict, lead: dict):
     elif any(h in ended for h in NO_ANSWER_HINTS) or not any(m["role"] == "lead" for m in messages):
         status = "sin_respuesta" if "error" not in ended and "failed" not in ended else "fallida"
     else:
-        status = sd.get("outcome") if sd.get("outcome") in vapi.OUTCOMES else "calificado"
-        if status == "cita_agendada":
-            status = "calificado"
+        status = sd.get("outcome") if sd.get("outcome") in vapi.AI_OUTCOMES else None
+        if status in (None, "cita_agendada"):
+            status = "calificado" if (sd.get("interest_score") or 0) >= 50 else "no_interesado"
     if status == "no_llamar":
         await add_dnc(lead["tenant_id"], lead["phone"], "Lo pidió durante la llamada")
     score = sd.get("interest_score")
+    cost = msg.get("cost", call.get("cost"))
     await db.leads.update_one({"_id": lead["_id"]}, {"$set": {
         "status": status, "call_phase": "ended", "ended_reason": ended,
+        "cost": cost, "cost_breakdown": msg.get("costBreakdown") or call.get("costBreakdown"),
         "transcript": artifact.get("transcript") or msg.get("transcript") or "",
         "messages": messages, "recording_url": _recording(msg, artifact),
         "summary": analysis.get("summary") or "", "answers": str(sd.get("answers") or ""),
         "interest_score": int(max(0, min(100, score))) if isinstance(score, (int, float)) else None,
         "duration_seconds": msg.get("durationSeconds"),
         "error": ended if status == "fallida" else "", "updated_at": now_iso()}})
+    if cost is None and lead.get("vapi_call_id"):
+        asyncio.create_task(sync_cost_later(lead["_id"]))
+
+
+async def sync_call_cost(lead: dict) -> bool:
+    try:
+        call = await vapi.get_call(lead["vapi_call_id"])
+    except vapi.VapiError:
+        return False
+    if call.get("cost") is None:
+        return False
+    upd = {"cost": call["cost"], "cost_breakdown": call.get("costBreakdown")}
+    if not lead.get("duration_seconds") and call.get("startedAt") and call.get("endedAt"):
+        start = datetime.fromisoformat(call["startedAt"].replace("Z", "+00:00"))
+        end = datetime.fromisoformat(call["endedAt"].replace("Z", "+00:00"))
+        upd["duration_seconds"] = (end - start).total_seconds()
+    await db.leads.update_one({"_id": lead["_id"]}, {"$set": upd})
+    return True
+
+
+async def sync_cost_later(lead_id, delay: int = 45):
+    await asyncio.sleep(delay)
+    lead = await db.leads.find_one({"_id": lead_id})
+    if lead and lead.get("cost") is None:
+        await sync_call_cost(lead)
