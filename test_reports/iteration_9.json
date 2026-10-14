@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only regression after copy update: every plan now includes a free +34 (ES) or +56 (CL) number; customer must NOT be told to bring their own SIP/telefonía IP. Verified all 8 marketing routes (/, /es, /cl + 5 topic pages), Pricing EUR/CLP switch, Dashboard /app/plan after admin login, meta description, JSON-LD FAQ validity, mobile 390px rendering.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "/es intro still says 'Se integra con tu centralita virtual o telefonía IP' — reads as compatibility (not as 'bring your own'), aligned with request. No change needed, but worth a product-side review to confirm wording.",
+    "seo/pages.json still lists 'telefonía IP empresas España/Chile' in meta keywords (SEO only, not visible). Low-risk but inconsistent with the new positioning if someone searches intent-wise.",
+    "/telefonia-ip-con-inteligencia-artificial still exists as a topic page (expected for SEO). Its H1/intro now correctly frames IP as INCLUDED free, not required from the customer. OK.",
+    "Pricing.jsx CurrencySwitch uses `shrink-0` and `whitespace-nowrap` — confirmed labels stay on one line at 1920px. Good.",
+    "Billing.jsx PlanCard: data-testid `billing-plan-number-{id}` present on every card and correctly swaps copy by me.currency (CLP vs EUR). Note: dashboard currency is fixed by the business's country (me.currency), not togglable here — intended."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend only)", "frontend": "100% on tested flows"},
+  "verifications": {
+    "forbidden_copy_routes": "0 hits of 'usa nuestras líneas' / 'conecta tu sip' / 'trae tu propia' / unqualified 'necesitas contratar telefonía' on all 8 routes.",
+    "hero_bullets": "/ -> 'Número +34 o +56 gratis'; /es -> 'Número +34 de España gratis'; /cl -> 'Número +56 de Chile gratis' (verified via data-testid=hero-title + body scan).",
+    "trust_bar": "'Gratis' + 'número de España o Chile incluido' rendered as 2-line stat (big label + sub-text) on all pages.",
+    "compat_title": "'Número de España o Chile gratis. Y compatible con tu centralita' present on /, /es, /cl, topic pages.",
+    "eyebrow_es_cl": "/es eyebrow = 'España · número +34 gratis · precios en euros'; /cl eyebrow = 'Chile · número +56 gratis · precios en pesos' — both contain 'gratis'.",
+    "pricing_eur": "3 cards each show pricing-plan-number-{id} = 'Número de España (+34) gratis' in EUR default.",
+    "pricing_clp": "After clicking pricing-currency-clp, 3 cards each show 'Número de Chile (+56) gratis'.",
+    "pricing_switch_no_wrap_1920": "Both toggle buttons share the same bounding-box top at 1920×1080 — no wrap.",
+    "dashboard_billing": "Admin login → /app/plan → 3 cards each with billing-plan-number-{id} = 'Número de España (+34) gratis' (admin business currency = EUR).",
+    "meta_description_home": "'Agente telefónico con inteligencia artificial… Incluye número de España o Chile gratis.' — contains required phrase.",
+    "jsonld_home": "Parsed as valid JSON, @type FAQPage present.",
+    "mobile_390": "/es renders hero + form stacked, no horizontal scroll in viewport.",
+    "console_errors": "Only expected 401s from unauthenticated API calls on home (api/auth/me etc). No JS errors."
+  },
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). Login route is /login (not /acceder).",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login path is /login. Form data-testids are prefixed with 'solicitar-' or 'solicitar-final-' (e.g. solicitar-name, solicitar-phone, solicitar-consent, solicitar-submit, solicitar-error, info-form-success). InfoForm has 2 instances per page (hero + final CTA). Rate-limit is 3 submissions / IP / 10min (per iter-8 backend fixture). Pricing switch testids: pricing-currency-eur / pricing-currency-clp. Billing cards: billing-plan-{id} with children billing-plan-number-{id}, billing-plan-price-{id}, billing-plan-buy-{id}. Pricing cards: pricing-plan-{id} / pricing-plan-number-{id} / pricing-plan-price-{id} / pricing-plan-cta-{id}. SEO/pages.json is the single source of truth for marketing copy on all 8 routes.",
+  "rca of the issue": "N/A — all requested copy changes present and visible; no forbidden 'bring your own SIP' copy found anywhere in the frontend bundle."
+}
