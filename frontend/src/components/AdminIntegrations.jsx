@@ -42,6 +42,40 @@ export function StripeSettings() {
   );
 }
 
+export function ElevenLabsSettings() {
+  const [s, setS] = useState(null);
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () => api.get("/admin/elevenlabs").then((r) => setS(r.data));
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    setBusy(true);
+    try { await api.put("/admin/elevenlabs", { api_key: key }); toast.success("ElevenLabs conectado"); setKey(""); load(); }
+    catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  const disconnect = async () => { await api.delete("/admin/elevenlabs"); load(); };
+  if (!s) return null;
+  return (
+    <Panel className="space-y-4" data-testid="elevenlabs-settings-panel">
+      <div className="flex items-center gap-2"><Mic className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">ElevenLabs (audios de ejemplo)</h3></div>
+      {s.connected
+        ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="elevenlabs-status-connected">Conectado · clave …{s.key_last4}. Los ejemplos suenan con la misma voz que las llamadas.</p>
+        : <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200" data-testid="elevenlabs-status-missing">Sin conectar: los ejemplos usan una voz IA de respaldo. Conecta tu clave para oír exactamente la voz de las llamadas.</p>}
+      <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Clave de API de ElevenLabs" className="bg-slate-950/60 font-mono" data-testid="elevenlabs-key-input" />
+      <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
+        <li>Entra en elevenlabs.io y crea una cuenta (el plan gratuito sirve para empezar).</li>
+        <li>Abajo a la izquierda: tu perfil → «API Keys» → «Create API Key».</li>
+        <li>Activa el permiso «Text to Speech», crea la clave y cópiala aquí.</li>
+        <li>Para voces con acento nativo, pega también la clave en Vapi → Integrations → ElevenLabs.</li>
+      </ol>
+      <div className="flex gap-2">
+        <Button onClick={save} disabled={busy || key.length < 20} className="rounded-full" data-testid="elevenlabs-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{s.connected ? "Cambiar clave" : "Conectar ElevenLabs"}</Button>
+        {s.connected && <Button variant="ghost" onClick={disconnect} className="rounded-full" data-testid="elevenlabs-disconnect-button">Desconectar</Button>}
+      </div>
+    </Panel>
+  );
+}
+
 const EMPTY = { name: "", gender: "Mujer", country: "ES", voice_id: "", tone: "" };
 
 export function CustomVoices() {

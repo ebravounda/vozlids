@@ -3,7 +3,6 @@ import { ArrowRight, BarChart3, CalendarCheck, Check, Code2, Globe2, Headphones,
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { Pricing } from "@/components/Pricing";
 
-const DEMO = "Hola Laura, soy Marta, asistente virtual de Clínica Sonrisa. Te llamo porque acabas de pedir información en nuestra web. ¿Tienes un minuto?";
 const USES = [
   [Timer, "Respuesta inmediata a nuevos leads", "Cada formulario recibido genera una llamada en menos de 30 segundos, de día o de noche."],
   [CalendarCheck, "Citas agendadas en tu calendario", "El agente consulta tu disponibilidad real y confirma la cita por email al cliente y a tu equipo."],
@@ -66,7 +65,7 @@ export default function Landing() {
             <p className="mt-6 max-w-lg text-lg text-slate-600">VozLeads llama a tus clientes potenciales, los califica, agenda citas, gestiona cobros y hace seguimiento. Tu equipo solo atiende las oportunidades reales.</p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link to="/registro" data-testid="landing-hero-register-button" className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800">Empezar ahora <ArrowRight className="h-4 w-4" /></Link>
-              <AmbiencePreview ambience="oficina_real" volume={35} voice="p_marta" text={DEMO} label="Escuchar un ejemplo" testid="landing-hero-demo-button" className="!border-slate-300 !bg-white !text-slate-800 hover:!bg-slate-100" />
+              <AmbiencePreview demo label="Escuchar un ejemplo" testid="landing-hero-demo-button" className="!border-slate-300 !bg-white !text-slate-800 hover:!bg-slate-100" />
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
               {["Grabación y transcripción", "Lista de exclusión automática", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" />{t}</li>)}

@@ -1,68 +1,47 @@
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { Loader2, Pause, Play } from "lucide-react";
+import { toast } from "sonner";
 import { API } from "@/lib/api";
 
-const MALE = ["e_chris", "e_eric", "e_roger", "e_will", "alvaro", "dario", "arnau", "p_marcos", "p_gonzalo", "p_luis", "p_hector", "l_eduardo", "l_mateo", "l_andres", "cl_lorenzo"];
+const previewUrl = ({ demo, ambience, volume, voice, text }) =>
+  demo ? `${API}/voice-preview/demo.wav`
+    : `${API}/voice-preview?${new URLSearchParams({ voice, text, ambience_id: ambience, volume: String(volume) })}`;
 
-function pickVoice(voiceId) {
-  const voices = window.speechSynthesis?.getVoices() || [];
-  const latam = /^(l_|cl_)/.test(voiceId || "");
-  const es = voices.filter((v) => (latam ? /^es-(cl|419|mx|us)/i : /^es-es/i).test(v.lang || ""));
-  const pool = es.length ? es : voices.filter((v) => v.lang?.startsWith("es"));
-  const male = MALE.includes(voiceId);
-  const re = male ? /(jorge|pablo|alvaro|álvaro|dario|male|hombre|diego|enrique)/i : /(monica|mónica|elvira|lucia|laura|helena|female|mujer|marisol)/i;
-  return pool.find((v) => re.test(v.name)) || pool[0] || null;
-}
-
-export const AmbiencePreview = ({ ambience, volume, text, voice, label = "Escuchar ejemplo", testid = "audio-preview-play-button", className = "" }) => {
-  const [playing, setPlaying] = useState(false);
+export const AmbiencePreview = ({ demo = false, ambience = "none", volume = 35, text = "", voice = "", label = "Escuchar ejemplo", testid = "audio-preview-play-button", className = "" }) => {
+  const [state, setState] = useState("idle");
   const audioRef = useRef(null);
-  const timers = useRef([]);
 
   const stop = () => {
-    audioRef.current?.pause();
+    const a = audioRef.current;
+    if (a) { a.onplaying = a.onended = a.onerror = null; a.pause(); a.removeAttribute("src"); a.load(); }
     audioRef.current = null;
-    window.speechSynthesis?.cancel();
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    setPlaying(false);
+    setState("idle");
   };
 
   useEffect(() => stop, []);
-  useEffect(() => { if (playing) stop(); }, [ambience, volume, voice]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (state !== "idle") stop(); }, [ambience, volume, voice, text]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const play = () => {
-    if (playing) return stop();
-    setPlaying(true);
-    if (!["none", "vapi_office"].includes(ambience) && volume > 0) {
-      const src = ambience.startsWith("custom:") ? `${API}/ambience/custom/${ambience.slice(7)}/${volume}.wav` : `${API}/ambience/${ambience}/${volume}.wav?v=2`;
-      const a = new Audio(src);
-      a.loop = true;
-      a.play().catch(() => {});
-      audioRef.current = a;
-    }
-    const synth = window.speechSynthesis;
-    if (text && synth) {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = /^(l_|cl_)/.test(voice || "") ? "es-CL" : "es-ES";
-      u.rate = 1.03;
-      const v = pickVoice(voice);
-      if (v) u.voice = v;
-      u.onend = () => timers.current.push(setTimeout(stop, 2200));
-      timers.current.push(setTimeout(() => synth.speak(u), 1100));
-    } else {
-      timers.current.push(setTimeout(stop, 10000));
-    }
+    if (state !== "idle") return stop();
+    const a = new Audio();
+    a.preload = "auto";
+    a.onplaying = () => setState("playing");
+    a.onended = stop;
+    a.onerror = () => { stop(); toast.error("No se pudo generar el audio de ejemplo. Inténtalo de nuevo."); };
+    a.src = previewUrl({ demo, ambience, volume, voice, text });
+    audioRef.current = a;
+    setState("loading");
+    a.play().catch((e) => { if (e?.name !== "AbortError" && audioRef.current === a) { stop(); toast.error("Toca de nuevo para escuchar el ejemplo."); } });
   };
 
   return (
-    <button type="button" onClick={play} data-testid={testid}
+    <button type="button" onClick={play} data-testid={testid} data-state={state}
       className={`group inline-flex items-center gap-3 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/20 ${className}`}>
       <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-slate-950">
-        {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 translate-x-px" />}
+        {state === "loading" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : state === "playing" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 translate-x-px" />}
       </span>
-      {playing ? "Parar" : label}
-      {playing && (
+      {state === "loading" ? "Preparando audio…" : state === "playing" ? "Parar" : label}
+      {state === "playing" && (
         <span className="flex h-4 items-center gap-0.5" aria-hidden>
           {[0, 1, 2, 3, 4].map((i) => (
             <span key={i} className="wave-bar h-4 w-0.5 rounded bg-emerald-300" style={{ animationDelay: `${i * 0.12}s` }} />
