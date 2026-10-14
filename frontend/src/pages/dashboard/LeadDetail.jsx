@@ -40,7 +40,8 @@ export const LeadDetail = ({ id, onClose }) => {
 
   return (
     <Sheet open={!!id} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto border-slate-800 bg-slate-950 sm:max-w-xl" data-testid="lead-detail-sheet">
+      <SheetContent aria-describedby={undefined} className="w-full overflow-y-auto border-slate-800 bg-slate-950 sm:max-w-xl" data-testid="lead-detail-sheet">
+        {!lead && <SheetTitle className="sr-only">Detalle del lead</SheetTitle>}
         {lead && (
           <div className="space-y-6">
             <SheetHeader>

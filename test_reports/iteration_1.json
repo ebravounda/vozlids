@@ -1,0 +1,36 @@
+{
+  "summary": "VozLead first-run testing: all 25 backend pytest cases pass (auth, agents CRUD, leads, stats, public form consent/dedup/DNC, availability GET/PUT + 422, DNC CRUD + duplicate 400, ambience endpoint, Vapi webhook auth/tool-calls/end-of-call-report + double booking, tenant isolation, telephony not configured). Frontend smoke tested end-to-end: landing, login, leads dashboard with stats/search/filter/lead detail sheet, agents page, agenda save, DNC add+duplicate, telephony badge, agent builder save→detail→embed snippet, invalid phone test-call toast, public form submit success. No functional bugs found; app behaves exactly as expected including fallback 'Telefonía sin configurar / fallida' because Vapi keys are intentionally empty.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Lead detail sheet / dialogs", "issues": ["Radix a11y warnings in console: 'DialogContent requires a DialogTitle' and 'Missing Description or aria-describedby' - wrap hidden title with VisuallyHidden or add DialogTitle for a11y."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Low) Add DialogTitle / aria-describedby to lead-detail-sheet and any Radix Dialog usage to silence a11y console warnings."
+  ],
+  "critical_code_review_comments": [
+    "server.login: on 5th failed attempt the counter is reset to 0 and locked_until=ago(-15) which produces a past datetime, so the lock is effectively bypassed on the very next request. Suggest keep count=5 and set locked_until to a future ISO (e.g. (now+15min).isoformat()).",
+    "models.Lead.to_mongo() includes an id=None entry stripped only when None, but Agent/Lead responses are returned via Lead.from_mongo(...).out() which exposes '_id' alias as 'id' via populate_by_name - fine, no ObjectId leaks (verified in responses).",
+    "Public form rate-limit uses count_documents on source_ip across all tenants/agents which is OK but may be noisy if deployed behind proxy without X-Forwarded-For - already handled.",
+    "auth.set_access_cookie uses SameSite=None + Secure which requires HTTPS (preview URL is HTTPS, OK). Login response also returns access_token in body so Bearer works too.",
+    "server.py has grown to 436 lines - still manageable, no split needed yet."
+  ],
+  "updated_files": [
+    "/app/backend/tests/__init__.py",
+    "/app/backend/tests/test_vozlead_backend.py"
+  ],
+  "success_rate": {"backend": "100% (25/25)", "frontend": "100% of flows exercised passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). VAPI_WEBHOOK_SECRET read from /app/backend/.env for webhook tests.",
+  "seed_data_creation": "Seed admin + Marta agent + 4 sample leads (incl. Carlos Ruiz with transcript and cita_agendada) are created automatically on backend startup; verified present.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite lives at /app/backend/tests/test_vozlead_backend.py and runs under pytest-xdist (configured in /app/backend/pytest.ini). It covers auth, agents CRUD, leads, stats, availability, DNC, ambience audio, public form (consent/dedup/DNC silent), Vapi webhook (unauthorized, tool-calls: check_availability/book_appointment/mark_do_not_call, double booking, end-of-call-report updating status/summary/score/recording), and tenant isolation. Any test data (agents TEST*, DNC phones +34612999888 / +34612000333 / +34612000444, UITest agent) is cleaned up at the end of the test session.",
+  "rca of the issue": "No bugs reproduced; only noted the brute-force lockout off-by-one in login (count resets to 0 and locked_until set to a past time instead of future) which should be addressed when Vapi integration is wired up and traffic increases."
+}
