@@ -1,0 +1,159 @@
+{
+  "project_name": "VozLead - Agentes de Voz IA Hyper-Realistas para Cualificación de Leads en España",
+  "app_type": "hybrid_fullstack",
+  "tech_stack": {
+    "framework": "React (CRA, JS)",
+    "styling": "Tailwind CSS + shadcn/ui primitives",
+    "icons": "lucide-react",
+    "charts": "recharts",
+    "toast": "sonner",
+    "animation": "framer-motion"
+  },
+  "design_archetype": "Performance Dark & Cyber-Emerald (Swiss Hybrid)",
+  "color_palette": {
+    "background_dark": "#0B0F17",
+    "surface_dark": "#111827",
+    "surface_card": "#1F2937",
+    "surface_border": "#374151",
+    "primary_emerald": "#10B981",
+    "primary_emerald_hover": "#059669",
+    "accent_cyan": "#06B6D4",
+    "accent_amber": "#F59E0B",
+    "accent_rose": "#F43F5E",
+    "text_primary": "#F9FAFB",
+    "text_secondary": "#9CA3AF",
+    "text_muted": "#6B7280"
+  },
+  "typography": {
+    "headings": "Outfit, sans-serif",
+    "body": "Plus Jakarta Sans, sans-serif",
+    "code_and_audio": "JetBrains Mono, monospace",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight font-extrabold",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "h4": "text-lg font-medium",
+      "body": "text-base font-normal leading-relaxed",
+      "caption": "text-xs font-medium uppercase tracking-widest text-emerald-400"
+    }
+  },
+  "layout_strategies": {
+    "landing_page": {
+      "nav": "Glassmorphic floating header with backdrop-blur-xl bg-slate-950/80 border border-slate-800/80, brand logo with pulsing live voice icon, links to Ventajas, Demostración, Precios, FAQ, and CTA buttons 'Iniciar Sesión' and 'Probar Gratis'",
+      "hero": "Asymmetric hero with high-impact headline ('Tus leads contactados en <30s por Voz IA 100% Real'), video/audio live demo widget with realistic background noise toggle (oficina, teclados, call center), interactive test call input (+34 phone number picker)",
+      "features": "Bento grid mode A showing 30s speed comparison, office ambient noise simulator, Spanish es-ES natural intonation, CRM integration sync, and lead scoring engine",
+      "comparison": "Side-by-side card comparison matrix: Agente Humano vs VozLead IA vs Chatbot Convencional",
+      "cta_section": "High-conversion sticky dark banner with immediate demo call trial"
+    },
+    "dashboard": {
+      "navigation": "Collapsible sidebar (240px -> 64px) with quick switcher, links for 'Agentes IA', 'Leads & Llamadas', 'Agenda & Citas', 'Lista Negra (Do Not Call)', 'Formulario Embebible', 'Configuración Telefonía'",
+      "header": "Top bar displaying Active Telephony Status ('Twilio / SIP Conectado' with green status indicator), Active Voice Credits balance, quick 'Crear Agente' CTA, and User Profile menu",
+      "agents_builder": "Multi-tab editor: 1) Configuración General (nombre, empresa, objetivo: Calificar y agendar / Solo calificar / Vender), 2) Selector de Voz es-ES (Mateo, Sofía, Javier, Carmen) con preview de audio, 3) Ruido de Fondo (Oficina Corporativa, Call Center, Teclados, Ninguno) + Deslizador de volumen (0-100%), 4) Preguntas de Cualificación, 5) Saludo Inicial Editable, 6) Pruebas ('Llamarme Ahora') y Código para Embeber",
+      "leads_panel": "Dense data table with search, status filters (llamando, sin respuesta, calificado, no interesado, cita agendada, venta, no llamar), detail view dialog with interactive Web Audio waveform player, dual transcript chat view (Lead vs Agente), AI summary bullet points, and Interest Score meter (0-100%)",
+      "agenda": "Weekly hour slot availability editor + interactive calendar viewer of upcoming qualified appointments",
+      "do_not_call": "Blocked phone numbers table with instant addition input, search, and CSV import simulation",
+      "embeddable_form_page": "Previewable public lead form with live phone validation (+34), consent checkbox, and copyable Iframe/Script snippet"
+    }
+  },
+  "audio_ambience_simulation": {
+    "tech": "Web Audio API synth + HTML5 Audio / oscillator noise simulation for background office ambience (keyboard typing clicks, low murmurs, paper shuffling) with real-time gain/volume slider",
+    "presets": [
+      {
+        "id": "office_corporate",
+        "name": "Oficina Corporativa",
+        "desc": "Teclados suaves y murmullo lejano de oficina profesional",
+        "default_volume": 35
+      },
+      {
+        "id": "call_center",
+        "name": "Call Center Activo",
+        "desc": "Ambiente dinámico con voces de fondo y actividad",
+        "default_volume": 45
+      },
+      {
+        "id": "keyboard_typing",
+        "name": "Teclado y Escritorio",
+        "desc": "Sonido táctil de tecleo suave mientras habla el agente",
+        "default_volume": 30
+      },
+      {
+        "id": "none",
+        "name": "Estudio Limpio (Sin fondo)",
+        "desc": "Voz cristalina sin ningún sonido ambiental",
+        "default_volume": 0
+      }
+    ]
+  },
+  "voice_profiles_es": [
+    {
+      "id": "es_mateo",
+      "name": "Mateo (España - Profesional / Consultor)",
+      "accent": "es-ES",
+      "gender": "Masculino",
+      "tone": "Cálido, profesional, autoritario"
+    },
+    {
+      "id": "es_sofia",
+      "name": "Sofía (España - Ventas / Amigable)",
+      "accent": "es-ES",
+      "gender": "Femenino",
+      "tone": "Entusiasta, clara, persuasiva"
+    },
+    {
+      "id": "es_javier",
+      "name": "Javier (España - Ejecutivo / Negociación)",
+      "accent": "es-ES",
+      "gender": "Masculino",
+      "tone": "Sereno, firme, formal"
+    },
+    {
+      "id": "es_carmen",
+      "name": "Carmen (España - Atención al Cliente)",
+      "accent": "es-ES",
+      "gender": "Femenino",
+      "tone": "Servicial, empática, fluida"
+    }
+  ],
+  "image_urls": {
+    "headphones": "https://images.unsplash.com/photo-1608692747054-b4ed998abc2a?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "studio_mic": "https://images.unsplash.com/photo-1601856254555-a9c0ebef8af3?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "corporate_meeting": "https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "executive_desk": "https://images.unsplash.com/photo-1659186198156-f0372a4fdc5e?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "team_office": "https://images.unsplash.com/photo-1622675363311-3e1904dc1885?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "testing_and_data_testids": {
+    "rule": "Every interactive and critical informational element MUST include a data-testid attribute in kebab-case.",
+    "key_testids": [
+      "landing-nav-login-button",
+      "landing-nav-register-button",
+      "landing-hero-test-call-button",
+      "landing-phone-input",
+      "audio-preview-play-button",
+      "audio-ambience-select",
+      "audio-volume-slider",
+      "sidebar-nav-agents",
+      "sidebar-nav-leads",
+      "sidebar-nav-agenda",
+      "sidebar-nav-donotcall",
+      "sidebar-nav-embed",
+      "sidebar-nav-settings",
+      "agent-builder-save-button",
+      "agent-builder-call-me-button",
+      "lead-details-audio-play",
+      "lead-status-badge",
+      "dnc-add-phone-input",
+      "dnc-add-phone-button",
+      "agenda-save-hours-button",
+      "embed-copy-code-button",
+      "telephony-status-badge"
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Ensure all user-visible strings are in Spanish (Spain es-ES).",
+    "Implement real audio preview simulations using standard Web Audio API synthesis or pre-generated sound effects for realistic keyboard/office ambience.",
+    "Do NOT use transparent backgrounds in dropdowns, header, or modals. Use backdrop-blur-xl bg-slate-950/90 border border-slate-800.",
+    "Ensure high contrast compliance: minimum 4.5:1 for normal text, 3:1 for large headings.",
+    "Add explicit hover states with text color preservation (e.g. hover:bg-emerald-600 hover:text-white).",
+    "Include sample initial leads data with realistic Spanish names (e.g., Carlos Ruiz, María Fernández, Alejandro Gómez) and valid Spanish mobile formats (+34 6xx xxx xxx)."
+  ]
+}
