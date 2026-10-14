@@ -8,18 +8,18 @@
       "type": "home",
       "country": "AUTO",
       "title": "VozLeads | Agente de voz con IA que llama a tus leads · España y Chile",
-      "description": "Agente telefónico con inteligencia artificial que llama a tus leads en menos de 30 segundos, los califica y agenda citas. Compatible con tu telefonía IP. España y Chile.",
+      "description": "Agente telefónico con inteligencia artificial que llama a tus leads en menos de 30 segundos, los califica y agenda citas. Incluye número de España o Chile gratis.",
       "eyebrow": "Agentes de voz con IA para España y Chile",
       "h1": "Tu agente telefónico con IA llama a cada lead en menos de 30 segundos",
-      "intro": "VozLeads llama al instante a quien rellena tu formulario, lo califica, agenda la cita y te avisa si quiere hablar con una persona. Funciona sobre tu telefonía IP, central IP u oficina virtual, sin cambiar de operador.",
+      "intro": "VozLeads llama al instante a quien rellena tu formulario, lo califica, agenda la cita y te avisa si quiere hablar con una persona. Incluye gratis un número de España (+34) o de Chile (+56): no necesitas contratar telefonía IP ni cuenta SIP.",
       "keywords": "agente de voz IA, llamadas automáticas IA, telefonía IP con IA, centralita virtual IA, central IP Chile, oficina virtual",
       "faq": [
         ["¿Qué es VozLeads?", "Un agente de voz con inteligencia artificial que llama por teléfono a tus clientes potenciales en segundos, mantiene una conversación natural en español, los califica, agenda citas y registra grabación, transcripción y resultado de cada llamada."],
-        ["¿Necesito cambiar mi telefonía IP o mi centralita?", "No. VozLeads se conecta a tu proveedor de telefonía IP por SIP (por ejemplo Zadarma) o usa nuestras líneas. Tu centralita, central IP u oficina virtual siguen funcionando igual."],
+        ["¿Necesito contratar un número o una telefonía IP?", "No. Todos los planes incluyen gratis un número de España (+34) o de Chile (+56) ya configurado, con su línea. Si tienes centralita, central IP u oficina virtual, sigue funcionando igual."],
         ["¿En qué países funciona?", "En España (números +34, precios en euros) y en Chile (números +56, precios en pesos chilenos), con voces, horarios y formatos adaptados a cada país."],
         ["¿El cliente sabe que habla con una IA?", "Sí. El agente se presenta como asistente virtual y avisa de la grabación, como exigen el RGPD en España y la Ley 19.628 en Chile."],
         ["¿Qué pasa si el cliente quiere hablar con una persona?", "El agente toma nota del motivo y del mejor momento para llamar, se lo promete al cliente y tu equipo recibe al instante un email y un aviso en el panel."],
-        ["¿Cómo se paga?", "Con un plan mensual de minutos, sin permanencia. Pagas con tarjeta y puedes cambiar o cancelar el plan cuando quieras."]
+        ["¿Cómo se paga?", "Con un plan mensual de minutos, sin permanencia y con un número de España o Chile incluido gratis. Pagas con tarjeta y puedes cambiar o cancelar el plan cuando quieras."]
       ]
     },
     {
@@ -28,12 +28,12 @@
       "country": "ES",
       "title": "Agente telefónico con IA en España | Llamadas automáticas · VozLeads",
       "description": "Agente de voz con IA para empresas en España: llama a tus leads en segundos con voz natural, agenda citas y se integra con tu centralita virtual o telefonía IP. Precios en euros.",
-      "eyebrow": "España · números +34 · precios en euros",
+      "eyebrow": "España · número +34 gratis · precios en euros",
       "h1": "Agente telefónico con IA para empresas en España",
-      "intro": "Llama a tus leads con número español en menos de 30 segundos, con una voz natural que agenda citas, recuerda pagos y hace seguimiento. Se integra con tu centralita virtual o telefonía IP y cumple el RGPD.",
+      "intro": "Llama a tus leads con un número español incluido gratis en menos de 30 segundos, con una voz natural que agenda citas, recuerda pagos y hace seguimiento. Se integra con tu centralita virtual o telefonía IP y cumple el RGPD.",
       "keywords": "agente telefónico IA España, llamadas automáticas España, centralita virtual IA, telefonía IP empresas España",
       "faq": [
-        ["¿Llamáis con número español?", "Sí, con un número +34 de tu proveedor de telefonía IP (por ejemplo Zadarma) o con una línea nuestra."],
+        ["¿Llamáis con número español?", "Sí. Tu plan incluye gratis un número español +34 ya configurado: no tienes que contratar nada más."],
         ["¿Cumple el RGPD?", "El agente se identifica como asistente virtual, avisa de la grabación, solo llama a quien dio su consentimiento y respeta la lista de no llamar."],
         ["¿En qué horario llama?", "En el horario que tú configures, con la hora peninsular de España."]
       ]
@@ -44,12 +44,12 @@
       "country": "CL",
       "title": "Agente telefónico con IA en Chile | Llamadas automáticas · VozLeads",
       "description": "Agente de voz con IA para empresas en Chile: llama a tus clientes en segundos con acento latino, agenda citas y funciona con tu central IP. Precios en pesos chilenos (CLP).",
-      "eyebrow": "Chile · números +56 · precios en pesos",
+      "eyebrow": "Chile · número +56 gratis · precios en pesos",
       "h1": "Agente telefónico con IA para empresas en Chile",
-      "intro": "Llama a tus clientes potenciales con número chileno en menos de 30 segundos, con voz latina natural que agenda citas, gestiona cobranza y hace seguimiento. Funciona con tu central IP y cumple la Ley 19.628.",
+      "intro": "Llama a tus clientes potenciales con un número chileno incluido gratis en menos de 30 segundos, con voz latina natural que agenda citas, gestiona cobranza y hace seguimiento. Funciona con tu central IP y cumple la Ley 19.628.",
       "keywords": "agente telefónico IA Chile, llamadas automáticas Chile, central IP Chile, telefonía IP empresas Chile, cobranza telefónica IA",
       "faq": [
-        ["¿Llaman con número chileno?", "Sí, con un número +56 de tu proveedor de telefonía IP o con una línea nuestra."],
+        ["¿Llaman con número chileno?", "Sí. Tu plan incluye gratis un número chileno +56 ya configurado: no tienes que contratar nada más."],
         ["¿Sirve para cobranza?", "Sí. El agente recuerda montos y vencimientos con amabilidad y nunca pide datos de tarjeta por teléfono."],
         ["¿En qué moneda se paga?", "En pesos chilenos (CLP), con un plan mensual sin permanencia."]
       ]
@@ -59,19 +59,19 @@
       "type": "topic",
       "country": "AUTO",
       "title": "Telefonía IP con inteligencia artificial para empresas | VozLeads",
-      "description": "Añade un agente de voz con IA a tu telefonía IP: llama a tus leads en segundos, agenda citas y registra cada llamada. Funciona por SIP en España y Chile, sin cambiar de operador.",
+      "description": "Añade un agente de voz con IA a tu telefonía IP: llama a tus leads en segundos, agenda citas y registra cada llamada. Incluye número de España o Chile gratis.",
       "eyebrow": "Telefonía IP + IA",
       "h1": "Telefonía IP con inteligencia artificial: tus líneas ahora llaman solas",
-      "intro": "Ya pagas una telefonía IP. VozLeads la convierte en un equipo comercial que no duerme: un agente con IA usa tus líneas SIP para llamar a cada nuevo lead en segundos y te deja el resultado por escrito.",
+      "intro": "Telefonía IP y agente de voz en un solo plan: te damos gratis un número de España o Chile y un agente con IA que llama a cada nuevo lead en segundos y te deja el resultado por escrito.",
       "keywords": "telefonía IP, telefonía IP con IA, telefonía IP empresas, VoIP inteligencia artificial, SIP IA",
       "sections": [
-        ["Qué aporta la IA a tu telefonía IP", "La telefonía IP te da líneas baratas y flexibles; la IA les da conversación. Con VozLeads tus números +34 o +56 llaman automáticamente a los leads de tu web, hacen preguntas de calificación, agendan citas y dejan grabación, transcripción y resumen de cada llamada."],
-        ["Compatible con tu proveedor VoIP", "Se conecta por SIP a proveedores como Zadarma y a cualquier operador que permita troncales SIP. No cambias de número ni de operador: solo añades un agente que trabaja con tus líneas."],
+        ["Qué aporta la IA a tu telefonía IP", "La telefonía IP te da líneas baratas y flexibles; la IA les da conversación. Con VozLeads tu número +34 o +56, incluido gratis, llama automáticamente a los leads de tu web, hacen preguntas de calificación, agendan citas y dejan grabación, transcripción y resumen de cada llamada."],
+        ["Número y línea incluidos", "No tienes que contratar operador, número ni cuenta SIP: te entregamos un número de España o Chile ya configurado y listo para llamar desde el primer día."],
         ["Coste por minuto claro", "Ves el coste real de cada llamada en el panel. Pagas un plan mensual de minutos en euros o pesos chilenos, sin permanencia."]
       ],
       "faq": [
-        ["¿Necesito una telefonía IP para usar VozLeads?", "No es obligatorio: puedes usar nuestras líneas. Si ya tienes telefonía IP, la conectas por SIP y llamas con tu propio número."],
-        ["¿VozLeads sustituye a mi operador de telefonía IP?", "No. VozLeads es el agente de voz con IA; tu operador sigue dando las líneas y el número."]
+        ["¿Necesito una telefonía IP para usar VozLeads?", "No. Tu plan incluye gratis el número de España o Chile y la línea para llamar."],
+        ["¿VozLeads sustituye a mi operador de telefonía IP?", "No hace falta: VozLeads ya incluye el número y la línea para las llamadas del agente. Puedes mantener tu operador para el resto de llamadas de tu empresa."]
       ]
     },
     {
@@ -85,12 +85,12 @@
       "intro": "Tu centralita virtual reparte las llamadas; VozLeads las hace. Un agente con IA llama a cada nuevo cliente potencial en segundos, lo califica y le da cita, mientras tu equipo atiende solo a quien está listo para comprar.",
       "keywords": "centralita virtual, centralita virtual IA, centralita IP, centralita en la nube, centralita para empresas",
       "sections": [
-        ["Tu centralita, ahora con agente de voz", "VozLeads funciona junto a tu centralita virtual o centralita IP en la nube. Usa tus mismas líneas SIP para las llamadas salientes del agente, así tus clientes ven siempre tu número de empresa."],
+        ["Tu centralita, ahora con agente de voz", "VozLeads funciona junto a tu centralita virtual o centralita IP en la nube. El agente llama desde un número español incluido gratis en tu plan, así que no tienes que tocar la configuración de tu centralita."],
         ["Del formulario a la cita en un minuto", "Cuando alguien deja sus datos en tu web, el agente le llama al momento, resuelve sus dudas básicas, consulta tu agenda y confirma la cita por email al cliente y a tu equipo."],
         ["Cuando hace falta una persona", "Si el cliente pide hablar con alguien, el agente se lo promete y tu equipo recibe el aviso al instante con nombre, teléfono y motivo."]
       ],
       "faq": [
-        ["¿Tengo que cambiar mi centralita virtual?", "No. VozLeads se suma a tu centralita actual a través de SIP; no sustituye su función de recibir y repartir llamadas."],
+        ["¿Tengo que cambiar mi centralita virtual?", "No. VozLeads trabaja a su lado con su propio número incluido gratis; tu centralita sigue recibiendo y repartiendo llamadas."],
         ["¿El agente atiende llamadas entrantes?", "Hoy VozLeads está especializado en llamadas salientes: llama a tus leads, recuerda citas, gestiona cobros y hace encuestas."]
       ]
     },
@@ -105,12 +105,12 @@
       "intro": "Tu central IP ya conecta a tu equipo. VozLeads le suma un agente con IA y voz latina que llama a cada cliente potencial en segundos, agenda reuniones, recuerda pagos y te deja todo registrado.",
       "keywords": "central IP, central IP Chile, central telefónica IP, central telefónica virtual, PBX IP Chile",
       "sections": [
-        ["Central telefónica IP + agente de voz", "VozLeads usa troncales SIP con número +56, las mismas que usa tu central telefónica IP o PBX en la nube. Tus clientes ven tu número y hablan con un agente que suena natural."],
+        ["Central telefónica IP + agente de voz", "VozLeads incluye gratis un número chileno +56 con su línea, así que funciona junto a tu central telefónica IP o PBX en la nube sin configurarla. Tus clientes hablan con un agente que suena natural."],
         ["Cobranza y seguimiento sin esfuerzo", "Programa llamadas de cobranza, recordatorios de citas y encuestas de satisfacción. El agente adapta el mensaje a cada cliente y nunca pide datos de tarjeta."],
         ["Precios en pesos chilenos", "Planes mensuales de minutos en CLP, sin permanencia, con el coste de cada llamada visible en tu panel."]
       ],
       "faq": [
-        ["¿Funciona con mi central telefónica IP actual?", "Sí, si tu proveedor permite troncales SIP. Si no, puedes usar nuestras líneas con número chileno."],
+        ["¿Funciona con mi central telefónica IP actual?", "Sí. VozLeads trabaja a su lado con un número chileno incluido gratis, sin tocar tu central."],
         ["¿El acento suena chileno?", "Usamos voces latinas naturales y puedes añadir voces con acento nativo desde la biblioteca de ElevenLabs."]
       ]
     },

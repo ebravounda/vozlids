@@ -12,7 +12,7 @@ const USES = [
   [UserRound, "Paso a una persona cuando hace falta", "Si el cliente quiere hablar con alguien, tu equipo recibe el aviso al instante con el motivo."],
   [Code2, "API para tu CRM", "Lanza llamadas desde tu CRM, ERP o plataforma de facturación con una sola petición."],
 ];
-const STEPS = [["Configura", "Elige objetivo, guion, voz y horario. Tu agente queda listo en minutos."], ["Conecta", "Pega el formulario en tu web, conecta tu telefonía IP o usa nuestra API."], ["Vende", "Revisa grabaciones, transcripciones y resultados, y atiende solo a quien está listo."]];
+const STEPS = [["Configura", "Elige objetivo, guion, voz y horario. Tu agente queda listo en minutos."], ["Conecta", "Pega el formulario en tu web o usa nuestra API. El número de España o Chile ya viene incluido."], ["Vende", "Revisa grabaciones, transcripciones y resultados, y atiende solo a quien está listo."]];
 
 export const Hero = ({ page }) => (
   <section className="border-b border-slate-200 bg-slate-50">
@@ -26,7 +26,7 @@ export const Hero = ({ page }) => (
           <Link to="/registro" data-testid="landing-hero-register-button" className="inline-flex items-center gap-1.5 px-2 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900">Crear cuenta <ArrowRight className="h-4 w-4" /></Link>
         </div>
         <ul className="mt-8 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-          {["Llama en menos de 30 segundos", "Voz natural en español", "Grabación y transcripción", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" />{t}</li>)}
+          {[{ ES: "Número +34 de España gratis", CL: "Número +56 de Chile gratis" }[page.country] || "Número +34 o +56 gratis", "Llama en menos de 30 segundos", "Voz natural en español", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" />{t}</li>)}
         </ul>
       </div>
       <InfoForm country={page.country} page={page.path} />
@@ -37,7 +37,7 @@ export const Hero = ({ page }) => (
 export const TrustBar = () => (
   <section className="border-b border-slate-200 bg-white" aria-label="Datos clave">
     <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-6 py-10 md:grid-cols-4">
-      {[["< 30 s", "del formulario a la llamada"], ["24/7", "dentro del horario que elijas"], ["+34 · +56", "números de España y Chile"], ["100 %", "llamadas grabadas y transcritas"]].map(([k, v]) => (
+      {[["< 30 s", "del formulario a la llamada"], ["24/7", "dentro del horario que elijas"], ["Gratis", "número de España o Chile incluido"], ["100 %", "llamadas grabadas y transcritas"]].map(([k, v]) => (
         <div key={k}><p className="text-3xl font-bold text-slate-900" style={H}>{k}</p><p className="mt-1 text-sm text-slate-500">{v}</p></div>
       ))}
     </div>
@@ -86,10 +86,10 @@ export const Uses = () => (
 
 export const Compatible = () => (
   <section className="mx-auto max-w-6xl px-6 py-24" aria-labelledby="compat-title">
-    <h2 id="compat-title" className="max-w-3xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Funciona con tu telefonía IP, central IP u oficina virtual</h2>
-    <p className="mt-3 max-w-3xl text-slate-600">VozLeads no es otro operador: es el agente con IA que trabaja sobre las líneas que ya tienes. Lo conectas por SIP y tus clientes ven siempre el número de tu empresa.</p>
+    <h2 id="compat-title" className="max-w-3xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Número de España o Chile gratis. Y compatible con tu centralita</h2>
+    <p className="mt-3 max-w-3xl text-slate-600">Te damos gratis un número de España (+34) o de Chile (+56) ya configurado: no necesitas contratar telefonía IP ni cuenta SIP. Si ya tienes centralita, central IP u oficina virtual, VozLeads trabaja a su lado sin tocarla.</p>
     <div className="mt-12 grid gap-5 md:grid-cols-3">
-      {[[Server, "Telefonía IP y SIP", "Compatible con Zadarma y cualquier proveedor con troncal SIP.", "/telefonia-ip-con-inteligencia-artificial"],
+      {[[Server, "Número y línea incluidos", "Número +34 o +56 listo para llamar desde el primer día, sin contratar operador.", "/telefonia-ip-con-inteligencia-artificial"],
         [PhoneForwarded, "Centralita virtual y central IP", "Suma un agente que llama a tus leads sin tocar tu centralita.", "/centralita-virtual-con-ia"],
         [Globe2, "Oficina virtual y trabajo remoto", "Tu asistente telefónico con IA llama por ti estés donde estés.", "/oficina-virtual-con-asistente-telefonico-ia"]].map(([I, t, d, to]) => (
         <Link key={t} to={to} className="group rounded-xl border border-slate-200 p-7 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40" data-testid={`compat-${to.slice(1)}`}>
@@ -122,7 +122,7 @@ export const Countries = () => (
   <section className="mx-auto max-w-6xl px-6 py-24">
     <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Pensado para España y Chile</h2>
     <div className="mt-10 grid gap-5 md:grid-cols-2">
-      {[["/es", "España", ["Números +34", "Precios en euros", "Voces en español de España", "Cumple el RGPD"]], ["/cl", "Chile", ["Números +56", "Precios en pesos chilenos", "Voces latinas naturales", "Cumple la Ley 19.628"]]].map(([to, n, items]) => (
+      {[["/es", "España", ["Número +34 gratis", "Precios en euros", "Voces en español de España", "Cumple el RGPD"]], ["/cl", "Chile", ["Número +56 gratis", "Precios en pesos chilenos", "Voces latinas naturales", "Cumple la Ley 19.628"]]].map(([to, n, items]) => (
         <Link key={to} to={to} className="rounded-xl border border-slate-200 p-7 transition-colors hover:border-emerald-300" data-testid={`country-card-${to.slice(1)}`}>
           <h3 className="text-xl font-semibold text-slate-900" style={H}>Agente telefónico con IA en {n}</h3>
           <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-slate-600">{items.map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" />{t}</li>)}</ul>
@@ -181,7 +181,7 @@ export const FinalCta = ({ page }) => (
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl" style={H}>Escúchalo tú mismo en 30 segundos</h2>
         <p className="mt-4 text-slate-300">Déjanos tu teléfono y nuestro agente te llama ahora. Es la misma experiencia que tendrán tus clientes.</p>
-        <p className="mt-6 flex items-center gap-2 text-sm text-slate-400"><PhoneCall className="h-4 w-4 text-emerald-400" />Llamada gratuita · España y Chile</p>
+        <p className="mt-6 flex items-center gap-2 text-sm text-slate-400"><PhoneCall className="h-4 w-4 text-emerald-400" />Llamada gratuita · Número de España o Chile incluido en todos los planes</p>
       </div>
       <InfoForm country={page.country} page={page.path} id="solicitar-final" title="Solicita información" dark />
     </div>
