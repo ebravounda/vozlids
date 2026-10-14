@@ -14,7 +14,7 @@ import { TestPublishTab } from "@/pages/dashboard/TestPublishTab";
 
 const blank = (business) => ({
   name: "Marta", business_name: business || "", product: "", objective: "agendar", questions: [""],
-  voice: "elvira", ambience: "oficina", ambience_volume: 35,
+  voice: "p_marta", ambience: "oficina", ambience_volume: 35,
   greeting: DEFAULT_GREETING.replace("tu negocio", business || "tu negocio"), extra_instructions: "", active: true,
 });
 

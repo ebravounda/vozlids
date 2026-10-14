@@ -39,11 +39,19 @@ export const VoiceTab = ({ agent, update }) => {
   const amb = AMBIENCES.find((a) => a.id === agent.ambience);
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <Panel className="space-y-4">
+      <Panel className="space-y-5">
         <Label>Voz (español de España)</Label>
-        <div className="grid grid-cols-2 gap-3">
-          {VOICES.map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
-        </div>
+        {[[true, "Premium · entonación ultra natural", "Algo más caras por minuto"], [false, "Estándar", "Opción más económica"]].map(([prem, title, note]) => (
+          <div key={title} className="space-y-3" data-testid={prem ? "voice-group-premium" : "voice-group-standard"}>
+            <div className="flex items-baseline justify-between">
+              <p className={`text-xs font-semibold uppercase tracking-widest ${prem ? "text-amber-300" : "text-slate-400"}`}>{title}</p>
+              <p className="text-xs text-slate-500">{note}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {VOICES.filter((v) => !!v.premium === prem).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
+            </div>
+          </div>
+        ))}
       </Panel>
       <Panel className="space-y-4">
         <Label>Ambiente de fondo</Label>

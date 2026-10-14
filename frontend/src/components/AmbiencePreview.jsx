@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { API } from "@/lib/api";
 
-const MALE = ["alvaro", "dario", "arnau"];
+const MALE = ["alvaro", "dario", "arnau", "p_marcos", "p_gonzalo", "p_luis", "p_hector"];
 
 function pickVoice(voiceId) {
   const voices = window.speechSynthesis?.getVoices() || [];

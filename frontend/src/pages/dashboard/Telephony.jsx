@@ -1,7 +1,39 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, CircleDashed } from "lucide-react";
+import { toast } from "sonner";
+import { CheckCircle2, CircleDashed, Loader2, Plug } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PageHeader, Panel } from "@/components/Common";
-import { api } from "@/lib/api";
+import { api, errMsg } from "@/lib/api";
+
+function ConnectZadarma({ onDone }) {
+  const [f, setF] = useState({ sip_login: "", sip_password: "", number: "" });
+  const [busy, setBusy] = useState(false);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const { data } = await api.post("/telephony/zadarma", f);
+      toast.success(`Número ${data.number} conectado. ¡Ya puedes llamar!`);
+      onDone();
+    } catch (err) { toast.error(errMsg(err)); }
+    finally { setBusy(false); }
+  };
+  return (
+    <form onSubmit={submit} className="space-y-4 border-t border-slate-800 pt-5" data-testid="zadarma-connect-form">
+      <h4 className="font-semibold text-white">Conectar mi número de Zadarma</h4>
+      <div className="space-y-2"><Label>Número virtual +34</Label><Input required value={f.number} onChange={set("number")} placeholder="+34 910 000 000" className="bg-slate-950/60 font-mono" data-testid="zadarma-number-input" /></div>
+      <div className="space-y-2"><Label>Usuario SIP (ej. 123456-100)</Label><Input required value={f.sip_login} onChange={set("sip_login")} className="bg-slate-950/60 font-mono" data-testid="zadarma-sip-login-input" /></div>
+      <div className="space-y-2"><Label>Contraseña SIP</Label><Input required type="password" value={f.sip_password} onChange={set("sip_password")} className="bg-slate-950/60" data-testid="zadarma-sip-password-input" /></div>
+      <p className="text-xs text-slate-500">Se envía directamente a Vapi; no la guardamos.</p>
+      <Button type="submit" disabled={busy} className="rounded-full font-semibold" data-testid="zadarma-connect-button">
+        {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plug className="mr-2 h-4 w-4" />} Conectar número
+      </Button>
+    </form>
+  );
+}
 
 const Row = ({ ok, label, testid }) => (
   <div className="flex items-center gap-3 text-sm" data-testid={testid}>
@@ -11,16 +43,17 @@ const Row = ({ ok, label, testid }) => (
 );
 
 const STEPS = [
-  "En Zadarma, contrata un número español (+34) y activa un identificador de llamada español/UE para llamar a móviles a ≈0,02 $/min.",
-  "En Zadarma › Configuración › PBX, crea una extensión SIP y copia su usuario y contraseña.",
-  "En el panel de Vapi › Phone Numbers › Import › BYO SIP Trunk, sigue la guía oficial de Zadarma (servidor sip.zadarma.com) y añade tu número +34.",
-  "Copia el Phone Number ID que te da Vapi y tu API Key privada (Vapi › API Keys).",
-  "Pásaselas al equipo técnico (o pégalas en el chat de Emergent) para activarlas en la plataforma.",
+  "Entra en my.zadarma.com y contrata un número virtual español (+34). Te pedirán documentación (DNI/CIF y dirección) para activarlo.",
+  "En Configuración › Centralita/PBX o «Números SIP», abre tu número SIP (tipo 123456-100) y copia su usuario y contraseña.",
+  "En ese número SIP, en «CallerID», pon tu número +34 para que el lead vea un número español. Activa también la tarifa/identificador UE para pagar ≈0,02 $/min a móviles.",
+  "Recarga algo de saldo en Zadarma (las llamadas salientes se pagan allí).",
+  "Rellena aquí el número, el usuario y la contraseña SIP y pulsa «Conectar número». Nosotros lo damos de alta en Vapi.",
 ];
 
 export default function Telephony() {
   const [s, setS] = useState(null);
-  useEffect(() => { api.get("/telephony/status").then((r) => setS(r.data)); }, []);
+  const load = () => api.get("/telephony/status").then((r) => setS(r.data));
+  useEffect(() => { load(); }, []);
 
   return (
     <div className="fade-up">
@@ -29,10 +62,12 @@ export default function Telephony() {
         <Panel className="space-y-4" data-testid="telephony-panel">
           <h3 className="text-xl font-semibold text-white">Estado</h3>
           <Row ok={s?.has_api_key} label="Clave de Vapi" testid="telephony-api-key-status" />
-          <Row ok={s?.has_phone_number} label="Número +34 de Zadarma conectado en Vapi" testid="telephony-number-status" />
+          <Row ok={s?.has_phone_number} label={s?.number ? `Número ${s.number} conectado en Vapi` : "Número +34 de Zadarma conectado en Vapi"} testid="telephony-number-status" />
           <Row ok label="Webhook de resultados (se configura solo en cada llamada)" testid="telephony-webhook-status" />
           {s && <p className="break-all rounded-lg bg-slate-950 p-3 font-mono text-xs text-slate-400">{s.webhook_url}</p>}
           {s && !s.configured && <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200" data-testid="telephony-not-configured">Mientras falte algún dato, las llamadas se guardan como “Fallida” con el motivo.</p>}
+          {s?.is_admin && s.has_api_key && !s.has_phone_number && <ConnectZadarma onDone={load} />}
+          {s && !s.is_admin && !s.configured && <p className="text-xs text-slate-500">Solo el administrador de la plataforma puede conectar el número.</p>}
         </Panel>
         <Panel className="space-y-4">
           <h3 className="text-xl font-semibold text-white">Cómo conectarlo</h3>

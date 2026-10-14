@@ -63,7 +63,7 @@ async def seed():
     if await db.agents.count_documents({"tenant_id": tid}):
         return
     agent = Agent(tenant_id=tid, name="Marta", business_name="Clínica Dental Sonrisa", product=SAMPLE_PRODUCT,
-                  objective="agendar", voice="elvira", ambience="oficina", ambience_volume=35, is_sample=True,
+                  objective="agendar", voice="p_marta", ambience="oficina", ambience_volume=35, is_sample=True,
                   questions=["¿El tratamiento es para ti o para otra persona?", "¿Qué te gustaría mejorar de tu sonrisa?",
                              "¿Cuándo te gustaría empezar?"],
                   greeting="Hola {nombre}, soy Marta, la asistente virtual de Clínica Dental Sonrisa. Te llamo porque acabas "

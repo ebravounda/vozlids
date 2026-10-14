@@ -2,7 +2,7 @@ import os
 import httpx
 
 VAPI_URL = "https://api.vapi.ai"
-VOICES = {
+STANDARD = {
     "elvira": "es-ES-ElviraNeural",
     "alvaro": "es-ES-AlvaroNeural",
     "ximena": "es-ES-XimenaNeural",
@@ -10,6 +10,63 @@ VOICES = {
     "irene": "es-ES-IreneNeural",
     "arnau": "es-ES-ArnauNeural",
 }
+PREMIUM = {
+    "p_marta": "de38f545-c574-44e8-9b54-a7d6fec1c6b1",
+    "p_nuria": "9d8c6b2e-0a23-4a15-ae1b-121d5b5af417",
+    "p_isabel": "c0c374aa-09be-42d9-9828-4d2d7df86962",
+    "p_elena": "cefcb124-080b-4655-b31f-932f3ee743de",
+    "p_marcos": "13ff5deb-2591-42ad-a356-63a04e524411",
+    "p_gonzalo": "58e531e3-b212-49df-adee-c335a19c2429",
+    "p_luis": "b5aa8098-49ef-475d-89b0-c9262ecf33fd",
+    "p_hector": "b042270c-d46f-4d4f-8fb0-7dd7c5fe5615",
+}
+VOICES = {**STANDARD, **PREMIUM}
+STATE = {"phone_number_id": None, "number": None}
+
+
+def voice_config(voice: str) -> dict:
+    if voice in PREMIUM:
+        return {"provider": "cartesia", "model": "sonic-3", "language": "es", "voiceId": PREMIUM[voice]}
+    return {"provider": "azure", "voiceId": STANDARD[voice]}
+
+
+def phone_number_id():
+    return os.environ.get("VAPI_PHONE_NUMBER_ID") or STATE["phone_number_id"]
+
+
+def _headers() -> dict:
+    return {"Authorization": f"Bearer {os.environ['VAPI_API_KEY']}"}
+
+
+async def _post(path: str, payload: dict) -> dict:
+    try:
+        async with httpx.AsyncClient(timeout=20) as x:
+            r = await x.post(f"{VAPI_URL}{path}", json=payload, headers=_headers())
+    except httpx.HTTPError as e:
+        raise VapiError(f"No se pudo contactar con Vapi: {e.__class__.__name__}")
+    if r.status_code >= 400:
+        try:
+            msg = r.json().get("message")
+        except ValueError:
+            msg = r.text
+        if isinstance(msg, list):
+            msg = "; ".join(map(str, msg))
+        raise VapiError(f"Vapi respondió con error ({r.status_code}): {str(msg)[:300]}")
+    return r.json()
+
+
+async def connect_zadarma(sip_login: str, sip_password: str, number: str) -> dict:
+    cred = await _post("/credential", {
+        "provider": "byo-sip-trunk", "name": "Zadarma Trunk",
+        "gateways": [{"ip": "sip.zadarma.com", "inboundEnabled": False}],
+        "outboundLeadingPlusEnabled": True,
+        "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
+    })
+    phone = await _post("/phone-number", {
+        "provider": "byo-phone-number", "name": "Zadarma +34", "number": number.lstrip("+"),
+        "numberE164CheckEnabled": False, "credentialId": cred["id"],
+    })
+    return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
 OBJECTIVES = {
     "agendar": (
         "Tu objetivo es calificar al lead con las preguntas y, si encaja, reservarle una cita. Para reservar: llama primero a "
@@ -35,7 +92,7 @@ class VapiError(Exception):
 
 
 def configured() -> bool:
-    return bool(os.environ.get("VAPI_API_KEY")) and bool(os.environ.get("VAPI_PHONE_NUMBER_ID"))
+    return bool(os.environ.get("VAPI_API_KEY")) and bool(phone_number_id())
 
 
 def public_url() -> str:
@@ -156,7 +213,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         "model": {"provider": "openai", "model": "gpt-4o", "temperature": 0.5,
                   "messages": [{"role": "system", "content": system_prompt(agent, lead, today)}],
                   "tools": tools(agent, server)},
-        "voice": {"provider": "azure", "voiceId": VOICES[agent["voice"]]},
+        "voice": voice_config(agent["voice"]),
         "transcriber": {"provider": "deepgram", "model": "nova-2", "language": "es"},
         "backgroundSound": background_sound(agent),
         "silenceTimeoutSeconds": 30,
@@ -170,23 +227,9 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
 
 async def create_call(agent: dict, lead: dict, today: str) -> str:
     payload = {
-        "phoneNumberId": os.environ["VAPI_PHONE_NUMBER_ID"],
+        "phoneNumberId": phone_number_id(),
         "customer": {"number": lead["phone"], "name": lead["name"][:40]},
         "assistant": build_assistant(agent, lead, today),
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
     }
-    try:
-        async with httpx.AsyncClient(timeout=20) as x:
-            r = await x.post(f"{VAPI_URL}/call", json=payload,
-                             headers={"Authorization": f"Bearer {os.environ['VAPI_API_KEY']}"})
-    except httpx.HTTPError as e:
-        raise VapiError(f"No se pudo contactar con Vapi: {e.__class__.__name__}")
-    if r.status_code >= 400:
-        try:
-            msg = r.json().get("message")
-        except ValueError:
-            msg = r.text
-        if isinstance(msg, list):
-            msg = "; ".join(map(str, msg))
-        raise VapiError(f"Vapi rechazó la llamada ({r.status_code}): {str(msg)[:300]}")
-    return r.json().get("id")
+    return (await _post("/call", payload)).get("id")

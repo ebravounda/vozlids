@@ -1,4 +1,12 @@
 export const VOICES = [
+  { id: "p_marta", name: "Marta", gender: "Mujer", tone: "Cercana, atención al cliente", premium: true },
+  { id: "p_nuria", name: "Nuria", gender: "Mujer", tone: "Serena y profesional", premium: true },
+  { id: "p_isabel", name: "Isabel", gender: "Mujer", tone: "Castellano suave y amable", premium: true },
+  { id: "p_elena", name: "Elena", gender: "Mujer", tone: "Castellano pausado y cálido", premium: true },
+  { id: "p_marcos", name: "Marcos", gender: "Hombre", tone: "Calmado, asesor de confianza", premium: true },
+  { id: "p_gonzalo", name: "Gonzalo", gender: "Hombre", tone: "Cálido y natural", premium: true },
+  { id: "p_luis", name: "Luis", gender: "Hombre", tone: "Castellano claro y firme", premium: true },
+  { id: "p_hector", name: "Héctor", gender: "Hombre", tone: "Castellano enérgico", premium: true },
   { id: "elvira", name: "Elvira", gender: "Mujer", tone: "Cálida y cercana" },
   { id: "alvaro", name: "Álvaro", gender: "Hombre", tone: "Profesional y sereno" },
   { id: "ximena", name: "Ximena", gender: "Mujer", tone: "Joven y enérgica" },

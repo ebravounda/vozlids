@@ -25,8 +25,13 @@
 - Landing page
 - Seeded demo account with sample data labelled "Ejemplo"
 
+## Iteration 2 (2026-06)
+- VAPI_API_KEY set (validated; assistant config accepted by Vapi API for Cartesia + Azure voices)
+- 8 premium Castilian voices (Cartesia sonic-3 via Vapi billing) + 6 standard Azure voices; new agents default to premium Marta
+- Admin-only "Conectar número" form on Telefonía: creates Vapi byo-sip-trunk credential (sip.zadarma.com) + byo-phone-number, stores phone_number_id in platform_settings (overridable by VAPI_PHONE_NUMBER_ID env)
+
 ## Pending / blockers
-- VAPI_API_KEY and VAPI_PHONE_NUMBER_ID empty → real calls end as "Fallida" until provided
+- Zadarma +34 number not connected yet → real calls end as "Fallida" until user fills the connect form
 
 ## Backlog
 - P1: Stripe plans + minute limits; auto-retries for no-answer; SMS/WhatsApp confirmation; Google Calendar; CSV campaigns

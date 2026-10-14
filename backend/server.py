@@ -370,7 +370,32 @@ async def delete_dnc(entry_id: str, user=CurrentUser):
 @api.get("/telephony/status")
 async def telephony_status(user=CurrentUser):
     return {"configured": vapi.configured(), "has_api_key": bool(os.environ.get("VAPI_API_KEY")),
-            "has_phone_number": bool(os.environ.get("VAPI_PHONE_NUMBER_ID")), "webhook_url": vapi.webhook_url()}
+            "has_phone_number": bool(vapi.phone_number_id()), "number": vapi.STATE["number"],
+            "is_admin": user.get("role") == "admin", "webhook_url": vapi.webhook_url()}
+
+
+class ZadarmaIn(BaseModel):
+    sip_login: str = Field(min_length=2, max_length=80)
+    sip_password: str = Field(min_length=1, max_length=200)
+    number: str
+
+
+@api.post("/telephony/zadarma")
+async def connect_zadarma(body: ZadarmaIn, user=CurrentUser):
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Solo el administrador de la plataforma puede conectar la telefonía.")
+    if not os.environ.get("VAPI_API_KEY"):
+        raise HTTPException(400, "Falta la clave de Vapi.")
+    number = norm_phone(body.number)
+    try:
+        res = await vapi.connect_zadarma(body.sip_login.strip(), body.sip_password, number)
+    except vapi.VapiError as e:
+        raise HTTPException(400, str(e))
+    await db.platform_settings.update_one({"_id": "telephony"}, {"$set": {
+        "phone_number_id": res["phone_number_id"], "credential_id": res["credential_id"],
+        "number": number, "updated_at": now_iso()}}, upsert=True)
+    vapi.STATE.update(phone_number_id=res["phone_number_id"], number=number)
+    return {"ok": True, "number": number}
 
 
 @api.get("/ambience/{preset}/{volume}.wav")
@@ -429,6 +454,9 @@ async def startup():
     await db.dnc.create_index([("tenant_id", 1), ("phone", 1)], unique=True)
     await db.availability.create_index("tenant_id", unique=True)
     await seed()
+    tel = await db.platform_settings.find_one({"_id": "telephony"})
+    if tel:
+        vapi.STATE.update(phone_number_id=tel.get("phone_number_id"), number=tel.get("number"))
 
 
 @app.on_event("shutdown")
