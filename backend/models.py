@@ -91,6 +91,8 @@ class Appointment(BaseDocument):
     duration_minutes: Optional[int] = None
     source: str = "agent"
     reminder_sent_at: Optional[str] = None
+    reminder_email_at: Optional[str] = None
+    reminder_call_at: Optional[str] = None
     reminder_channels: List[str] = []
     confirmed_at: Optional[str] = None
     google_event_id: Optional[str] = None

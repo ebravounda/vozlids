@@ -1,0 +1,39 @@
+{
+  "summary": "Tested appointment reminders (settings API, run_due unit test, public confirm/cancel), Google Calendar sync (status/connect/busy, super admin OAuth app CRUD, callback with a bad state, non-admin 403), appointment create/patch/delete regression, free_slots with no Google connection, and the frontend (agenda Reminders & Google tab, ?google=ok/error toasts, lead_email field in the create dialog, reminder status in the event detail, public /cita page confirm/cancel/invalid token, Super admin Google panel through to a generated OAuth URL, landing logo strip and testimonial logos on / and /es). Backend 11/11 pytest passed; every frontend flow passed. Only minor issues found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PATCH /api/appointments/{id}", "issue": "When start changes, the DB correctly resets reminder_sent_at/confirmed_at, but the response is built from the doc returned BEFORE the second update_one, so it still shows the old reminder_sent_at/confirmed_at. Include the reset fields in the same $set (upd) before find_one_and_update."},
+      {"endpoint": "reminders.run_due (call path)", "issue": "If a call reminder falls outside call_from-call_to (e.g. 24h reminder for an 08:00 appointment with a 09:00 window), the appointment is still marked reminder_sent_at with 'llamada no realizada (fuera de horario)' and the call is never retried once the window opens. Consider deferring the call (not claiming the appointment) until the window opens or until start minus a minimum margin. The same applies to quota errors."},
+      {"endpoint": "public /api/public/appointment/{token}", "issue": "The token never expires: a past appointment can still be confirmed or cancelled (cancel deletes the history). Consider rejecting when start < now."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "/app/agenda?google=ok", "issue": "The success toast 'Google Calendar conectado' shows for any visit with ?google=ok, even when nothing is connected. Low impact; could re-check /google/status before showing it.", "affected_selectors": ["[data-sonner-toast]"]}
+    ],
+    "design_issues": [
+      {"screen": "Agenda > Recordatorios y Google", "issues": ["The call window uses native <input type=time>, which shows browser-locale AM/PM ('09:00 AM') in a Spanish UI", "Grammar: '1 recordatorios enviados' should be singular when the count is 1"]},
+      {"screen": "Landing testimonials", "issues": ["The Tramilex logo in the figcaption is very small/thin and hard to read"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter27.py", "/app/test_reports/pytest/pytest_iter27.xml"],
+  "action_items": [
+    "PATCH appointments: return the reset reminder_sent_at/confirmed_at in the response (fold them into the same update)",
+    "Reminder calls: don't permanently mark as sent when outside the call window or over quota; defer instead",
+    "Optional: reject public confirm/cancel for past appointments; pluralise the sent counter; check google status before the ?google=ok toast"
+  ],
+  "critical_code_review_comments": [
+    "reminders.run_due marks reminder_sent_at atomically (good, no double send); confirmed by a second run",
+    "Appointment.out does not leak reminder_token (verified)",
+    "public_cancel: when lead_id is not a valid ObjectId it filters {'_id': None}; harmless but odd. Also lead update is not tenant-scoped",
+    "admin_google response does not expose client_secret (good)"
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter27.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Temporary TEST_iter27 appointments (incl. one with reminder_token TESTiter27publictoken01) were all deleted or cancelled. A temporary user was registered and deleted. Admin reminders were restored to defaults and the platform_settings google doc was deleted. The run_due test sent one real reminder email to test@example.com.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run with: cd /app/backend && REACT_APP_BACKEND_URL=... python -m pytest tests/test_vozlead_iter27.py -n0 (tests are order-dependent and use a module-level asyncio LOOP for motor). pytest.ini adds xdist, so -n0 is needed. A real Google OAuth flow can't be completed: with fake credentials the generated URL goes to Google's invalid_client error page, as expected."
+}

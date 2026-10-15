@@ -102,19 +102,24 @@ async def run_due() -> int:
         tid, cfg = str(owner["_id"]), {**DEFAULT, **owner["reminders"]}
         now = datetime.now(S.tz_of(owner.get("country", "ES")))
         lo, hi = now.strftime("%Y-%m-%dT%H:%M"), (now + timedelta(hours=cfg["hours_before"])).strftime("%Y-%m-%dT%H:%M")
-        q = {"tenant_id": tid, "start": {"$gt": lo, "$lte": hi}, "reminder_sent_at": None, "is_sample": {"$ne": True},
+        pending = ([{"reminder_email_at": None}] if cfg["email"] else []) + ([{"reminder_call_at": None}] if cfg["call"] else [])
+        q = {"tenant_id": tid, "start": {"$gt": lo, "$lte": hi}, "is_sample": {"$ne": True}, "$or": pending,
              "created_at": {"$lt": (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()}}
-        while a := await db.appointments.find_one_and_update(q, {"$set": {"reminder_sent_at": now_iso()}}):
-            token = secrets.token_urlsafe(18)
-            await db.appointments.update_one({"_id": a["_id"]}, {"$set": {"reminder_token": token}})
-            done = []
-            if cfg["email"] and await _email(a, owner, token):
-                done.append("email")
-            if cfg["call"]:
+        for a in await db.appointments.find(q).to_list(200):
+            token = a.get("reminder_token") or secrets.token_urlsafe(18)
+            upd, notes = {"reminder_token": token}, list(a.get("reminder_channels") or [])
+            if cfg["email"] and not a.get("reminder_email_at"):
+                upd["reminder_email_at"] = now_iso()
+                notes.append("email" if await _email(a, owner, token) else "email no enviado (sin dirección)")
+            if cfg["call"] and not a.get("reminder_call_at"):
                 err = await _call(a, owner, cfg)
-                done.append("llamada" if not err else f"llamada no realizada ({err})")
-            await db.appointments.update_one({"_id": a["_id"]}, {"$set": {"reminder_channels": done}})
-            n += 1
+                if err != "fuera de horario":
+                    upd["reminder_call_at"] = now_iso()
+                    notes.append("llamada" if not err else f"llamada no realizada ({err})")
+            if len(upd) > 1:
+                upd.update(reminder_channels=notes, reminder_sent_at=a.get("reminder_sent_at") or now_iso())
+                await db.appointments.update_one({"_id": a["_id"]}, {"$set": upd})
+                n += 1
     return n
 
 
@@ -123,6 +128,9 @@ async def _by_token(token: str) -> dict:
     a = await db.appointments.find_one({"reminder_token": token}) if len(token) > 10 else None
     if not a:
         raise HTTPException(404, "Cita no encontrada o ya anulada")
+    country = ((await db.users.find_one({"_id": ObjectId(a["tenant_id"])}, {"country": 1})) or {}).get("country", "ES")
+    if a["start"] < datetime.now(S.tz_of(country)).strftime("%Y-%m-%dT%H:%M"):
+        raise HTTPException(410, "Esta cita ya ha pasado")
     return a
 
 

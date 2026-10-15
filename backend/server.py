@@ -428,10 +428,11 @@ async def create_appointment(body: ApptIn, user=CurrentUser):
 @api.patch("/appointments/{appt_id}")
 async def update_appointment(appt_id: str, body: ApptPatch, user=CurrentUser):
     upd = {k: v for k, v in body.model_dump().items() if v is not None}
-    if "start" in upd:
-        _slot(upd["start"])
     if not upd:
         raise HTTPException(422, "Nada que cambiar")
+    if "start" in upd:
+        _slot(upd["start"])
+        upd.update(reminder_sent_at=None, reminder_email_at=None, reminder_call_at=None, confirmed_at=None, reminder_channels=[])
     try:
         doc = await db.appointments.find_one_and_update({"_id": oid(appt_id), "tenant_id": user["id"]}, {"$set": upd},
                                                         return_document=True)
@@ -439,8 +440,6 @@ async def update_appointment(appt_id: str, body: ApptPatch, user=CurrentUser):
         raise HTTPException(409, "Ya hay una cita a esa hora")
     if not doc:
         raise HTTPException(404, "Cita no encontrada")
-    if "start" in upd:
-        await db.appointments.update_one({"_id": doc["_id"]}, {"$set": {"reminder_sent_at": None, "confirmed_at": None}})
     gcal.sync(doc["_id"])
     return Appointment.from_mongo(doc).out()
 

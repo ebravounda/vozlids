@@ -79,7 +79,7 @@ export const Testimonials = () => (
             <div className="flex flex-1 flex-col p-6">
               <Quote className="h-6 w-6 text-blue-200" />
               <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-slate-700">{quote}</blockquote>
-              <figcaption className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-4"><img src={LOGOS[i][1]} alt="" className="h-10 w-16 shrink-0 object-contain" /><div><p className="font-bold text-slate-900" style={H}>{biz}</p><p className="text-sm text-slate-500">{role} · {where}</p></div></figcaption>
+              <figcaption className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-4"><img src={LOGOS[i][1]} alt="" className="h-12 w-24 shrink-0 object-contain" /><div><p className="font-bold text-slate-900" style={H}>{biz}</p><p className="text-sm text-slate-500">{role} · {where}</p></div></figcaption>
             </div>
           </figure>
         ))}

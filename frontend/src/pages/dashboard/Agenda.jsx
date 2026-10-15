@@ -46,7 +46,7 @@ export default function Agenda() {
   useEffect(() => {
     api.get("/availability").then((r) => setAv(r.data));
     const g = new URLSearchParams(window.location.search).get("google");
-    if (g === "ok") toast.success("Google Calendar conectado");
+    if (g === "ok") api.get("/google/status").then((r) => r.data.connected && toast.success(`Google Calendar conectado con ${r.data.email}`));
     if (g === "error") toast.error("No se pudo conectar Google Calendar. Inténtalo de nuevo.");
     if (g) window.history.replaceState(null, "", "/app/agenda");
   }, []);

@@ -33,6 +33,7 @@ export function GoogleCard() {
   );
 }
 
+const TIMES = Array.from({ length: 33 }, (_, i) => `${String(6 + Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
 const HOURS = [[24, "24 h antes"], [3, "3 h antes"], [1, "1 h antes"]];
 
 export function RemindersCard() {
@@ -57,9 +58,9 @@ export function RemindersCard() {
       <div className="space-y-2"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Cuándo</p>
         <div className="flex flex-wrap gap-2">{HOURS.map(([h, l]) => <button key={h} onClick={() => setF({ ...f, hours_before: h })} className={`rounded-full border px-4 py-1.5 text-sm ${f.hours_before === h ? "border-blue-600 bg-blue-600 font-semibold text-white" : "border-slate-200 text-slate-600"}`} data-testid={`reminder-hours-${h}`}>{l}</button>)}</div></div>
       {f.call && <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600" data-testid="reminder-call-window">Llamar solo entre
-        <input type="time" value={f.call_from} onChange={(e) => setF({ ...f, call_from: e.target.value })} className={t} data-testid="reminder-call-from" /> y
-        <input type="time" value={f.call_to} onChange={(e) => setF({ ...f, call_to: e.target.value })} className={t} data-testid="reminder-call-to" /></div>}
-      <div className="flex items-center justify-between gap-3"><span className="text-xs text-slate-500" data-testid="reminder-sent-total">{f.sent_total} recordatorios enviados</span>
+        <select value={f.call_from} onChange={(e) => setF({ ...f, call_from: e.target.value })} className={t} data-testid="reminder-call-from">{TIMES.map((x) => <option key={x}>{x}</option>)}</select> y
+        <select value={f.call_to} onChange={(e) => setF({ ...f, call_to: e.target.value })} className={t} data-testid="reminder-call-to">{TIMES.map((x) => <option key={x}>{x}</option>)}</select></div>}
+      <div className="flex items-center justify-between gap-3"><span className="text-xs text-slate-500" data-testid="reminder-sent-total">{f.sent_total} {f.sent_total === 1 ? "recordatorio enviado" : "recordatorios enviados"}</span>
         <Button onClick={save} disabled={busy} className="rounded-full bg-blue-600 text-white hover:bg-blue-700" data-testid="reminder-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Guardar</Button></div>
     </Panel>
   );

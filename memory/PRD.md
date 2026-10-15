@@ -187,3 +187,9 @@
 - Probado: iteration_26.json (97%, mejoras menores aplicadas)
 - Pendiente: que los clientes aprueben los textos de los testimonios
 
+## 2026-06 Google Calendar + recordatorios + logos
+- gcal.py: app OAuth en Super Admin (platform_settings google: client_id/secret; redirect {PUBLIC_BACKEND_URL}/api/oauth/calendar/callback). Cada cliente conecta su Google (users.google_calendar). Citas se crean/actualizan/borran en Google; eventos ocupados de Google bloquean huecos del agente (free_slots) y se ven en el calendario. PENDIENTE: el usuario debe pegar ID y secreto OAuth en Super Admin
+- reminders.py: users.reminders {email, call, hours_before 24|3|1, call_from, call_to}; worker cada ~60 s; email con enlace /cita/{token} (confirmar/anular); llamada IA (gasta minutos) solo dentro de la ventana, si no se reintenta; PATCH de hora reinicia recordatorios
+- Landing: LogoStrip (public/clients/*.webp) + logos en testimonios
+- Probado: iteration_27.json (100%), mejoras menores aplicadas
+
