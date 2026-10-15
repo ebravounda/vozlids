@@ -154,3 +154,9 @@
 - widget.js envia eventos view/open (POST /api/public/widget/{id}/event, text/plain, max 30/ip/dia); leads del iframe con source=widget
 - Embudo vistas->pulsaciones->telefono->contestada->cita (GET /api/widget/stats?days, /api/admin/monitor/widget-stats) con grafico 7/30/90 (components/WidgetStats.jsx) en Boton para tu web y Monitor
 - Self-tested curl + screenshot
+
+## 2026-06 Stripe modo prueba
+- platform_settings stripe: secret_key (real) + test_key opcional (si no, STRIPE_API_KEY emergent) + test_scope off|all|emails + test_emails
+- billing.client(mode), mode_for(email); tx/user guardan stripe_mode; webhook verifica con ambos secretos; altas de prueba billing_test=True -> badge PRUEBA, no cuentan como ingreso
+- UI en Super admin > Cobros con Stripe > Modo prueba
+- Tested iteration_22 OK

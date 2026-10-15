@@ -1,0 +1,31 @@
+{
+  "summary": "Iter-22 (Stripe test mode). Backend pytest 13/13 PASS (test_vozlead_iter22.py). Verified: GET /api/admin/stripe shape includes test_connected/test_scope/test_emails/test_key_last4/test_account_name; PUT /api/admin/stripe/test-mode persists scope=off|all|emails with email normalization (lowercased, deduped, non-'@' entries dropped) and rejects scope='emails' with empty list (422) + invalid scope (422); PUT /api/admin/stripe/test-key rejects sk_live_ keys (422 with 'sk_test_' message) and short keys (422); admin endpoints enforce admin (business JWT -> 403). Business checkout: with scope='all' or scope='emails' including the user, POST /api/billing/checkout returns a valid https checkout_url and cs_* session_id — routed through sk_test_emergent proxy because no own Stripe key is connected in preview (make_client -> base_addresses={'api': 'https://integrations.emergentagent.com/stripe'}). Frontend (admin logged in): /app/admin shows stripe-settings-panel + stripe-test-mode section with three scope buttons (off/all/emails), stripe-test-emails-input appears when emails selected, stripe-test-mode-save persists (toast 'Modo prueba desactivado/activado' + stripe-test-mode-active 'ACTIVO' badge on non-off scope), stripe-test-key-input + stripe-test-key-status rendered, and GET /api/admin/stripe confirmed persistence in-browser.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter22.py",
+    "/app/test_reports/pytest/iter22_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "billing.make_client: if 'sk_test_emergent' in key branch returns a stripe.StripeClient with base_addresses={'api': PROXY}. The proxy URL is hardcoded ('https://integrations.emergentagent.com/stripe'); fine for Emergent internal preview flow but consider making it an env override for future portability.",
+    "billing.mode_for: returns 'test' only when scope='all' OR (scope='emails' AND email in test_emails). Good. Email match uses lowercase on both sides via test-mode PUT normalization — safe.",
+    "billing.client(): fallback to os.environ['STRIPE_API_KEY'] when neither live secret_key nor test_key is set in platform_settings. In preview STRIPE_API_KEY='sk_test_emergent' so both modes use the proxy — correct. Documented via `proxy` flag returned.",
+    "billing.checkout: when proxy=True overrides mode to 'test' and persists stripe_mode='test' on payment_transaction. Good for later status reconciliation via /billing/status/{session_id}.",
+    "billing.portal: if shared_test is True returns 400 ('El portal estará disponible cuando la cuenta de Stripe esté conectada.') — correct: Stripe-hosted portal won't work through the Emergent proxy for the shared test account.",
+    "billing.cancel: skips Stripe API call entirely when shared_test (since the shared proxy test account subs don't belong to the merchant). It only updates local cancel_at_period_end=True. Reasonable for preview; in prod with a real test_key, shared_test would be False and the real Stripe API is called.",
+    "TestModeIn: pattern '^(off|all|emails)$' + emails list[str] max_length=20. Good. One small concern: the empty-emails-with-scope=emails check raises 422 AFTER sanitising; so passing [' bad '] (no @) correctly becomes [] and 422s. Verified by test.",
+    "AdminIntegrations StripeSettings → TestMode section renders only when parent stripe-settings-panel is loaded; the useState initializer reads from `s` (parent state) which was undefined on first render in previous iterations. Current code guards with `if (!s) return null;` style via conditional parent — verified no console errors during Playwright run.",
+    "connect_key: for prefix='test_' deletes old test webhook when the same key is re-saved — avoids orphan webhooks. Good. One nit: both production and test webhooks post to the same /api/billing/webhook URL and webhook() iterates both secrets to construct_event — correct, idempotent."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_iter22.py (new)"
+  ],
+  "success_rate": {"backend": "100% (13/13)", "frontend": "100% (all flows passed)"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Pytest creates 1 TEST_stripe_<uuid>@vozlead-test.es business user (via /api/auth/register with DNI 12345678Z + billing_address{line,street,city,postal_code,country}) and deletes it in teardown. platform_settings/stripe doc is snapshotted before tests and restored after — no side-effects on seeded config. Frontend test resets scope back to 'off' at end of flow.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Stripe test mode: GET/PUT /api/admin/stripe, PUT/DELETE /api/admin/stripe/test-key, PUT /api/admin/stripe/test-mode (body {scope:'off|all|emails', emails:[...]}). Checkout mode is decided by billing.mode_for(email) using platform_settings.test_scope + test_emails; when key is 'sk_test_emergent' (preview default), stripe.StripeClient is pointed at PROXY='https://integrations.emergentagent.com/stripe'. Billing portal is disabled while running on the shared test proxy. Register body for business users must include billing_address.line (NOT just .street). Run tests with: REACT_APP_BACKEND_URL=https://ai-voice-caller-2.preview.emergentagent.com MONGO_URL=mongodb://localhost:27017 DB_NAME=<from backend/.env> python -m pytest tests/test_vozlead_iter22.py -n 0.",
+  "rca of the issue": "N/A — feature implementation matches the request. All 13 backend tests + full admin UI flow pass."
+}
