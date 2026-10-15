@@ -257,7 +257,7 @@ async def platform_inbound(user=Depends(X.require_admin)):
     for c, n in vapi.STATE["numbers"].items():
         r = await db.tenant_numbers.find_one({"platform": True, "country": c}) or {}
         out.append({"country": c, "number": n.get("number"), "enabled": r.get("status") == "activo",
-                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": r.get("inbound_uri") or vapi.inbound_sip_uri(n.get("number", ""), n.get("credential_id", "")),
+                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": vapi.inbound_sip_uri(n.get("number", "")),
                     "routed": r.get("routed", False)})
     return out
 
@@ -275,16 +275,16 @@ async def platform_inbound_on(body: PlatformInboundIn, user=Depends(X.require_ad
     routed, note = False, ""
     if (await Z.creds()).get("key"):
         try:
-            await Z.route_to(n["number"], sip["uri"][4:])
+            await Z.route_to(n["number"], vapi.inbound_sip_uri(n["number"]))
             routed = True
         except Z.ZadarmaError as e:
             note = str(e)[:200]
     await db.tenant_numbers.update_one({"platform": True, "country": body.country}, {"$set": {
         "tenant_id": user["id"], "number": n["number"], "phone_number_id": n["phone_number_id"], "credential_id": n["credential_id"],
         "status": "activo", "inbound_agent_id": body.agent_id, "routed": routed, "updated_at": now_iso(),
-        "inbound_phone_number_id": sip["id"], "inbound_uri": sip["uri"][4:]},
+        "inbound_phone_number_id": sip["id"], "inbound_uri": vapi.inbound_sip_uri(n["number"])},
         "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
-    return {"ok": True, "routed": routed, "note": note, "sip_uri": sip["uri"][4:]}
+    return {"ok": True, "routed": routed, "note": note, "sip_uri": vapi.inbound_sip_uri(n["number"])}
 
 
 @router.delete("/admin/platform-inbound/{country}")

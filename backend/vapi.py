@@ -137,7 +137,7 @@ async def connect_tenant_number(sip_login: str, sip_password: str, number: str, 
 
 
 ZADARMA_IN = [("185.45.152.0", 24), ("185.45.154.0", 24), ("185.45.155.0", 24), ("195.122.19.0", 24),
-              ("15.235.128.70", 32), ("31.31.222.201", 32)]
+              ("15.235.128.0", 24), ("31.31.222.0", 24)]
 INBOUND_GATEWAYS = [{"ip": "sip.zadarma.com", "inboundEnabled": False}] + [
     {"ip": ip, "netmask": m, "inboundEnabled": True, "outboundEnabled": False} for ip, m in ZADARMA_IN]
 

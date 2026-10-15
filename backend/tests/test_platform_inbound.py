@@ -27,9 +27,9 @@ ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 ES_AGENT_ID = "6acfac3a346c4c1ebc71ff58"
 # BYO-SIP phone-number id (Zadarma trunk) — must still resolve via inbound_phone_number_id OR phone_number_id
 BYO_PHONE_ID = "69c05ec5-d39d-4948-a76d-33329aa4ada5"
-# Vapi free-SIP phone-number id used as actual inbound target (sip:vozleads-34919932652@sip.vapi.ai)
+# Vapi free-SIP phone-number id used as actual inbound target (sip:34919932652@sip.vapi.ai)
 SIP_PHONE_ID = "dc43e89e-276b-44fa-bd5d-de43e6de85af"
-EXPECTED_SIP_URI = "vozleads-34919932652@sip.vapi.ai"
+EXPECTED_SIP_URI = "34919932652@sip.vapi.ai"
 
 
 @pytest.fixture(scope="module")
