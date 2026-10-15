@@ -375,10 +375,67 @@ async def save_availability(body: AvailabilityIn, user=CurrentUser):
 
 
 @api.get("/appointments")
-async def list_appointments(user=CurrentUser):
-    today = S.madrid_now().strftime("%Y-%m-%d")
-    docs = await db.appointments.find({"tenant_id": user["id"], "start": {"$gte": today}}).sort("start", 1).to_list(300)
+async def list_appointments(user=CurrentUser, start: Optional[str] = None, end: Optional[str] = None):
+    lo = start or S.madrid_now().strftime("%Y-%m-%d")
+    q = {"tenant_id": user["id"], "start": {"$gte": lo, **({"$lt": end} if end else {})}}
+    docs = await db.appointments.find(q).sort("start", 1).to_list(1000)
     return [Appointment.from_mongo(d).out() for d in docs]
+
+
+SLOT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$")
+
+
+class ApptIn(BaseModel):
+    start: str = Field(max_length=16)
+    lead_name: str = Field(min_length=1, max_length=80)
+    lead_phone: str = Field("", max_length=25)
+    notes: str = Field("", max_length=500)
+    duration_minutes: Optional[int] = Field(None, ge=5, le=480)
+
+
+class ApptPatch(BaseModel):
+    start: Optional[str] = Field(None, max_length=16)
+    notes: Optional[str] = Field(None, max_length=500)
+    duration_minutes: Optional[int] = Field(None, ge=5, le=480)
+
+
+def _slot(v: str) -> str:
+    if not SLOT_RE.match(v):
+        raise HTTPException(422, "Fecha y hora no válidas (AAAA-MM-DDTHH:MM)")
+    return v
+
+
+@api.post("/appointments")
+async def create_appointment(body: ApptIn, user=CurrentUser):
+    country = (await db.users.find_one({"_id": oid(user["id"])}, {"country": 1}) or {}).get("country", "ES")
+    try:
+        phone = norm_phone(body.lead_phone, country) if body.lead_phone.strip() else ""
+    except (ValueError, HTTPException):
+        raise HTTPException(422, "Teléfono no válido")
+    appt = Appointment(tenant_id=user["id"], lead_name=body.lead_name.strip(), lead_phone=phone, start=_slot(body.start),
+                       notes=body.notes.strip(), duration_minutes=body.duration_minutes, source="manual")
+    try:
+        res = await db.appointments.insert_one(appt.to_mongo())
+    except DuplicateKeyError:
+        raise HTTPException(409, "Ya hay una cita a esa hora")
+    return Appointment.from_mongo(await db.appointments.find_one({"_id": res.inserted_id})).out()
+
+
+@api.patch("/appointments/{appt_id}")
+async def update_appointment(appt_id: str, body: ApptPatch, user=CurrentUser):
+    upd = {k: v for k, v in body.model_dump().items() if v is not None}
+    if "start" in upd:
+        _slot(upd["start"])
+    if not upd:
+        raise HTTPException(422, "Nada que cambiar")
+    try:
+        doc = await db.appointments.find_one_and_update({"_id": oid(appt_id), "tenant_id": user["id"]}, {"$set": upd},
+                                                        return_document=True)
+    except DuplicateKeyError:
+        raise HTTPException(409, "Ya hay una cita a esa hora")
+    if not doc:
+        raise HTTPException(404, "Cita no encontrada")
+    return Appointment.from_mongo(doc).out()
 
 
 @api.delete("/appointments/{appt_id}")

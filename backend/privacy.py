@@ -71,8 +71,13 @@ async def _drop_vapi(call_id: str) -> None:
 
 
 async def erase_subject(tid: str, phone: str, email: str) -> dict:
-    leads = await db.leads.find(_match(tid, phone, email), {"_id": 1, "vapi_call_id": 1}).to_list(5000)
+    leads = await db.leads.find(_match(tid, phone, email), {"_id": 1, "vapi_call_id": 1, "created_at": 1, "duration_seconds": 1,
+                                                            "agent_id": 1, "source": 1, "sandbox": 1, "cost": 1}).to_list(5000)
     ids = [str(x["_id"]) for x in leads]
+    usage = [{"tenant_id": tid, **{k: x.get(k) for k in ("created_at", "duration_seconds", "agent_id", "source", "sandbox", "cost")},
+              "archived_at": now_iso(), "reason": "rgpd_erase"} for x in leads if x.get("duration_seconds")]
+    if usage:
+        await db.usage_archive.insert_many(usage)
     for x in leads:
         if x.get("vapi_call_id"):
             await _drop_vapi(x["vapi_call_id"])
@@ -139,6 +144,7 @@ async def ensure_indexes() -> None:
     await db.api_request_logs.create_index([("key_id", 1), ("at", -1)])
     await db.privacy_log.create_index([("tenant_id", 1), ("created_at", -1)])
     await db.leads.create_index([("tenant_id", 1), ("phone", 1)])
+    await db.usage_archive.create_index([("tenant_id", 1), ("created_at", 1)])
 
 
 async def key_requests(tid: str, kid: str, limit: int, errors_only: bool) -> dict:

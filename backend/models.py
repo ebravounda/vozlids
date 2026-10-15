@@ -87,6 +87,8 @@ class Appointment(BaseDocument):
     agent_id: Optional[str] = None
     start: str
     notes: str = ""
+    duration_minutes: Optional[int] = None
+    source: str = "agent"
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)
 

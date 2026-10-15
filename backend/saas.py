@@ -41,9 +41,13 @@ def month_start() -> str:
 
 
 async def minutes_used(tenant_id: str) -> float:
-    rows = await db.leads.aggregate([{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}}},
-                                     {"$group": {"_id": None, "s": {"$sum": {"$ifNull": ["$duration_seconds", 0]}}}}]).to_list(1)
-    return round((rows[0]["s"] if rows else 0) / 60, 1)
+    q = [{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}}},
+         {"$group": {"_id": None, "s": {"$sum": {"$ifNull": ["$duration_seconds", 0]}}}}]
+    secs = 0
+    for col in (db.leads, db.usage_archive):
+        rows = await col.aggregate(q).to_list(1)
+        secs += rows[0]["s"] if rows else 0
+    return round(secs / 60, 1)
 
 
 async def quota_error(tenant_id: str) -> Optional[str]:
