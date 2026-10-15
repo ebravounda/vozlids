@@ -8,7 +8,7 @@ command -v docker >/dev/null || { echo "ERROR: Docker no está instalado."; exit
 $DC version >/dev/null 2>&1 || { echo "ERROR: falta 'docker compose' (plugin v2)."; exit 1; }
 
 if [ ! -f .env ]; then
-  cp .env.example .env
+  cp env.example .env
   for k in JWT_SECRET VAPI_WEBHOOK_SECRET WEBHOOK_CRON_SECRET; do
     sed -i "s|^$k=.*|$k=$(openssl rand -hex 32)|" .env
   done
