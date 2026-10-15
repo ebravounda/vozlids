@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import timedelta
 import auth as A
 import services as S
@@ -65,8 +66,16 @@ async def migrate_voices():
     await db.platform_settings.update_one({"_id": "migrations"}, {"$set": {"voices_11labs": True}}, upsert=True)
 
 
+async def migrate_templates():
+    pat = r"^Hola \{nombre\}, (soy \{agente\}, )?te llamo de .+?\. Soy una? asistente virtual y la llamada se graba\."
+    new = "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba."
+    async for t in db.call_templates.find({"greeting": {"$regex": pat}}, {"greeting": 1}):
+        await db.call_templates.update_one({"_id": t["_id"]}, {"$set": {"greeting": re.sub(pat, new, t["greeting"])}})
+
+
 async def seed():
     await migrate_voices()
+    await migrate_templates()
     if not await db.plans.count_documents({}):
         await db.plans.insert_many([{**p, "public": True, "created_at": now_iso()} for p in SAMPLE_PLANS])
     email = os.environ["ADMIN_EMAIL"].lower()

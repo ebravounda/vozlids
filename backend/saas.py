@@ -261,13 +261,15 @@ class TemplateIn(BaseModel):
     greeting: str = Field(min_length=1, max_length=600)
 
 
+TEMPLATE_GREETING = "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?"
+
+
 @router.get("/templates")
 async def list_templates(user=CurrentUser):
     if not await db.call_templates.count_documents({"tenant_id": user["id"]}):
-        biz = user.get("business_name", "")
         await db.call_templates.insert_many([{
             "tenant_id": user["id"], "name": label, "call_type": k, "purpose": text, "created_at": now_iso(),
-            "greeting": f"Hola {{nombre}}, te llamo de {biz}. Soy un asistente virtual y la llamada se graba. ¿Tienes un minuto?"}
+            "greeting": TEMPLATE_GREETING}
             for k, (label, text) in CALL_TYPES.items()])
     docs = await db.call_templates.find({"tenant_id": user["id"]}).sort("created_at", 1).to_list(100)
     return [{**{k: v for k, v in d.items() if k != "_id"}, "id": str(d["_id"])} for d in docs]

@@ -94,7 +94,7 @@ export const VoiceTab = ({ agent, update }) => {
           </div>
         )}
         <div className="border-t border-slate-800 pt-4">
-          <AmbiencePreview ambience={agent.ambience} volume={agent.ambience_volume} voice={agent.voice} text={agent.greeting.replace("{nombre}", "Laura")} />
+          <AmbiencePreview ambience={agent.ambience} volume={agent.ambience_volume} voice={agent.voice} text={agent.greeting.replace("{nombre}", "Laura").replace("{empresa}", agent.business_name || "").replace("{agente}", agent.name || "")} />
           <p className="mt-3 text-xs text-slate-500">El ambiente es el mismo que sonará en la llamada. La vista previa usa la misma voz ElevenLabs de las llamadas (si el administrador conectó ElevenLabs); en la llamada real suena con calidad telefónica.</p>
         </div>
       </Panel>

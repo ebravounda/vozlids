@@ -14,7 +14,7 @@ const TYPES = { seguimiento: "Seguimiento", cobro: "Cobro", info: "Información"
 const STATUS_CLS = { pendiente: "text-cyan-300", realizada: "text-emerald-300", cancelada: "text-slate-500", fallida: "text-red-300", no_llamar: "text-rose-300", en_proceso: "text-amber-300" };
 
 function TemplateEditor({ onSaved }) {
-  const [f, setF] = useState({ name: "", call_type: "seguimiento", purpose: "", greeting: "Hola {nombre}, te llamo de parte de nuestro equipo. Soy un asistente virtual y la llamada se graba. ¿Tienes un minuto?" });
+  const [f, setF] = useState({ name: "", call_type: "seguimiento", purpose: "", greeting: "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?" });
   const save = async () => {
     try { await api.post("/templates", f); toast.success("Plantilla creada"); setF({ ...f, name: "", purpose: "" }); onSaved(); }
     catch (e) { toast.error(errMsg(e)); }
@@ -31,6 +31,7 @@ function TemplateEditor({ onSaved }) {
       </div>
       <Textarea rows={3} placeholder="Qué debe conseguir el agente en esta llamada" value={f.purpose} onChange={(e) => setF({ ...f, purpose: e.target.value })} className="bg-slate-950/60" data-testid="template-purpose-input" />
       <Textarea rows={2} value={f.greeting} onChange={(e) => setF({ ...f, greeting: e.target.value })} className="bg-slate-950/60" data-testid="template-greeting-input" />
+      <p className="text-xs text-slate-500" data-testid="template-greeting-hint">Usa <code className="text-emerald-300">{"{nombre}"}</code> (cliente), <code className="text-emerald-300">{"{agente}"}</code> y <code className="text-emerald-300">{"{empresa}"}</code>: se rellenan con el nombre y la empresa del agente que hace la llamada.</p>
       <Button onClick={save} disabled={!f.name || !f.purpose} className="rounded-full" data-testid="template-save-button"><Plus className="mr-2 h-4 w-4" /> Guardar plantilla</Button>
     </div>
   );

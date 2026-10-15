@@ -243,7 +243,10 @@ def inbound(lead: dict) -> bool:
 def greeting(agent: dict, lead: dict) -> str:
     if inbound(lead):
         return f"Hola, {agent['business_name']}, te atiende {agent['name']}, la asistente virtual. ¿En qué te puedo ayudar?"
-    return (lead.get("greeting") or agent["greeting"]).replace("{nombre}", first_name(lead["name"])).strip()
+    text = lead.get("greeting") or agent["greeting"]
+    for k, v in (("{nombre}", first_name(lead["name"])), ("{empresa}", agent["business_name"]), ("{agente}", agent["name"])):
+        text = text.replace(k, v)
+    return text.strip()
 
 
 def system_prompt(agent: dict, lead: dict, today: str) -> str:
