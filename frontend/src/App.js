@@ -14,6 +14,7 @@ import AgentBuilder from "@/pages/dashboard/AgentBuilder";
 import Agenda from "@/pages/dashboard/Agenda";
 import DoNotCall from "@/pages/dashboard/DoNotCall";
 import Telephony from "@/pages/dashboard/Telephony";
+import MyNumberPage from "@/pages/dashboard/MyNumberPage";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
 import Outbound from "@/pages/dashboard/Outbound";
 import Support from "@/pages/dashboard/Support";
@@ -46,6 +47,7 @@ function App() {
             <Route path="agentes/:agentId" element={<AgentBuilder />} />
             <Route path="agenda" element={<Agenda />} />
             <Route path="no-llamar" element={<DoNotCall />} />
+            <Route path="numero" element={<MyNumberPage />} />
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
             <Route path="llamadas" element={<Outbound />} />

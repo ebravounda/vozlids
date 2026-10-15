@@ -50,7 +50,7 @@ export const AMBIENCES = [
   { id: "oficina", name: "Oficina con teclados", desc: "Teclados y murmullo lejano de compañeros", volume: true },
   { id: "teclados", name: "Solo teclado", desc: "Tecleo suave de escritorio mientras habla", volume: true },
   { id: "call_center", name: "Call center", desc: "Muchas voces de fondo y actividad", volume: true },
-  { id: "vapi_office", name: "Oficina clásica (Vapi)", desc: "Ambiente integrado de Vapi, volumen fijo", volume: false },
+  { id: "vapi_office", name: "Oficina clásica", desc: "Ambiente integrado, volumen fijo", volume: false },
   { id: "none", name: "Sin ambiente", desc: "Voz limpia, sin sonido de fondo", volume: false },
 ];
 

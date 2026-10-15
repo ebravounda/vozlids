@@ -11,7 +11,7 @@ import { CustomAmbiences } from "@/components/CustomAmbiences";
 import { AMBIENCES, COUNTRIES, DEFAULT_VOICE, OBJECTIVES, TIER, VOICES } from "@/lib/constants";
 
 const GROUPS = [
-  ["eleven", "ElevenLabs · las más naturales", "Recomendado · algo más caro por minuto", "text-emerald-300"],
+  ["eleven", "Ultra natural HD · las más humanas", "Recomendado · algo más caro por minuto", "text-emerald-300"],
   ["premium", "Premium", "Buena calidad, más económica", "text-amber-300"],
   ["standard", "Estándar", "Opción más barata, suena más robótica", "text-slate-400"],
 ];
@@ -61,7 +61,7 @@ export const GeneralTab = ({ agent, update }) => (
 export const VoiceTab = ({ agent, update }) => {
   const amb = agent.ambience.startsWith("custom:") ? { volume: true } : AMBIENCES.find((a) => a.id === agent.ambience);
   const [custom, setCustom] = useState([]);
-  useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map((v) => ({ ...v, eleven: true, tone: v.tone || "Voz ElevenLabs propia" })))).catch(() => {}); }, []);
+  useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map((v) => ({ ...v, eleven: true, tone: v.tone || "Voz ultra natural con acento nativo" })))).catch(() => {}); }, []);
   const country = agent.country || "ES";
   const list = [...custom, ...VOICES].filter((v) => v.country === country || v.country === "ALL");
   return (
@@ -95,7 +95,7 @@ export const VoiceTab = ({ agent, update }) => {
         )}
         <div className="border-t border-slate-800 pt-4">
           <AmbiencePreview ambience={agent.ambience} volume={agent.ambience_volume} voice={agent.voice} text={agent.greeting.replace("{nombre}", "Laura").replace("{empresa}", agent.business_name || "").replace("{agente}", agent.name || "")} />
-          <p className="mt-3 text-xs text-slate-500">El ambiente es el mismo que sonará en la llamada. La vista previa usa la misma voz ElevenLabs de las llamadas (si el administrador conectó ElevenLabs); en la llamada real suena con calidad telefónica.</p>
+          <p className="mt-3 text-xs text-slate-500">El ambiente es el mismo que sonará en la llamada. La vista previa usa la misma voz de las llamadas; en la llamada real suena con calidad telefónica.</p>
         </div>
       </Panel>
     </div>

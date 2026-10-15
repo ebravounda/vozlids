@@ -1,18 +1,17 @@
 import { Link } from "react-router-dom";
 import { PhoneCall } from "lucide-react";
+import { Logo } from "@/components/Common";
 import { SEO_PAGES } from "@/components/Seo";
 
-const H = { fontFamily: "Outfit" };
+const H = { fontFamily: "Plus Jakarta Sans" };
 const LINKS = [["#soluciones", "Soluciones"], ["#como", "Cómo funciona"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
 
 export const Brand = () => (
-  <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900" style={H} data-testid="landing-brand">
-    <span className="grid h-8 w-8 place-items-center rounded-md bg-slate-900 text-white"><PhoneCall className="h-4 w-4" /></span>VozLeads
-  </Link>
+  <Link to="/" className="flex items-center" data-testid="landing-brand"><Logo /></Link>
 );
 
 export const Nav = () => (
-  <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
+  <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
       <Brand />
       <nav className="hidden gap-7 text-sm text-slate-600 lg:flex" aria-label="Secciones">
@@ -20,7 +19,7 @@ export const Nav = () => (
       </nav>
       <div className="flex items-center gap-2">
         <Link to="/login" data-testid="landing-nav-login-button" className="hidden px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:block">Acceder</Link>
-        <a href="#solicitar" data-testid="landing-nav-info-button" className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700">Solicita información</a>
+        <a href="#solicitar" data-testid="landing-nav-info-button" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Solicita información</a>
       </div>
     </div>
   </header>
@@ -28,7 +27,7 @@ export const Nav = () => (
 
 export const MobileCta = () => (
   <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur md:hidden">
-    <a href="#solicitar" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-emerald-600 font-semibold text-white" data-testid="mobile-info-cta">
+    <a href="#solicitar" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 font-semibold text-white" data-testid="mobile-info-cta">
       <PhoneCall className="h-4 w-4" /> Solicita información ahora
     </a>
   </div>

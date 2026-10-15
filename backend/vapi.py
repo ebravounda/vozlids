@@ -100,7 +100,7 @@ async def _post(path: str, payload: dict, verb: str = "POST") -> dict:
         async with httpx.AsyncClient(timeout=20) as x:
             r = await x.request(verb, f"{VAPI_URL}{path}", json=payload, headers=_headers())
     except httpx.HTTPError as e:
-        raise VapiError(f"No se pudo contactar con Vapi: {e.__class__.__name__}")
+        raise VapiError(f"No se pudo contactar con el servicio de llamadas: {e.__class__.__name__}")
     if r.status_code >= 400:
         try:
             msg = r.json().get("message")
@@ -108,7 +108,7 @@ async def _post(path: str, payload: dict, verb: str = "POST") -> dict:
             msg = r.text
         if isinstance(msg, list):
             msg = "; ".join(map(str, msg))
-        raise VapiError(f"Vapi respondió con error ({r.status_code}): {str(msg)[:300]}")
+        raise VapiError(f"El servicio de llamadas respondió con error ({r.status_code}): {str(msg)[:300]}")
     return r.json() if r.content else {}
 
 
@@ -220,7 +220,7 @@ async def get_call(call_id: str) -> dict:
     async with httpx.AsyncClient(timeout=20) as x:
         r = await x.get(f"{VAPI_URL}/call/{call_id}", headers=_headers())
     if r.status_code >= 400:
-        raise VapiError(f"Vapi no devolvió la llamada ({r.status_code})")
+        raise VapiError(f"El servicio de llamadas no devolvió la llamada ({r.status_code})")
     return r.json()
 
 

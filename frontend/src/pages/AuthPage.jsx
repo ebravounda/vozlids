@@ -11,8 +11,8 @@ import { errMsg } from "@/lib/api";
 
 const Field = ({ id, label, ...props }) => (
   <div className="space-y-2">
-    <Label htmlFor={id} className="text-slate-300">{label}</Label>
-    <Input id={id} data-testid={`auth-${id}-input`} className="h-11 bg-slate-950/60" required {...props} />
+    <Label htmlFor={id} className="text-slate-700">{label}</Label>
+    <Input id={id} data-testid={`auth-${id}-input`} className="h-11 rounded-lg border-slate-200 bg-white shadow-sm focus-visible:ring-blue-600/30" required {...props} />
   </div>
 );
 
@@ -46,58 +46,81 @@ export default function AuthPage({ mode }) {
   };
 
   return (
-    <div className="grain relative grid min-h-screen lg:grid-cols-2">
-      <div className="relative z-10 flex flex-col px-6 py-8 sm:px-12">
-        <Link to="/" className="mb-16 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white" data-testid="auth-back-link">
-          <ArrowLeft className="h-4 w-4" /> Volver
-        </Link>
-        <div className="mx-auto w-full max-w-md fade-up">
-          <Logo className="mb-8" />
-          <h1 className="text-4xl font-bold tracking-tight text-white">{isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}</h1>
-          <p className="mt-2 text-slate-400">
-            {isLogin ? "Entra para ver tus llamadas y agentes." : "En 5 minutos tendrás un agente llamando a tus leads."}
-          </p>
-          <form onSubmit={submit} className="mt-10 space-y-5" data-testid="auth-form">
+    <div className="grid min-h-screen bg-white lg:grid-cols-[1fr_1.05fr]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="flex flex-col px-6 py-8 sm:px-12">
+        <div className="flex items-center justify-between">
+          <Link to="/" data-testid="auth-logo-link"><Logo /></Link>
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900" data-testid="auth-back-link"><ArrowLeft className="h-4 w-4" /> Volver a la web</Link>
+        </div>
+        <div className="mx-auto my-auto w-full max-w-sm py-12 fade-up">
+          <div className="mb-8 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist">
+            {[["/login", "Iniciar sesión", true], ["/registro", "Crear cuenta", false]].map(([to, l, lg]) => (
+              <Link key={to} to={to} role="tab" aria-selected={isLogin === lg} data-testid={`auth-tab-${lg ? "login" : "register"}`}
+                className={`rounded-lg py-2 text-center transition-[background-color,color,box-shadow] ${isLogin === lg ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}>{l}</Link>
+            ))}
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}</h1>
+          <p className="mt-2 text-slate-500">{isLogin ? "Entra para ver tus llamadas, agentes y citas." : "En 5 minutos tendrás un agente llamando a tus leads."}</p>
+          <form onSubmit={submit} className="mt-8 space-y-4" data-testid="auth-form">
             {!isLogin && (
               <>
                 <Field id="name" label="Tu nombre" value={form.name} onChange={set("name")} placeholder="Laura García" />
                 <Field id="business" label="Nombre del negocio" value={form.business_name} onChange={set("business_name")} placeholder="Clínica Dental Sonrisa" />
+                <div className="space-y-2">
+                  <Label className="text-slate-700">País del negocio</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[["ES", "🇪🇸 España"], ["CL", "🇨🇱 Chile"]].map(([c, n]) => (
+                      <button key={c} type="button" onClick={() => setForm({ ...form, country: c })} data-testid={`auth-country-${c}`}
+                        className={`h-11 rounded-lg border text-sm font-semibold transition-colors ${form.country === c ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>{n}</button>
+                    ))}
+                  </div>
+                </div>
               </>
             )}
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label className="text-slate-300">País del negocio</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[["ES", "España"], ["CL", "Chile"]].map(([c, n]) => (
-                    <button key={c} type="button" onClick={() => setForm({ ...form, country: c })} data-testid={`auth-country-${c}`}
-                      className={`h-11 rounded-lg border text-sm font-semibold transition-colors ${form.country === c ? "border-emerald-500 bg-emerald-500/10 text-emerald-200" : "border-slate-700 text-slate-300 hover:border-slate-500"}`}>{n}</button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <Field id="email" label="Email" type="email" value={form.email} onChange={set("email")} placeholder="tu@negocio.es" />
-            <Field id="password" label="Contraseña" type="password" minLength={isLogin ? undefined : 8} value={form.password} onChange={set("password")} placeholder={isLogin ? "" : "Mínimo 8 caracteres"} />
-            {error && <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300" data-testid="auth-error">{error}</p>}
-            <Button type="submit" disabled={loading} className="h-11 w-full rounded-full text-base font-semibold" data-testid="auth-submit-button">
+            <Field id="email" label="Email" type="email" value={form.email} onChange={set("email")} placeholder="tu@negocio.es" autoComplete="email" />
+            <Field id="password" label="Contraseña" type="password" minLength={isLogin ? undefined : 8} value={form.password} onChange={set("password")} placeholder={isLogin ? "••••••••" : "Mínimo 8 caracteres"} autoComplete={isLogin ? "current-password" : "new-password"} />
+            {error && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" data-testid="auth-error">{error}</p>}
+            <Button type="submit" disabled={loading} className="h-11 w-full rounded-lg text-base font-semibold shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" data-testid="auth-submit-button">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLogin ? "Entrar" : "Crear cuenta gratis"}
             </Button>
           </form>
-          <p className="mt-6 text-sm text-slate-400">
+          <p className="mt-6 text-sm text-slate-500">
             {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
-            <Link to={isLogin ? "/registro" : "/login"} className="font-semibold text-emerald-400 hover:text-emerald-300" data-testid="auth-switch-link">
-              {isLogin ? "Regístrate" : "Inicia sesión"}
-            </Link>
+            <Link to={isLogin ? "/registro" : "/login"} className="font-semibold text-blue-600 hover:text-blue-700" data-testid="auth-switch-link">{isLogin ? "Regístrate" : "Inicia sesión"}</Link>
           </p>
         </div>
+        <p className="text-xs text-slate-400">© {new Date().getFullYear()} VozLeads.com by GoRoky.com</p>
       </div>
-      <div className="relative hidden overflow-hidden lg:block">
-        <img src="https://images.unsplash.com/photo-1622675363311-3e1904dc1885?crop=entropy&cs=srgb&fm=jpg&q=80&w=1400" alt="Oficina" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/50 to-transparent" />
-        <blockquote className="absolute bottom-12 left-12 right-12 rounded-2xl border border-slate-700/60 bg-slate-950/70 p-6 backdrop-blur-xl">
-          <p className="font-display text-xl text-white">“Llamamos a cada lead en 20 segundos. Las citas se duplicaron el primer mes.”</p>
-          <p className="mt-3 text-sm text-slate-400">Ejemplo de resultado típico en clínicas y academias</p>
-        </blockquote>
+      <AuthShowcase />
+    </div>
+  );
+}
+
+function AuthShowcase() {
+  return (
+    <div className="relative hidden overflow-hidden bg-slate-900 lg:flex lg:flex-col lg:justify-between lg:p-12" data-testid="auth-showcase">
+      <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(#334155_1px,transparent_1px)] [background-size:22px_22px]" aria-hidden />
+      <p className="relative inline-flex w-fit items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-200">
+        <span className="h-2 w-2 rounded-full bg-emerald-400 vl-pulse" /> Líneas operativas · España +34 · Chile +56
+      </p>
+      <div className="relative mx-auto w-full max-w-md vl-float rounded-2xl border border-slate-700 bg-slate-800/70 p-6 backdrop-blur">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-white">Llamada en curso · Nuevo lead</p>
+          <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">00:18</span>
+        </div>
+        <div className="my-6 flex h-14 items-center justify-center gap-[3px]" aria-hidden>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <span key={i} className="vl-wave w-[3px] rounded-full bg-blue-400" style={{ height: 10 + ((i * 29) % 34), animationDelay: `${(i % 8) * 0.1}s` }} />
+          ))}
+        </div>
+        <p className="vl-type text-sm text-slate-300">“Perfecto, te reservo el jueves a las 10:30 y te envío la confirmación por email.”</p>
+      </div>
+      <div className="relative">
+        <p className="text-2xl font-bold leading-snug text-white" style={{ fontFamily: "Plus Jakarta Sans" }}>Cada lead recibe una llamada en menos de 30 segundos.</p>
+        <div className="mt-6 grid grid-cols-3 gap-4 border-t border-slate-700 pt-6 text-sm">
+          {[["< 30 s", "primer contacto"], ["24/7", "en tu horario"], ["100 %", "grabado y transcrito"]].map(([k, v]) => <div key={k}><p className="text-xl font-bold text-white">{k}</p><p className="text-slate-400">{v}</p></div>)}
+        </div>
       </div>
     </div>
   );

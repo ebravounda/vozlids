@@ -62,7 +62,7 @@ const ChileWarning = () => (
 
 const NUM = { activo: "Activo", comprando: "Preparando tu número…", error: "Pendiente: estamos resolviendo un problema", liberado: "Liberado", sin_numero: "Se asigna al contratar un plan" };
 
-function MyNumber() {
+export function MyNumber() {
   const [n, setN] = useState(null);
   const [agents, setAgents] = useState([]);
   useEffect(() => { api.get("/my-number").then((r) => setN(r.data)); api.get("/agents").then((r) => setAgents(r.data)); }, []);

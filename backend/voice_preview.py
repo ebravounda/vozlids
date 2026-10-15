@@ -49,7 +49,7 @@ async def eleven_tts(key: str, voice_id: str, text: str) -> bytes:
             msg = msg.get("message") if isinstance(msg, dict) else msg
         except ValueError:
             msg = r.text
-        raise HTTPException(400, f"ElevenLabs respondió: {str(msg)[:200]}")
+        raise HTTPException(400, f"El motor de voz respondió: {str(msg)[:200]}")
     return r.content
 
 

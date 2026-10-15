@@ -9,7 +9,7 @@
       "country": "AUTO",
       "title": "VozLeads | Agente de voz con IA que llama a tus leads · España y Chile",
       "description": "Agente telefónico con inteligencia artificial que llama a tus leads en menos de 30 segundos, los califica y agenda citas. Incluye número de España o Chile gratis.",
-      "eyebrow": "Agentes de voz con IA para España y Chile",
+      "eyebrow": "Líneas operativas en España (+34) y Chile (+56)",
       "h1": "Tu agente telefónico con IA llama a cada lead en menos de 30 segundos",
       "intro": "VozLeads llama al instante a quien rellena tu formulario, lo califica, agenda la cita y te avisa si quiere hablar con una persona. Incluye gratis un número de España (+34) o de Chile (+56): no necesitas contratar telefonía IP ni cuenta SIP.",
       "keywords": "agente de voz IA, llamadas automáticas IA, telefonía IP con IA, centralita virtual IA, central IP Chile, oficina virtual",
@@ -60,7 +60,7 @@
       "country": "AUTO",
       "title": "Telefonía IP con inteligencia artificial para empresas | VozLeads",
       "description": "Añade un agente de voz con IA a tu telefonía IP: llama a tus leads en segundos, agenda citas y registra cada llamada. Incluye número de España o Chile gratis.",
-      "eyebrow": "Telefonía IP + IA",
+      "eyebrow": "Telefonía IP con agente de voz",
       "h1": "Telefonía IP con inteligencia artificial: tus líneas ahora llaman solas",
       "intro": "Telefonía IP y agente de voz en un solo plan: te damos gratis un número de España o Chile y un agente con IA que llama a cada nuevo lead en segundos y te deja el resultado por escrito.",
       "keywords": "telefonía IP, telefonía IP con IA, telefonía IP empresas, VoIP inteligencia artificial, SIP IA",
@@ -111,7 +111,7 @@
       ],
       "faq": [
         ["¿Funciona con mi central telefónica IP actual?", "Sí. VozLeads trabaja a su lado con un número chileno incluido gratis, sin tocar tu central."],
-        ["¿El acento suena chileno?", "Usamos voces latinas naturales y puedes añadir voces con acento nativo desde la biblioteca de ElevenLabs."]
+        ["¿El acento suena chileno?", "Usamos voces latinas naturales y puedes elegir voces ultra naturales con acento chileno nativo."]
       ]
     },
     {
@@ -120,7 +120,7 @@
       "country": "AUTO",
       "title": "Oficina virtual con asistente telefónico IA | VozLeads",
       "description": "Para negocios con oficina virtual: un asistente telefónico con IA que llama a tus leads, agenda citas y avisa a tu equipo, desde cualquier lugar. España y Chile.",
-      "eyebrow": "Oficina virtual + asistente IA",
+      "eyebrow": "Oficina virtual · asistente telefónico",
       "h1": "Oficina virtual con asistente telefónico con IA",
       "intro": "Trabajas en remoto o con oficina virtual y no siempre puedes coger el teléfono. Tu asistente telefónico con IA llama a cada nuevo cliente al momento, le da cita y te deja el resumen en el panel o en tu email.",
       "keywords": "oficina virtual, asistente virtual telefónico, secretaria virtual IA, asistente telefónico IA",

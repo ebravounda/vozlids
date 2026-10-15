@@ -11,29 +11,29 @@ export const StatusBadge = ({ status, testid = "lead-status-badge" }) => {
 };
 
 export const Logo = ({ className = "" }) => (
-  <span className={`inline-flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white ${className}`}>
-    <span className="relative grid h-8 w-8 place-items-center rounded-lg bg-emerald-500 text-slate-950">
+  <span className={`inline-flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-slate-900 ${className}`} data-testid="brand-logo">
+    <span className="relative grid h-8 w-8 place-items-center rounded-[10px]" style={{ background: "#0F172A" }}>
       <span className="flex h-3.5 items-center gap-[2px]">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className="wave-bar w-[2.5px] rounded bg-slate-950" style={{ height: 14, animationDelay: `${i * 0.15}s` }} />
+          <span key={i} className="vl-wave w-[2.5px] rounded-full" style={{ height: 14, background: i % 2 ? "#60A5FA" : "#fff", animationDelay: `${i * 0.15}s` }} />
         ))}
       </span>
     </span>
-    VozLeads
+    Voz<span className="-ml-2 text-blue-600">Leads</span>
   </span>
 );
 
 export const PageHeader = ({ eyebrow, title, desc, children }) => (
   <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
     <div>
-      {eyebrow && <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">{eyebrow}</p>}
-      <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
-      {desc && <p className="mt-2 max-w-2xl text-sm text-slate-400">{desc}</p>}
+      {eyebrow && <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">{eyebrow}</p>}
+      <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+      {desc && <p className="mt-2 max-w-2xl text-sm text-slate-500">{desc}</p>}
     </div>
     {children && <div className="flex flex-wrap gap-3">{children}</div>}
   </div>
 );
 
 export const Panel = ({ children, className = "", ...rest }) => (
-  <div className={`rounded-2xl border border-slate-800 bg-slate-900/60 p-6 ${className}`} {...rest}>{children}</div>
+  <div className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] ${className}`} {...rest}>{children}</div>
 );
