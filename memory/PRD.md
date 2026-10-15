@@ -108,3 +108,9 @@
 - Logo from user: /frontend/public/brand/vozleads-logo.png (+ -white). Logo component uses it.
 - Provider names removed from public site + client panel (voice tier "Ultra natural HD"); only Super admin/Telefonía/Costes show providers. Generic VapiError/voice error texts.
 - New tenant page /app/numero (Mi número).  (iteration_13 PASS)
+
+## Update — Country-adaptive web + LatAm SEO (session 2)
+- lib/geo.jsx: DEMO countries (ES, CL + 16 Spanish-speaking LatAm), GeoProvider (GET /api/public/geo = Cloudflare cf-ipcountry, fallback timezone), useMarket(pageCountry) → market ES|CL|INT, visitor flag, TXT per market.
+- "/" adapts: ES visitors see /es content, CL see /cl, others international (EUR, visitor flag). /es only Spain, /cl only Chile (CLP). No currency switch on public site.
+- Demo call: 15 s max (landing.MAX_SECONDS), short greeting, endCallPhrases ['hasta luego'] when max_seconds<=20; non ES/CL countries use ES landing agent (+34); cap 40 intl demos/day; countries.norm_demo_phone.
+- SEO: 27 pages — 16 LatAm country pages (/mx, /ar, /co, /pe, /ec, /uy, /ve, /pa, /cr, /gt, /hn, /sv, /ni, /do, /bo, /py) + /call-center-con-ia, /central-telefonica-con-ia, /telefono-con-ia; hreflang es-XX for all; sitemap regenerated. (iteration_14; 2 minor fixes applied after)

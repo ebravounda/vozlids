@@ -52,8 +52,8 @@ export function GeoProvider({ children }) {
 export function useMarket(pageCountry) {
   const geo = useContext(GeoCtx);
   const fixed = pageCountry === "ES" || pageCountry === "CL";
-  const market = fixed ? pageCountry : geo.country === "ES" || geo.country === "CL" ? geo.country : "INT";
   const local = !fixed && byCode(pageCountry);
+  const market = fixed ? pageCountry : local ? "INT" : geo.country === "ES" || geo.country === "CL" ? geo.country : "INT";
   const visitor = byCode(fixed ? pageCountry : local ? pageCountry : geo.country) || null;
   return { market, fixed, visitor, country: geo.country, ready: fixed || geo.ready, t: TXT[market] };
 }

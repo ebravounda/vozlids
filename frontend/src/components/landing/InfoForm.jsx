@@ -14,7 +14,7 @@ const Done = ({ name, calling, reset }) => (
 );
 
 export function InfoForm({ m, page = "/", id = "solicitar", title = "Solicita tu muestra ahora", dark = false }) {
-  const list = m.fixed ? DEMO.filter((d) => d.code === m.market) : DEMO;
+  const list = m.market !== "INT" ? DEMO.filter((d) => d.code === m.market) : DEMO;
   const initial = m.visitor && list.includes(m.visitor) ? m.visitor.code : list[0].code;
   const [f, setF] = useState({ name: "", phone: "", country: initial, consent: false });
   useEffect(() => { if (!f.phone) setF((x) => ({ ...x, country: initial })); }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -50,9 +50,8 @@ export function InfoForm({ m, page = "/", id = "solicitar", title = "Solicita tu
             <span className="text-sm font-medium text-slate-700">País y teléfono</span>
             <div className="mt-1 flex gap-2">
               <label className="relative flex items-center rounded-lg border border-slate-300 focus-within:border-blue-600" data-testid={tid("country-flag")}>
-                <span className="pointer-events-none pl-3 text-xl leading-none" aria-hidden>{c.flag}</span>
                 <select value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} disabled={list.length === 1} aria-label="País"
-                  className="h-12 appearance-none bg-transparent py-0 pl-2 pr-6 text-sm font-semibold text-slate-800 outline-none disabled:opacity-100" data-testid={tid("country-select")}>
+                  className="h-12 appearance-none bg-transparent py-0 pl-3 pr-6 text-sm font-semibold text-slate-800 outline-none disabled:opacity-100" data-testid={tid("country-select")}>
                   {list.map((d) => <option key={d.code} value={d.code}>{d.flag} {d.name}</option>)}
                 </select>
                 {list.length > 1 && <span className="pointer-events-none absolute right-2 text-xs text-slate-400">▾</span>}
