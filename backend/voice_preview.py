@@ -64,12 +64,21 @@ async def tts(voice: str, text: str) -> tuple:
             return await asyncio.to_thread(storage.get_object, cached["path"]), source
         except Exception:  # noqa: BLE001
             pass
+    audio = None
     if source == "elevenlabs":
-        audio = await eleven_tts(key, vid, text)
-    else:
+        try:
+            audio = await eleven_tts(key, vid, text)
+        except Exception as e:  # noqa: BLE001
+            log.warning("ElevenLabs falló (%s); uso la voz de respaldo", getattr(e, "detail", e))
+            source = "openai"
+    if audio is None:
         female = voice in vapi.FEMALE or (vapi.STATE["custom_voices"].get(voice) or {}).get("gender") == "Mujer"
-        audio = await OpenAITextToSpeech(api_key=os.environ["EMERGENT_LLM_KEY"]).generate_speech(
-            text=text, model="tts-1-hd", voice="nova" if female else "onyx")
+        try:
+            audio = await OpenAITextToSpeech(api_key=os.environ["EMERGENT_LLM_KEY"]).generate_speech(
+                text=text, model="tts-1-hd", voice="nova" if female else "onyx")
+        except Exception as e:  # noqa: BLE001
+            log.exception("Voz de respaldo falló")
+            raise HTTPException(502, "El motor de voz no está disponible ahora mismo. Revisa la clave de ElevenLabs en Super Admin.") from e
     try:
         res = await asyncio.to_thread(storage.put_object, f"{storage.APP_NAME}/tts/{h}.mp3", audio, "audio/mpeg")
         await db.tts_cache.update_one({"hash": h}, {"$set": {"path": res["path"], "created_at": now_iso()}}, upsert=True)
