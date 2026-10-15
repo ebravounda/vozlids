@@ -6,6 +6,7 @@ DC="docker compose"
 
 ./backup.sh
 git -C .. pull --ff-only
+grep -q "^STRIPE_API_KEY=." .env || { sed -i '/^STRIPE_API_KEY=/d' .env; printf "\nSTRIPE_API_KEY=sk_test_emergent\n" >> .env; echo ">> Activada la cuenta de pruebas de Stripe"; }
 $DC build
 $DC up -d --remove-orphans
 sleep 8
