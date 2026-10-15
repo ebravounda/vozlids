@@ -130,3 +130,10 @@
 - Vapi no tiene API de saldo de creditos: se muestra gasto del mes + enlace al dashboard; limite de concurrencia se guarda de subscriptionLimits al crear llamadas (platform_settings vapi_limits)
 - Resend: platform_settings resend {api_key, from_email, reply_to}; emailer.deliver usa Resend si esta configurado, si no el envio integrado
 - Tested iteration_17: 100%
+
+## 2026-06 Landing por sectores + SEO
+- 7 sectores x ES/CL = 14 paginas /es|cl/<slug> (type sector en src/seo/pages.json, generadas con /app/scripts/gen_sectors.py que tambien escribe backend/assets/sector_dialogs.json)
+- Seccion Sectores en home/pais/topic (components/landing/Sectors.jsx) con foto, audio de llamada de ejemplo y enlace; pagina de sector con SectorHero + reproductor con transcripcion sincronizada
+- Audio: sector_demo.py genera bajo demanda (voz nativa custom del pais -> fallback e_sarah/e_chris -> OpenAI), linea telefonica en cliente + ambiente oficina_real 30, mp3 guardado en Mongo sector_demos. DELETE /api/admin/sector-demos para regenerar
+- SEO: hreflang ES/CL por sector, JSON-LD Service + AudioObject + Breadcrumb 3 niveles, og:image por sector, sitemap 42 urls
+- Tested iteration_18: 100%

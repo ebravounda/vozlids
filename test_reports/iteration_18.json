@@ -1,0 +1,32 @@
+{
+  "summary": "Iter-18: Sector landing improvements. Backend pytest 20/20 passed (test_vozlead_iter18.py) covering marks + mp3 audio generation for all 14 sector/country combinations, 404 for unknown slug/country, admin-only DELETE /api/admin/sector-demos (403 non-admin, 401/403 unauth). First call to /marks for cold slugs triggered real audio generation and still returned 200 with 7 marks + duration (~31s total for 14 pages → mostly cached). Frontend Playwright: Home /, /es, /cl all render sectors-section + all 7 sector-card-<slug> + sector-card-other; all images load (naturalWidth>0, no broken); landing-nav-sectores-link present; clicking sector-card-play-clinicas-dentales fires GET /api/public/sector-demo/es/clinicas-dentales.mp3, clicking sector-card-play-barberias fires second mp3 (first stops via shared player singleton). Sector page /es/barberias renders marketing-page-es/barberias, sector-hero, sector-breadcrumb, hero-title ('Recepcionista con IA para barberías y peluquerías'), sector-player + play button + time, sector-transcript, bottom sectors-section excludes barberias (6 other cards + other-card). SEO head on /es/barberias: title='Recepcionista virtual con IA para barberías y peluquerías en España | VozLeads', canonical=https://vozleads.com/es/barberias, hreflang es-ES/es-CL/x-default present, og:image=sector unsplash image, JSON-LD @graph contains Organization, WebSite, SoftwareApplication (EUR+CLP offers), WebPage, FAQPage, Service, AudioObject (contentUrl pointing to API), BreadcrumbList with 3 ListItems. /cl/abogados contains 'Estudio Jurídico' + 'hora' + CLP in pricing; /es/abogados contains 'Despacho' + 'cita'. Footer shows 'Sectores' links list. Mobile 390px on /es/restaurantes: no horizontal overflow (scrollW==innerW). 401 console errors are from public /auth/me probe (expected on unauth landing pages).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter18.py",
+    "/app/test_reports/pytest/iter18_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "sector_demo.get_demo: per-key asyncio.Lock prevents parallel generation of same slug; _locks dict grows unbounded with ~14 keys max — acceptable.",
+    "sector_demo.build: writes Binary mp3 directly into Mongo doc (sector_demos collection). For 14 slugs × ~tens of KB this is fine, but no TTL/eviction. If dialogs change, admin must call DELETE /api/admin/sector-demos. Documented contract.",
+    "sector_demo.demo_audio: Cache-Control public,max-age=86400 — good for CDN/browser cache but note mp3 is served from backend each miss. Consider streaming or filesystem cache for scale.",
+    "Sectors.jsx: shared module-level `player` singleton correctly stops previous audio when a new card is played. On unmount useEffect pauses only ref.current, not the singleton — fine because the new mount acquires it.",
+    "Sectors.jsx: useDemo marks fetch is triggered inside onplaying, so marks only load on first play; transcript highlight starts at mark[0]=0.6s. Good UX.",
+    "head.mjs: canonical/alternates always use cfg.site domain (https://vozleads.com) which is correct for production even in preview — verified in test.",
+    "head.mjs: AudioObject.contentUrl uses `${cfg.site}/api/public/...` — if someone copies JSON-LD on preview domain Google would hit prod. For production this is correct; previews harmless.",
+    "SectorHero.intro: shows the full intro inside the hero which is good for SEO; FAQ renders further down inside page body (verified by JSON-LD FAQPage with multiple questions, UI id='preguntas' not required per spec)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_iter18.py",
+    "/app/test_reports/pytest/iter18_results.xml",
+    "/app/test_reports/iteration_18.json"
+  ],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "100% of assertions passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). Transient business user 'TEST_iter18_<uuid>@example.com' created once for 403 non-admin check.",
+  "seed_data_creation": "Backend first-time calls to /marks or /mp3 for uncached slugs triggered audio generation and persisted docs in Mongo collection sector_demos (keys ES-<slug>, CL-<slug>). Did NOT call DELETE /api/admin/sector-demos with admin (per agent-to-agent note to avoid regeneration cost). Expected WARNING in backend logs about ElevenLabs library voices falling back to default — acceptable per note.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sector demo endpoints: GET /api/public/sector-demo/{es|cl}/{slug}.mp3 (audio/mpeg, 404 unknown), GET /api/public/sector-demo/{es|cl}/{slug}/marks ({marks:[7 floats], duration}), DELETE /api/admin/sector-demos (admin-only). Slugs: clinicas-dentales, clinicas-esteticas, psicologos, barberias, restaurantes, cafeterias, abogados. All 14 docs currently cached in Mongo after this run — subsequent /marks and /mp3 calls are fast. If testing changes to dialogs or voices, call admin DELETE once to force regeneration (first regen ~15s/slug and consumes ElevenLabs credits).",
+  "rca of the issue": "N/A — feature verification; everything specified in review request works as expected."
+}
