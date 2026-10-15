@@ -43,7 +43,7 @@ export const FeatureGrid = () => (
   </section>
 );
 
-const LOGOS = [["Tramilex Abogados", "/clients/tramilex.webp", "h-12"], ["IberoAcademy", "/clients/iberoacademy.webp", "h-16"], ["GoRoky.com", "/clients/goroky.webp", "h-10"]];
+const LOGOS = [["Tramilex Abogados", "/clients/tramilex.webp", "h-12"], ["IberoAcademy", "/clients/iberoacademy.webp", "h-16"], ["GoRoky.com", "/clients/goroky.webp", "h-10"], ["Bridge Industrial Solutions", "/clients/bridge.webp", "h-16"]];
 
 export const LogoStrip = () => (
   <section className="border-b border-slate-200 bg-white" aria-label="Clientes" data-testid="logo-strip">
