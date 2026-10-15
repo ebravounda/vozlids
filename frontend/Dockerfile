@@ -1,7 +1,7 @@
 FROM node:20-bookworm AS build
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 600000
+COPY package.json yarn-lock.txt ./
+RUN cp yarn-lock.txt yarn.lock && yarn install --frozen-lockfile --network-timeout 600000
 COPY . .
 ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL GENERATE_SOURCEMAP=false

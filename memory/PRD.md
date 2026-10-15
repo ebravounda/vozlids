@@ -98,3 +98,4 @@
 - backend/Dockerfile, frontend/Dockerfile (+nginx.conf SPA fallback with prerendered SEO pages).
 - Encrypted exports (AES-256, pbkdf2) passphrase stored only at /root/vl_pass.txt (NOT in repo) and given to user in chat.
 - Not verifiable here (no Docker in preview): import script + install env-fill logic tested locally.
+- frontend/yarn.lock is NOT pushed to GitHub by platform; Docker build uses frontend/yarn-lock.txt copy. After any yarn add: cp frontend/yarn.lock frontend/yarn-lock.txt
