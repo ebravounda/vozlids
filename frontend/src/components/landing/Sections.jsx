@@ -167,8 +167,9 @@ export const Compatible = ({ m }) => (
   </section>
 );
 
-export const TopicSections = ({ sections }) => (
+export const TopicSections = ({ sections, title }) => (
   <section className="mx-auto max-w-4xl px-6 py-20" data-testid="topic-sections">
+    {title && <p className="mb-8 text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">{title}</p>}
     {sections.map(([t, p]) => <div key={t} className="mb-12 last:mb-0"><h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl" style={H}>{t}</h2><p className="mt-4 text-lg leading-relaxed text-slate-600">{p}</p></div>)}
   </section>
 );

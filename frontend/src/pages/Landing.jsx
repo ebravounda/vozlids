@@ -3,6 +3,7 @@ import { Pricing } from "@/components/Pricing";
 import { Seo, pageByPath } from "@/components/Seo";
 import { GeoProvider, useMarket } from "@/lib/geo";
 import { Footer, MobileCta, Nav } from "@/components/landing/Chrome";
+import { SectorHero, Sectors } from "@/components/landing/Sectors";
 import { ApiBlock, Compatible, Faq, FinalCta, Hero, Steps, TopicSections, TrustBar, Uses, WhyNow } from "@/components/landing/Sections";
 
 
@@ -26,19 +27,22 @@ function LandingPage({ path = "/" }) {
   const view = path === "/" && MARKET_PAGE[m.market] ? { ...pageByPath(MARKET_PAGE[m.market]), path: "/" } : page;
   useReveal(path);
   const topic = page.type === "topic";
+  const sector = page.type === "sector";
   return (
     <div className="min-h-screen bg-white text-slate-700" style={{ fontFamily: "'DM Sans', sans-serif" }} data-testid={`marketing-page-${path === "/" ? "home" : path.slice(1)}`}>
       <Seo page={page} />
       <Nav />
       <main>
-        <Hero page={view} m={m} />
+        {sector ? <SectorHero page={page} m={m} /> : <Hero page={view} m={m} />}
         <TrustBar m={m} />
-        {page.sections?.length > 0 && <TopicSections sections={page.sections} />}
-        <WhyNow />
+        {page.sections?.length > 0 && <TopicSections sections={page.sections} title={sector ? `Cómo ayuda a ${page.name.toLowerCase()}` : ""} />}
+        {!sector && <Sectors country={m.market} />}
+        {!sector && <WhyNow />}
         <Uses m={m} />
-        {!topic && <Compatible m={m} />}
+        {!topic && !sector && <Compatible m={m} />}
+        {sector && <Sectors country={page.country} exclude={page.sector} title="Otros sectores que ya lo usan" />}
         <Steps m={m} />
-        {!topic && <ApiBlock />}
+        {!topic && !sector && <ApiBlock />}
         <Pricing m={m} />
         <Faq items={view.faq} />
         <FinalCta page={view} m={m} />

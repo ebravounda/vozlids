@@ -929,6 +929,1098 @@
      "Sí: deja tu teléfono en el formulario y recibirás una muestra de 15 segundos al instante."
     ]
    ]
+  },
+  {
+   "path": "/es/clinicas-dentales",
+   "type": "sector",
+   "country": "ES",
+   "sector": "clinicas-dentales",
+   "name": "Clínicas dentales",
+   "img": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Smile",
+   "biz": "Clínica Dental Sonrisa",
+   "title": "Recepcionista virtual con IA para clínicas dentales en España | VozLeads",
+   "description": "Asistente telefónico con IA para clínicas dentales en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Clínicas dentales · España",
+   "h1": "Recepcionista con IA para clínicas dentales",
+   "intro": "Recepción saturada entre pacientes, llamadas perdidas a la hora de comer y huecos en la agenda por citas olvidadas. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "recepcionista virtual clínica dental, asistente telefónico IA dentista, centralita IA clínica dental, citas dentales por teléfono, recordatorio de citas dentista",
+   "sections": [
+    [
+     "Atiende cada llamada de pacientes, también en hora punta",
+     "Tu recepcionista con IA contesta al primer tono, resuelve dudas sobre tratamientos, precios orientativos y horarios, y deja la cita agendada en tu calendario sin que tu equipo deje de atender en sillón."
+    ],
+    [
+     "Menos ausencias con recordatorios por teléfono",
+     "Llama el día antes para confirmar, reprograma si el paciente no puede venir y libera el hueco para otro paciente de la lista de espera."
+    ],
+    [
+     "Primeras visitas y presupuestos que no se enfrían",
+     "Cuando alguien rellena el formulario de tu web para una ortodoncia o un implante, el agente le llama en menos de 30 segundos y le cita para la primera visita."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede agendar citas directamente en mi agenda?",
+     "Sí. El agente consulta tu disponibilidad real en la agenda de VozLeads o en Google Calendar y confirma la cita en la misma llamada, con email al paciente y a la clínica."
+    ],
+    [
+     "¿Qué pasa con una urgencia dental?",
+     "Puedes definir qué es urgente (dolor fuerte, traumatismo, infección). En esos casos el agente avisa al instante a tu equipo con el motivo y el teléfono del paciente, o le da el hueco de urgencias más cercano."
+    ],
+    [
+     "¿Da precios de tratamientos?",
+     "Solo los que tú le indiques, por ejemplo el precio de una limpieza o de la primera visita. Para presupuestos complejos, cita al paciente para valoración."
+    ],
+    [
+     "¿Cumple la protección de datos de salud?",
+     "El agente avisa de la grabación, no pide datos clínicos innecesarios y todo queda en tu cuenta. Cumple el RGPD en España y la Ley 19.628 en Chile."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Clínica Dental Sonrisa, buenos días, le atiende Carla. ¿En qué puedo ayudarle?"
+    ],
+    [
+     "caller",
+     "Hola, quería pedir cita para una limpieza, que hace tiempo que no voy."
+    ],
+    [
+     "agent",
+     "Claro que sí. Tengo hueco el martes a las diez y media o el jueves a las cinco de la tarde. ¿Cuál le viene mejor?"
+    ],
+    [
+     "caller",
+     "El jueves a las cinco, perfecto."
+    ],
+    [
+     "agent",
+     "Hecho. ¿Me dice su nombre y apellido, por favor?"
+    ],
+    [
+     "caller",
+     "Javier Martín."
+    ],
+    [
+     "agent",
+     "Gracias, Javier. Le dejo apuntado el jueves a las cinco y el miércoles le enviamos un recordatorio. ¡Que tenga buen día!"
+    ]
+   ]
+  },
+  {
+   "path": "/cl/clinicas-dentales",
+   "type": "sector",
+   "country": "CL",
+   "sector": "clinicas-dentales",
+   "name": "Clínicas dentales",
+   "img": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Smile",
+   "biz": "Clínica Dental Sonrisa",
+   "title": "Recepcionista virtual con IA para clínicas dentales en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para clínicas dentales en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Clínicas dentales · Chile",
+   "h1": "Recepcionista con IA para clínicas dentales",
+   "intro": "Recepción colapsada, llamadas sin contestar en horario de colación y horas perdidas porque el paciente no confirmó. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "recepcionista virtual clínica dental Chile, asistente telefónico IA dentista Chile, agendar hora dentista por teléfono, confirmación de horas clínica dental",
+   "sections": [
+    [
+     "Atiende cada llamada de pacientes, también en hora punta",
+     "Tu recepcionista con IA contesta al primer tono, resuelve dudas sobre tratamientos, precios orientativos y horarios, y deja la hora agendada en tu calendario sin que tu equipo deje de atender en sillón."
+    ],
+    [
+     "Menos ausencias con recordatorios por teléfono",
+     "Llama el día antes para confirmar, reprograma si el paciente no puede venir y libera el hueco para otro paciente de la lista de espera."
+    ],
+    [
+     "Primeras visitas y presupuestos que no se enfrían",
+     "Cuando alguien rellena el formulario de tu web para una ortodoncia o un implante, el agente le llama en menos de 30 segundos y le cita para la primera visita."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede agendar horas directamente en mi agenda?",
+     "Sí. El agente consulta tu disponibilidad real en la agenda de VozLeads o en Google Calendar y confirma la cita en la misma llamada, con email al paciente y a la clínica."
+    ],
+    [
+     "¿Qué pasa con una urgencia dental?",
+     "Puedes definir qué es urgente (dolor fuerte, traumatismo, infección). En esos casos el agente avisa al instante a tu equipo con el motivo y el teléfono del paciente, o le da el hueco de urgencias más cercano."
+    ],
+    [
+     "¿Da precios de tratamientos?",
+     "Solo los que tú le indiques, por ejemplo el precio de una limpieza o de la primera visita. Para presupuestos complejos, cita al paciente para valoración."
+    ],
+    [
+     "¿Cumple la protección de datos de salud?",
+     "El agente avisa de la grabación, no pide datos clínicos innecesarios y todo queda en tu cuenta. Cumple el RGPD en España y la Ley 19.628 en Chile."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Clínica Dental Sonrisa, buenos días, habla Carla. ¿En qué le puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, quería agendar una hora para limpieza, hace rato que no voy."
+    ],
+    [
+     "agent",
+     "Por supuesto. Tengo disponible el martes a las diez y media o el jueves a las cinco de la tarde. ¿Cuál le acomoda más?"
+    ],
+    [
+     "caller",
+     "El jueves a las cinco, ya."
+    ],
+    [
+     "agent",
+     "Listo. ¿Me indica su nombre y apellido, por favor?"
+    ],
+    [
+     "caller",
+     "Javier Muñoz."
+    ],
+    [
+     "agent",
+     "Gracias, Javier. Quedó agendado el jueves a las cinco y el miércoles le llega la confirmación por WhatsApp. ¡Que esté muy bien!"
+    ]
+   ]
+  },
+  {
+   "path": "/es/clinicas-esteticas",
+   "type": "sector",
+   "country": "ES",
+   "sector": "clinicas-esteticas",
+   "name": "Clínicas estéticas",
+   "img": "https://images.unsplash.com/photo-1731514771613-991a02407132?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Sparkles",
+   "biz": "Estética Bella Piel",
+   "title": "Recepcionista virtual con IA para clínicas estéticas en España | VozLeads",
+   "description": "Asistente telefónico con IA para clínicas estéticas en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Clínicas estéticas · España",
+   "h1": "Recepcionista con IA para clínicas estéticas",
+   "intro": "Leads de campañas de redes sociales que nadie llama a tiempo y consultas por WhatsApp o teléfono fuera de horario. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "recepcionista virtual clínica estética, asistente telefónico IA centro de estética, citas medicina estética, llamadas automáticas clínica estética",
+   "sections": [
+    [
+     "Llama a cada lead de tus campañas en segundos",
+     "Quien deja sus datos en tu anuncio o en tu web recibe una llamada en menos de 30 segundos, cuando todavía está pensando en el tratamiento. El agente resuelve dudas y reserva la valoración."
+    ],
+    [
+     "Una agenda llena sin depender de la recepción",
+     "Atiende llamadas entrantes 24/7, explica tratamientos, duración y cuidados previos, y reserva en los huecos libres de cada cabina o profesional."
+    ],
+    [
+     "Reactiva a clientas que no han vuelto",
+     "Programa llamadas de seguimiento tras un tratamiento o para recordar la siguiente sesión de un bono, con un tono cercano y profesional."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede explicar mis tratamientos?",
+     "Sí. Le das la lista de tratamientos con duración, precio orientativo y recomendaciones, y el agente responde con esa información sin inventar nada."
+    ],
+    [
+     "¿Sirve para los leads de Instagram y Facebook?",
+     "Sí. Conecta tus formularios de anuncios o tu web con el formulario o la API de VozLeads y cada lead recibe una llamada al instante."
+    ],
+    [
+     "¿Puede vender bonos o promociones?",
+     "Puede informar de las promociones que configures y reservar la cita. El cobro se hace en tu centro o con tu sistema de pago habitual."
+    ],
+    [
+     "¿Suena natural?",
+     "Usa voces nativas con acento de tu país y un ligero ambiente de recepción de fondo. Escucha el ejemplo de esta página."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Estética Bella Piel, hola, soy Lucía. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, vi vuestro anuncio del tratamiento de hidratación facial y quería información."
+    ],
+    [
+     "agent",
+     "¡Genial! Es un tratamiento de unos cuarenta y cinco minutos y la primera valoración es gratuita. ¿Te gustaría venir esta semana?"
+    ],
+    [
+     "caller",
+     "Sí, ¿el viernes por la tarde puede ser?"
+    ],
+    [
+     "agent",
+     "El viernes tengo a las seis o a las siete. ¿Cuál prefieres?"
+    ],
+    [
+     "caller",
+     "A las seis."
+    ],
+    [
+     "agent",
+     "Perfecto, te reservo el viernes a las seis. Te mando un mensaje con la dirección y las indicaciones. ¡Hasta el viernes!"
+    ]
+   ]
+  },
+  {
+   "path": "/cl/clinicas-esteticas",
+   "type": "sector",
+   "country": "CL",
+   "sector": "clinicas-esteticas",
+   "name": "Clínicas estéticas",
+   "img": "https://images.unsplash.com/photo-1731514771613-991a02407132?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Sparkles",
+   "biz": "Estética Bella Piel",
+   "title": "Recepcionista virtual con IA para clínicas estéticas en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para clínicas estéticas en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Clínicas estéticas · Chile",
+   "h1": "Recepcionista con IA para clínicas estéticas",
+   "intro": "Leads de Instagram y Facebook que nadie llama a tiempo y consultas fuera de horario que se van a la competencia. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "recepcionista virtual clínica estética Chile, asistente telefónico IA centro de estética Chile, agendar hora estética, llamadas automáticas clínica estética",
+   "sections": [
+    [
+     "Llama a cada lead de tus campañas en segundos",
+     "Quien deja sus datos en tu anuncio o en tu web recibe una llamada en menos de 30 segundos, cuando todavía está pensando en el tratamiento. El agente resuelve dudas y reserva la valoración."
+    ],
+    [
+     "Una agenda llena sin depender de la recepción",
+     "Atiende llamadas entrantes 24/7, explica tratamientos, duración y cuidados previos, y reserva en los huecos libres de cada cabina o profesional."
+    ],
+    [
+     "Reactiva a clientas que no han vuelto",
+     "Programa llamadas de seguimiento tras un tratamiento o para recordar la siguiente sesión de un bono, con un tono cercano y profesional."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede explicar mis tratamientos?",
+     "Sí. Le das la lista de tratamientos con duración, precio orientativo y recomendaciones, y el agente responde con esa información sin inventar nada."
+    ],
+    [
+     "¿Sirve para los leads de Instagram y Facebook?",
+     "Sí. Conecta tus formularios de anuncios o tu web con el formulario o la API de VozLeads y cada lead recibe una llamada al instante."
+    ],
+    [
+     "¿Puede vender bonos o promociones?",
+     "Puede informar de las promociones que configures y reservar la cita. El cobro se hace en tu centro o con tu sistema de pago habitual."
+    ],
+    [
+     "¿Suena natural?",
+     "Usa voces nativas con acento de tu país y un ligero ambiente de recepción de fondo. Escucha el ejemplo de esta página."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Estética Bella Piel, hola, habla Lucía. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, vi el aviso del tratamiento de hidratación facial y quería saber más."
+    ],
+    [
+     "agent",
+     "¡Qué bueno! Dura unos cuarenta y cinco minutos y la primera evaluación es gratis. ¿Te gustaría venir esta semana?"
+    ],
+    [
+     "caller",
+     "Sí, ¿el viernes en la tarde se puede?"
+    ],
+    [
+     "agent",
+     "El viernes tengo a las seis o a las siete. ¿Cuál te acomoda?"
+    ],
+    [
+     "caller",
+     "A las seis, porfa."
+    ],
+    [
+     "agent",
+     "Listo, te reservé el viernes a las seis. Te mando un mensaje con la dirección y las indicaciones. ¡Nos vemos!"
+    ]
+   ]
+  },
+  {
+   "path": "/es/psicologos",
+   "type": "sector",
+   "country": "ES",
+   "sector": "psicologos",
+   "name": "Consultas de psicología",
+   "img": "https://images.unsplash.com/photo-1550504630-cc20eca3b23e?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Brain",
+   "biz": "Centro de Psicología Equilibrio",
+   "title": "Recepcionista virtual con IA para consultas de psicología en España | VozLeads",
+   "description": "Asistente telefónico con IA para consultas de psicología en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Consultas de psicología · España",
+   "h1": "Recepcionista con IA para consultas de psicología",
+   "intro": "No puedes coger el teléfono en sesión y las personas que llaman por primera vez no suelen dejar mensaje. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "secretaria virtual psicólogo, asistente telefónico IA consulta de psicología, citas psicólogo por teléfono, recepcionista virtual gabinete psicológico",
+   "sections": [
+    [
+     "Nadie se queda sin respuesta mientras estás en sesión",
+     "El agente contesta con un tono cálido y discreto, explica cómo trabajas, modalidades y tarifas, y reserva la primera sesión en tus huecos libres."
+    ],
+    [
+     "Primeras consultas con la sensibilidad que requieren",
+     "Tú decides qué puede decir y qué no. Ante cualquier señal de urgencia o riesgo, deriva a los servicios de emergencia y te avisa al instante."
+    ],
+    [
+     "Menos cancelaciones de última hora",
+     "Recuerda cada sesión el día anterior y permite reprogramar, para que tu agenda no tenga huecos vacíos."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Es adecuado para una consulta de psicología?",
+     "Sí. Configuras un tono cercano y respetuoso, sin preguntas clínicas: solo recoge el motivo general, la modalidad y la disponibilidad."
+    ],
+    [
+     "¿Qué hace si alguien está en crisis?",
+     "Le facilita de inmediato el teléfono de emergencias (112 o el 024 de atención a la conducta suicida) y te envía un aviso con el teléfono para que contactes cuanto antes."
+    ],
+    [
+     "¿Puede gestionar sesiones online?",
+     "Sí. Reserva la sesión y envía por email el enlace de videollamada que tú configures."
+    ],
+    [
+     "¿Dónde quedan los datos?",
+     "En tu cuenta, con grabación avisada y acceso solo para ti. Cumple el RGPD y la Ley 19.628."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Centro de Psicología Equilibrio, buenas tardes, soy Elena. ¿En qué puedo ayudarte?"
+    ],
+    [
+     "caller",
+     "Hola... quería pedir una primera cita, estoy pasando una temporada con mucha ansiedad."
+    ],
+    [
+     "agent",
+     "Gracias por llamar, has dado un paso importante. La primera sesión dura cincuenta minutos. ¿Prefieres presencial u online?"
+    ],
+    [
+     "caller",
+     "Online, si puede ser."
+    ],
+    [
+     "agent",
+     "Tengo el lunes a las siete de la tarde o el miércoles a las once de la mañana."
+    ],
+    [
+     "caller",
+     "El lunes a las siete."
+    ],
+    [
+     "agent",
+     "Perfecto, queda reservada. Te envío por email el enlace de la videollamada. Cuídate mucho."
+    ]
+   ]
+  },
+  {
+   "path": "/cl/psicologos",
+   "type": "sector",
+   "country": "CL",
+   "sector": "psicologos",
+   "name": "Consultas de psicología",
+   "img": "https://images.unsplash.com/photo-1550504630-cc20eca3b23e?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Brain",
+   "biz": "Centro de Psicología Equilibrio",
+   "title": "Recepcionista virtual con IA para consultas de psicología en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para consultas de psicología en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Consultas de psicología · Chile",
+   "h1": "Recepcionista con IA para consultas de psicología",
+   "intro": "No puedes contestar en plena sesión y quien llama por primera vez casi nunca deja mensaje. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "secretaria virtual psicólogo Chile, asistente telefónico IA consulta psicológica, agendar hora psicólogo, recepcionista virtual psicología Chile",
+   "sections": [
+    [
+     "Nadie se queda sin respuesta mientras estás en sesión",
+     "El agente contesta con un tono cálido y discreto, explica cómo trabajas, modalidades y tarifas, y reserva la primera sesión en tus huecos libres."
+    ],
+    [
+     "Primeras consultas con la sensibilidad que requieren",
+     "Tú decides qué puede decir y qué no. Ante cualquier señal de urgencia o riesgo, deriva a los servicios de emergencia y te avisa al instante."
+    ],
+    [
+     "Menos cancelaciones de última hora",
+     "Recuerda cada sesión el día anterior y permite reprogramar, para que tu agenda no tenga huecos vacíos."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Es adecuado para una consulta de psicología?",
+     "Sí. Configuras un tono cercano y respetuoso, sin preguntas clínicas: solo recoge el motivo general, la modalidad y la disponibilidad."
+    ],
+    [
+     "¿Qué hace si alguien está en crisis?",
+     "Le facilita de inmediato el teléfono de emergencias (131 o la línea de prevención del suicidio *4141) y te envía un aviso con el teléfono para que contactes cuanto antes."
+    ],
+    [
+     "¿Puede gestionar sesiones online?",
+     "Sí. Reserva la sesión y envía por email el enlace de videollamada que tú configures."
+    ],
+    [
+     "¿Dónde quedan los datos?",
+     "En tu cuenta, con grabación avisada y acceso solo para ti. Cumple el RGPD y la Ley 19.628."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Centro de Psicología Equilibrio, buenas tardes, habla Elena. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola... quería agendar una primera hora, he estado con harta ansiedad."
+    ],
+    [
+     "agent",
+     "Gracias por llamar, es un paso importante. La primera sesión dura cincuenta minutos. ¿La prefieres presencial u online?"
+    ],
+    [
+     "caller",
+     "Online, si se puede."
+    ],
+    [
+     "agent",
+     "Tengo el lunes a las siete de la tarde o el miércoles a las once de la mañana."
+    ],
+    [
+     "caller",
+     "El lunes a las siete."
+    ],
+    [
+     "agent",
+     "Perfecto, quedó agendada. Te mando al correo el link de la videollamada. Cuídate mucho."
+    ]
+   ]
+  },
+  {
+   "path": "/es/barberias",
+   "type": "sector",
+   "country": "ES",
+   "sector": "barberias",
+   "name": "Barberías y peluquerías",
+   "img": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Scissors",
+   "biz": "Barbería El Clásico",
+   "title": "Recepcionista virtual con IA para barberías y peluquerías en España | VozLeads",
+   "description": "Asistente telefónico con IA para barberías y peluquerías en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Barberías y peluquerías · España",
+   "h1": "Recepcionista con IA para barberías y peluquerías",
+   "intro": "Tienes las manos ocupadas con la navaja y el teléfono sonando: cada llamada sin contestar es un corte que se va a otra barbería. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "reservas por teléfono barbería, asistente telefónico IA peluquería, recepcionista virtual barbería, citas peluquería automáticas",
+   "sections": [
+    [
+     "Reservas sin soltar las tijeras",
+     "El agente contesta cada llamada, consulta los huecos de cada barbero y deja la cita reservada con el servicio y el precio, mientras tú sigues trabajando."
+    ],
+    [
+     "Agenda por barbero y por servicio",
+     "Corte, barba, color o tratamientos: cada servicio con su duración, para que nunca se solapen las citas."
+    ],
+    [
+     "Recordatorios que reducen los plantones",
+     "Llama o avisa el día antes y, si el cliente no puede venir, mueve la cita y libera el hueco para otro."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede reservar con un barbero concreto?",
+     "Sí. Configuras a cada profesional con su horario y el agente ofrece sus huecos libres o el primero disponible."
+    ],
+    [
+     "¿Informa de precios?",
+     "Sí, los que le indiques para cada servicio, en euros."
+    ],
+    [
+     "¿Atiende fuera de horario?",
+     "Sí, 24/7. Quien llama de noche o en domingo deja su cita reservada para el siguiente día de apertura."
+    ],
+    [
+     "¿Y si el cliente pregunta otra cosa?",
+     "Responde con la información de tu negocio (dirección, aparcamiento, formas de pago) y, si no sabe algo, toma el recado y te avisa."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Barbería El Clásico, ¿qué tal? Soy Marta. ¿Te reservo cita?"
+    ],
+    [
+     "caller",
+     "Sí, quería corte y arreglo de barba para mañana."
+    ],
+    [
+     "agent",
+     "Mañana tengo a las doce con Dani o a las seis y media con Rubén. ¿Qué te viene mejor?"
+    ],
+    [
+     "caller",
+     "A las seis y media con Rubén."
+    ],
+    [
+     "agent",
+     "Hecho. ¿A nombre de quién lo pongo?"
+    ],
+    [
+     "caller",
+     "Sergio."
+    ],
+    [
+     "agent",
+     "Listo, Sergio, mañana a las seis y media con Rubén. Corte más barba son veintidós euros. ¡Nos vemos!"
+    ]
+   ]
+  },
+  {
+   "path": "/cl/barberias",
+   "type": "sector",
+   "country": "CL",
+   "sector": "barberias",
+   "name": "Barberías y peluquerías",
+   "img": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Scissors",
+   "biz": "Barbería El Clásico",
+   "title": "Recepcionista virtual con IA para barberías y peluquerías en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para barberías y peluquerías en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Barberías y peluquerías · Chile",
+   "h1": "Recepcionista con IA para barberías y peluquerías",
+   "intro": "Estás con la máquina en la mano y suena el teléfono: cada llamada que no contestas es un corte que se va a otra barbería. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "reservas por teléfono barbería Chile, asistente telefónico IA peluquería Chile, recepcionista virtual barbería, agendar hora barbería",
+   "sections": [
+    [
+     "Reservas sin soltar las tijeras",
+     "El agente contesta cada llamada, consulta los huecos de cada barbero y deja la cita reservada con el servicio y el precio, mientras tú sigues trabajando."
+    ],
+    [
+     "Agenda por barbero y por servicio",
+     "Corte, barba, color o tratamientos: cada servicio con su duración, para que nunca se solapen las citas."
+    ],
+    [
+     "Recordatorios que reducen los plantones",
+     "Llama o avisa el día antes y, si el cliente no puede venir, mueve la cita y libera el hueco para otro."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede reservar con un barbero concreto?",
+     "Sí. Configuras a cada profesional con su horario y el agente ofrece sus huecos libres o el primero disponible."
+    ],
+    [
+     "¿Informa de precios?",
+     "Sí, los que le indiques para cada servicio, en pesos chilenos."
+    ],
+    [
+     "¿Atiende fuera de horario?",
+     "Sí, 24/7. Quien llama de noche o en domingo deja su cita reservada para el siguiente día de apertura."
+    ],
+    [
+     "¿Y si el cliente pregunta otra cosa?",
+     "Responde con la información de tu negocio (dirección, aparcamiento, formas de pago) y, si no sabe algo, toma el recado y te avisa."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Barbería El Clásico, ¿cómo estás? Habla Marta. ¿Te agendo una hora?"
+    ],
+    [
+     "caller",
+     "Sí, quería corte y perfilado de barba para mañana."
+    ],
+    [
+     "agent",
+     "Mañana tengo a las doce con el Dani o a las seis y media con el Rubén. ¿Cuál te acomoda?"
+    ],
+    [
+     "caller",
+     "A las seis y media con el Rubén."
+    ],
+    [
+     "agent",
+     "Ya, perfecto. ¿A nombre de quién la dejo?"
+    ],
+    [
+     "caller",
+     "Sebastián."
+    ],
+    [
+     "agent",
+     "Listo, Sebastián, mañana a las seis y media con el Rubén. Corte más barba son quince mil pesos. ¡Nos vemos!"
+    ]
+   ]
+  },
+  {
+   "path": "/es/restaurantes",
+   "type": "sector",
+   "country": "ES",
+   "sector": "restaurantes",
+   "name": "Restaurantes",
+   "img": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=70",
+   "icon": "UtensilsCrossed",
+   "biz": "Restaurante La Brasa",
+   "title": "Recepcionista virtual con IA para restaurantes en España | VozLeads",
+   "description": "Asistente telefónico con IA para restaurantes en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Restaurantes · España",
+   "h1": "Recepcionista con IA para restaurantes",
+   "intro": "En pleno servicio nadie puede coger el teléfono, y una reserva perdida es una mesa vacía un sábado. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "reservas telefónicas restaurante IA, asistente telefónico restaurante, contestador inteligente restaurante, gestionar reservas por teléfono",
+   "sections": [
+    [
+     "Reservas atendidas en pleno servicio",
+     "Mientras tu equipo atiende las mesas, el agente toma las reservas por teléfono: día, hora, número de comensales, zona y alergias."
+    ],
+    [
+     "Alergias y peticiones especiales anotadas",
+     "Celíacos, tronas, cumpleaños o grupos: todo queda apuntado en la reserva para que la sala lo tenga en cuenta."
+    ],
+    [
+     "Responde las preguntas de siempre",
+     "Horarios, carta, menú del día, aparcamiento o si se admiten mascotas: el agente responde al momento y libera a tu equipo."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede controlar el aforo?",
+     "Sí. Configuras turnos y mesas disponibles y el agente solo ofrece los huecos libres; si está completo, propone otra hora o lista de espera."
+    ],
+    [
+     "¿Puede tomar pedidos para llevar?",
+     "Puede tomar el pedido y la hora de recogida y enviártelo por email al instante para que cocina lo prepare."
+    ],
+    [
+     "¿Funciona con mi sistema de reservas?",
+     "Las reservas quedan en tu panel de VozLeads y te llegan por email; por API puedes enviarlas a tu sistema."
+    ],
+    [
+     "¿Cuánto cuesta?",
+     "Un plan mensual de minutos en euros, sin permanencia, con el número de teléfono incluido."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Restaurante La Brasa, buenas noches, soy Paula. ¿Quieres hacer una reserva?"
+    ],
+    [
+     "caller",
+     "Sí, para el sábado, cuatro personas, sobre las nueve."
+    ],
+    [
+     "agent",
+     "El sábado a las nueve tengo mesa en la terraza o en el salón. ¿Dónde preferís?"
+    ],
+    [
+     "caller",
+     "En la terraza. Y una de las personas es celíaca."
+    ],
+    [
+     "agent",
+     "Sin problema, lo anoto y tenemos carta sin gluten. ¿A nombre de quién?"
+    ],
+    [
+     "caller",
+     "De Ana López."
+    ],
+    [
+     "agent",
+     "Reservado, Ana: sábado a las nueve, cuatro personas en terraza. Te envío la confirmación por mensaje. ¡Gracias!"
+    ]
+   ]
+  },
+  {
+   "path": "/cl/restaurantes",
+   "type": "sector",
+   "country": "CL",
+   "sector": "restaurantes",
+   "name": "Restaurantes",
+   "img": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=70",
+   "icon": "UtensilsCrossed",
+   "biz": "Restaurante La Brasa",
+   "title": "Recepcionista virtual con IA para restaurantes en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para restaurantes en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Restaurantes · Chile",
+   "h1": "Recepcionista con IA para restaurantes",
+   "intro": "En pleno servicio nadie alcanza a contestar, y una reserva perdida es una mesa vacía el sábado. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "reservas telefónicas restaurante Chile, asistente telefónico restaurante IA, contestador inteligente restaurante, reservas por teléfono Chile",
+   "sections": [
+    [
+     "Reservas atendidas en pleno servicio",
+     "Mientras tu equipo atiende las mesas, el agente toma las reservas por teléfono: día, hora, número de comensales, zona y alergias."
+    ],
+    [
+     "Alergias y peticiones especiales anotadas",
+     "Celíacos, tronas, cumpleaños o grupos: todo queda apuntado en la reserva para que la sala lo tenga en cuenta."
+    ],
+    [
+     "Responde las preguntas de siempre",
+     "Horarios, carta, menú del día, aparcamiento o si se admiten mascotas: el agente responde al momento y libera a tu equipo."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede controlar el aforo?",
+     "Sí. Configuras turnos y mesas disponibles y el agente solo ofrece los huecos libres; si está completo, propone otra hora o lista de espera."
+    ],
+    [
+     "¿Puede tomar pedidos para llevar?",
+     "Puede tomar el pedido y la hora de recogida y enviártelo por email al instante para que cocina lo prepare."
+    ],
+    [
+     "¿Funciona con mi sistema de reservas?",
+     "Las reservas quedan en tu panel de VozLeads y te llegan por email; por API puedes enviarlas a tu sistema."
+    ],
+    [
+     "¿Cuánto cuesta?",
+     "Un plan mensual de minutos en pesos chilenos, sin permanencia, con el número de teléfono incluido."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Restaurante La Brasa, buenas noches, habla Paula. ¿Quiere hacer una reserva?"
+    ],
+    [
+     "caller",
+     "Sí, para el sábado, cuatro personas, tipo nueve."
+    ],
+    [
+     "agent",
+     "El sábado a las nueve tengo mesa en la terraza o en el salón. ¿Dónde prefieren?"
+    ],
+    [
+     "caller",
+     "En la terraza. Y una de las personas es celíaca."
+    ],
+    [
+     "agent",
+     "No hay problema, lo dejo anotado y tenemos carta sin gluten. ¿A nombre de quién?"
+    ],
+    [
+     "caller",
+     "De Ana González."
+    ],
+    [
+     "agent",
+     "Reservado, Ana: sábado a las nueve, cuatro personas en terraza. Le mando la confirmación por mensaje. ¡Gracias!"
+    ]
+   ]
+  },
+  {
+   "path": "/es/cafeterias",
+   "type": "sector",
+   "country": "ES",
+   "sector": "cafeterias",
+   "name": "Cafeterías y panaderías",
+   "img": "https://images.unsplash.com/photo-1511081692775-05d0f180a065?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Coffee",
+   "biz": "Café Aroma",
+   "title": "Recepcionista virtual con IA para cafeterías y panaderías en España | VozLeads",
+   "description": "Asistente telefónico con IA para cafeterías y panaderías en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Cafeterías y panaderías · España",
+   "h1": "Recepcionista con IA para cafeterías y panaderías",
+   "intro": "Con la barra llena no hay quien coja el teléfono para un encargo de tarta o un pedido para la oficina. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "asistente telefónico cafetería, pedidos por teléfono cafetería IA, encargos de tartas por teléfono, contestador inteligente panadería",
+   "sections": [
+    [
+     "Encargos y pedidos sin parar la barra",
+     "El agente toma encargos de tartas, pedidos para oficinas y catering con todos los detalles, y te los envía por email al instante."
+    ],
+    [
+     "Información al momento",
+     "Horarios, productos sin gluten o veganos, si hay mesa o si hacéis envíos: respuestas rápidas sin que nadie deje lo que está haciendo."
+    ],
+    [
+     "Más ventas en fechas clave",
+     "En Navidad, Día de la Madre o cumpleaños, cuando más llamadas recibes, ninguna se queda sin contestar."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede dar precios de mis productos?",
+     "Sí. Le indicas tu carta o tus productos de encargo con precio y el agente responde con esos datos."
+    ],
+    [
+     "¿Cómo me llegan los pedidos?",
+     "Por email y en tu panel, con nombre, teléfono, producto, cantidad y hora de recogida."
+    ],
+    [
+     "¿Sirve si solo tengo un local pequeño?",
+     "Sí. Es justo cuando más ayuda: no necesitas a nadie pendiente del teléfono."
+    ],
+    [
+     "¿Necesito un número nuevo?",
+     "Incluimos un número español +34 gratis. También puedes desviar tu número actual."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Café Aroma, buenos días, soy Irene. ¿En qué te ayudo?"
+    ],
+    [
+     "caller",
+     "Hola, quería encargar una tarta de chocolate para el domingo."
+    ],
+    [
+     "agent",
+     "¡Claro! ¿Para cuántas personas la quieres?"
+    ],
+    [
+     "caller",
+     "Para unas diez."
+    ],
+    [
+     "agent",
+     "Perfecto, la de diez raciones son treinta y dos euros. ¿La recoges el domingo por la mañana?"
+    ],
+    [
+     "caller",
+     "Sí, sobre las once. A nombre de Laura."
+    ],
+    [
+     "agent",
+     "Apuntado, Laura: tarta de chocolate de diez raciones, domingo a las once. ¡Gracias y hasta el domingo!"
+    ]
+   ]
+  },
+  {
+   "path": "/cl/cafeterias",
+   "type": "sector",
+   "country": "CL",
+   "sector": "cafeterias",
+   "name": "Cafeterías y pastelerías",
+   "img": "https://images.unsplash.com/photo-1511081692775-05d0f180a065?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Coffee",
+   "biz": "Café Aroma",
+   "title": "Recepcionista virtual con IA para cafeterías y pastelerías en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para cafeterías y pastelerías en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Cafeterías y pastelerías · Chile",
+   "h1": "Recepcionista con IA para cafeterías y pastelerías",
+   "intro": "Con la barra llena nadie alcanza a contestar para un encargo de torta o un pedido para la oficina. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "asistente telefónico cafetería Chile, pedidos por teléfono cafetería IA, encargos de tortas por teléfono, contestador inteligente pastelería",
+   "sections": [
+    [
+     "Encargos y pedidos sin parar la barra",
+     "El agente toma encargos de tortas, pedidos para oficinas y catering con todos los detalles, y te los envía por email al instante."
+    ],
+    [
+     "Información al momento",
+     "Horarios, productos sin gluten o veganos, si hay mesa o si hacéis envíos: respuestas rápidas sin que nadie deje lo que está haciendo."
+    ],
+    [
+     "Más ventas en fechas clave",
+     "En Navidad, Día de la Madre o cumpleaños, cuando más llamadas recibes, ninguna se queda sin contestar."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede dar precios de mis productos?",
+     "Sí. Le indicas tu carta o tus productos de encargo con precio y el agente responde con esos datos."
+    ],
+    [
+     "¿Cómo me llegan los pedidos?",
+     "Por email y en tu panel, con nombre, teléfono, producto, cantidad y hora de recogida."
+    ],
+    [
+     "¿Sirve si solo tengo un local pequeño?",
+     "Sí. Es justo cuando más ayuda: no necesitas a nadie pendiente del teléfono."
+    ],
+    [
+     "¿Necesito un número nuevo?",
+     "Incluimos un número chileno +56 gratis. También puedes desviar tu número actual."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Café Aroma, buenos días, habla Irene. ¿En qué te ayudo?"
+    ],
+    [
+     "caller",
+     "Hola, quería encargar una torta de chocolate para el domingo."
+    ],
+    [
+     "agent",
+     "¡Claro! ¿Para cuántas personas la necesitas?"
+    ],
+    [
+     "caller",
+     "Para unas diez."
+    ],
+    [
+     "agent",
+     "Perfecto, la de diez porciones sale veintiocho mil pesos. ¿La retiras el domingo en la mañana?"
+    ],
+    [
+     "caller",
+     "Sí, tipo once. A nombre de Camila."
+    ],
+    [
+     "agent",
+     "Anotado, Camila: torta de chocolate de diez porciones, domingo a las once. ¡Gracias y nos vemos!"
+    ]
+   ]
+  },
+  {
+   "path": "/es/abogados",
+   "type": "sector",
+   "country": "ES",
+   "sector": "abogados",
+   "name": "Despachos de abogados",
+   "img": "https://images.unsplash.com/photo-1758518731462-d091b0b4ed0d?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Scale",
+   "biz": "Despacho Ruiz & Asociados",
+   "title": "Recepcionista virtual con IA para despachos de abogados en España | VozLeads",
+   "description": "Asistente telefónico con IA para despachos de abogados en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Despachos de abogados · España",
+   "h1": "Recepcionista con IA para despachos de abogados",
+   "intro": "Estás en juicio o reunido y la llamada de un posible cliente se pierde; cuando devuelves la llamada, ya ha contratado a otro despacho. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "secretaria virtual abogados, asistente telefónico IA despacho de abogados, recepcionista virtual bufete, captación de clientes abogados, atención telefónica despacho",
+   "sections": [
+    [
+     "Cada posible cliente atendido al primer tono",
+     "Mientras estás en juicio o reunido, el agente atiende, identifica el área legal (laboral, familia, penal, civil…) y agenda la primera consulta con el abogado adecuado."
+    ],
+    [
+     "Filtra y prepara cada consulta",
+     "Recoge los datos básicos del caso, la urgencia y los documentos que debe traer el cliente, y te deja un resumen por escrito antes de la reunión."
+    ],
+    [
+     "Imagen profesional las 24 horas",
+     "Un saludo con el nombre del despacho, voz natural y trato cuidado, también fuera de horario y en vacaciones."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Da asesoramiento legal?",
+     "No. El agente no da opiniones jurídicas: recoge el caso, informa de tus honorarios de primera consulta si lo deseas y agenda la cita con un abogado."
+    ],
+    [
+     "¿Puede derivar por área de práctica?",
+     "Sí. Configuras qué abogado lleva cada área y el agente ofrece la agenda del profesional que corresponde."
+    ],
+    [
+     "¿Qué pasa con los casos urgentes?",
+     "Una detención, un plazo que vence o una orden de alejamiento: te avisa al instante con el teléfono y el motivo para que llames tú."
+    ],
+    [
+     "¿Es confidencial?",
+     "Las llamadas se avisan como grabadas y solo tu equipo accede al panel. Cumple el RGPD y la Ley 19.628."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Despacho Ruiz y Asociados, buenos días, le atiende Sofía. ¿En qué podemos ayudarle?"
+    ],
+    [
+     "caller",
+     "Hola, me han despedido y quería saber si es procedente. Necesito un abogado laboralista."
+    ],
+    [
+     "agent",
+     "Lo siento mucho. Le puedo dar una primera consulta con nuestro abogado laboralista. ¿Cuándo fue el despido?"
+    ],
+    [
+     "caller",
+     "El viernes pasado."
+    ],
+    [
+     "agent",
+     "Entonces conviene actuar pronto. Tengo consulta mañana a las doce o el jueves a las cuatro. ¿Cuál le viene bien?"
+    ],
+    [
+     "caller",
+     "Mañana a las doce."
+    ],
+    [
+     "agent",
+     "Reservada. Traiga la carta de despido y sus últimas nóminas. Le envío la confirmación por email. Gracias por llamar."
+    ]
+   ]
+  },
+  {
+   "path": "/cl/abogados",
+   "type": "sector",
+   "country": "CL",
+   "sector": "abogados",
+   "name": "Estudios de abogados",
+   "img": "https://images.unsplash.com/photo-1758518731462-d091b0b4ed0d?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Scale",
+   "biz": "Estudio Jurídico Rojas y Asociados",
+   "title": "Recepcionista virtual con IA para estudios de abogados en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para estudios de abogados en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Estudios de abogados · Chile",
+   "h1": "Recepcionista con IA para estudios de abogados",
+   "intro": "Estás en audiencia o en reunión y se pierde la llamada de un posible cliente; cuando devuelves el llamado, ya contrató a otro estudio. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "secretaria virtual abogados Chile, asistente telefónico IA estudio jurídico, recepcionista virtual estudio de abogados, captación de clientes abogados Chile",
+   "sections": [
+    [
+     "Cada posible cliente atendido al primer tono",
+     "Mientras estás en audiencia o reunido, el agente atiende, identifica el área legal (laboral, familia, penal, civil…) y agenda la primera consulta con el abogado adecuado."
+    ],
+    [
+     "Filtra y prepara cada consulta",
+     "Recoge los datos básicos del caso, la urgencia y los documentos que debe traer el cliente, y te deja un resumen por escrito antes de la reunión."
+    ],
+    [
+     "Imagen profesional las 24 horas",
+     "Un saludo con el nombre del estudio, voz natural y trato cuidado, también fuera de horario y en vacaciones."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Da asesoramiento legal?",
+     "No. El agente no da opiniones jurídicas: recoge el caso, informa de tus honorarios de primera consulta si lo deseas y agenda la cita con un abogado."
+    ],
+    [
+     "¿Puede derivar por área de práctica?",
+     "Sí. Configuras qué abogado lleva cada área y el agente ofrece la agenda del profesional que corresponde."
+    ],
+    [
+     "¿Qué pasa con los casos urgentes?",
+     "Una detención, un plazo que vence o una orden de alejamiento: te avisa al instante con el teléfono y el motivo para que llames tú."
+    ],
+    [
+     "¿Es confidencial?",
+     "Las llamadas se avisan como grabadas y solo tu equipo accede al panel. Cumple el RGPD y la Ley 19.628."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Estudio Jurídico Rojas y Asociados, buenos días, habla Sofía. ¿En qué le podemos ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, me despidieron y quería saber si fue justificado. Necesito un abogado laboral."
+    ],
+    [
+     "agent",
+     "Lo lamento mucho. Le puedo agendar una primera reunión con nuestro abogado laboral. ¿Cuándo lo despidieron?"
+    ],
+    [
+     "caller",
+     "El viernes pasado."
+    ],
+    [
+     "agent",
+     "Entonces conviene actuar luego, por los plazos. Tengo mañana a las doce o el jueves a las cuatro. ¿Cuál le acomoda?"
+    ],
+    [
+     "caller",
+     "Mañana a las doce."
+    ],
+    [
+     "agent",
+     "Quedó agendada. Traiga la carta de despido y sus últimas liquidaciones de sueldo. Le envío la confirmación por correo. Gracias."
+    ]
+   ]
   }
  ]
 }

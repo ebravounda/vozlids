@@ -1,0 +1,422 @@
+{
+ "ES-clinicas-dentales": [
+  [
+   "agent",
+   "Clínica Dental Sonrisa, buenos días, le atiende Carla. ¿En qué puedo ayudarle?"
+  ],
+  [
+   "caller",
+   "Hola, quería pedir cita para una limpieza, que hace tiempo que no voy."
+  ],
+  [
+   "agent",
+   "Claro que sí. Tengo hueco el martes a las diez y media o el jueves a las cinco de la tarde. ¿Cuál le viene mejor?"
+  ],
+  [
+   "caller",
+   "El jueves a las cinco, perfecto."
+  ],
+  [
+   "agent",
+   "Hecho. ¿Me dice su nombre y apellido, por favor?"
+  ],
+  [
+   "caller",
+   "Javier Martín."
+  ],
+  [
+   "agent",
+   "Gracias, Javier. Le dejo apuntado el jueves a las cinco y el miércoles le enviamos un recordatorio. ¡Que tenga buen día!"
+  ]
+ ],
+ "CL-clinicas-dentales": [
+  [
+   "agent",
+   "Clínica Dental Sonrisa, buenos días, habla Carla. ¿En qué le puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, quería agendar una hora para limpieza, hace rato que no voy."
+  ],
+  [
+   "agent",
+   "Por supuesto. Tengo disponible el martes a las diez y media o el jueves a las cinco de la tarde. ¿Cuál le acomoda más?"
+  ],
+  [
+   "caller",
+   "El jueves a las cinco, ya."
+  ],
+  [
+   "agent",
+   "Listo. ¿Me indica su nombre y apellido, por favor?"
+  ],
+  [
+   "caller",
+   "Javier Muñoz."
+  ],
+  [
+   "agent",
+   "Gracias, Javier. Quedó agendado el jueves a las cinco y el miércoles le llega la confirmación por WhatsApp. ¡Que esté muy bien!"
+  ]
+ ],
+ "ES-clinicas-esteticas": [
+  [
+   "agent",
+   "Estética Bella Piel, hola, soy Lucía. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, vi vuestro anuncio del tratamiento de hidratación facial y quería información."
+  ],
+  [
+   "agent",
+   "¡Genial! Es un tratamiento de unos cuarenta y cinco minutos y la primera valoración es gratuita. ¿Te gustaría venir esta semana?"
+  ],
+  [
+   "caller",
+   "Sí, ¿el viernes por la tarde puede ser?"
+  ],
+  [
+   "agent",
+   "El viernes tengo a las seis o a las siete. ¿Cuál prefieres?"
+  ],
+  [
+   "caller",
+   "A las seis."
+  ],
+  [
+   "agent",
+   "Perfecto, te reservo el viernes a las seis. Te mando un mensaje con la dirección y las indicaciones. ¡Hasta el viernes!"
+  ]
+ ],
+ "CL-clinicas-esteticas": [
+  [
+   "agent",
+   "Estética Bella Piel, hola, habla Lucía. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, vi el aviso del tratamiento de hidratación facial y quería saber más."
+  ],
+  [
+   "agent",
+   "¡Qué bueno! Dura unos cuarenta y cinco minutos y la primera evaluación es gratis. ¿Te gustaría venir esta semana?"
+  ],
+  [
+   "caller",
+   "Sí, ¿el viernes en la tarde se puede?"
+  ],
+  [
+   "agent",
+   "El viernes tengo a las seis o a las siete. ¿Cuál te acomoda?"
+  ],
+  [
+   "caller",
+   "A las seis, porfa."
+  ],
+  [
+   "agent",
+   "Listo, te reservé el viernes a las seis. Te mando un mensaje con la dirección y las indicaciones. ¡Nos vemos!"
+  ]
+ ],
+ "ES-psicologos": [
+  [
+   "agent",
+   "Centro de Psicología Equilibrio, buenas tardes, soy Elena. ¿En qué puedo ayudarte?"
+  ],
+  [
+   "caller",
+   "Hola... quería pedir una primera cita, estoy pasando una temporada con mucha ansiedad."
+  ],
+  [
+   "agent",
+   "Gracias por llamar, has dado un paso importante. La primera sesión dura cincuenta minutos. ¿Prefieres presencial u online?"
+  ],
+  [
+   "caller",
+   "Online, si puede ser."
+  ],
+  [
+   "agent",
+   "Tengo el lunes a las siete de la tarde o el miércoles a las once de la mañana."
+  ],
+  [
+   "caller",
+   "El lunes a las siete."
+  ],
+  [
+   "agent",
+   "Perfecto, queda reservada. Te envío por email el enlace de la videollamada. Cuídate mucho."
+  ]
+ ],
+ "CL-psicologos": [
+  [
+   "agent",
+   "Centro de Psicología Equilibrio, buenas tardes, habla Elena. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola... quería agendar una primera hora, he estado con harta ansiedad."
+  ],
+  [
+   "agent",
+   "Gracias por llamar, es un paso importante. La primera sesión dura cincuenta minutos. ¿La prefieres presencial u online?"
+  ],
+  [
+   "caller",
+   "Online, si se puede."
+  ],
+  [
+   "agent",
+   "Tengo el lunes a las siete de la tarde o el miércoles a las once de la mañana."
+  ],
+  [
+   "caller",
+   "El lunes a las siete."
+  ],
+  [
+   "agent",
+   "Perfecto, quedó agendada. Te mando al correo el link de la videollamada. Cuídate mucho."
+  ]
+ ],
+ "ES-barberias": [
+  [
+   "agent",
+   "Barbería El Clásico, ¿qué tal? Soy Marta. ¿Te reservo cita?"
+  ],
+  [
+   "caller",
+   "Sí, quería corte y arreglo de barba para mañana."
+  ],
+  [
+   "agent",
+   "Mañana tengo a las doce con Dani o a las seis y media con Rubén. ¿Qué te viene mejor?"
+  ],
+  [
+   "caller",
+   "A las seis y media con Rubén."
+  ],
+  [
+   "agent",
+   "Hecho. ¿A nombre de quién lo pongo?"
+  ],
+  [
+   "caller",
+   "Sergio."
+  ],
+  [
+   "agent",
+   "Listo, Sergio, mañana a las seis y media con Rubén. Corte más barba son veintidós euros. ¡Nos vemos!"
+  ]
+ ],
+ "CL-barberias": [
+  [
+   "agent",
+   "Barbería El Clásico, ¿cómo estás? Habla Marta. ¿Te agendo una hora?"
+  ],
+  [
+   "caller",
+   "Sí, quería corte y perfilado de barba para mañana."
+  ],
+  [
+   "agent",
+   "Mañana tengo a las doce con el Dani o a las seis y media con el Rubén. ¿Cuál te acomoda?"
+  ],
+  [
+   "caller",
+   "A las seis y media con el Rubén."
+  ],
+  [
+   "agent",
+   "Ya, perfecto. ¿A nombre de quién la dejo?"
+  ],
+  [
+   "caller",
+   "Sebastián."
+  ],
+  [
+   "agent",
+   "Listo, Sebastián, mañana a las seis y media con el Rubén. Corte más barba son quince mil pesos. ¡Nos vemos!"
+  ]
+ ],
+ "ES-restaurantes": [
+  [
+   "agent",
+   "Restaurante La Brasa, buenas noches, soy Paula. ¿Quieres hacer una reserva?"
+  ],
+  [
+   "caller",
+   "Sí, para el sábado, cuatro personas, sobre las nueve."
+  ],
+  [
+   "agent",
+   "El sábado a las nueve tengo mesa en la terraza o en el salón. ¿Dónde preferís?"
+  ],
+  [
+   "caller",
+   "En la terraza. Y una de las personas es celíaca."
+  ],
+  [
+   "agent",
+   "Sin problema, lo anoto y tenemos carta sin gluten. ¿A nombre de quién?"
+  ],
+  [
+   "caller",
+   "De Ana López."
+  ],
+  [
+   "agent",
+   "Reservado, Ana: sábado a las nueve, cuatro personas en terraza. Te envío la confirmación por mensaje. ¡Gracias!"
+  ]
+ ],
+ "CL-restaurantes": [
+  [
+   "agent",
+   "Restaurante La Brasa, buenas noches, habla Paula. ¿Quiere hacer una reserva?"
+  ],
+  [
+   "caller",
+   "Sí, para el sábado, cuatro personas, tipo nueve."
+  ],
+  [
+   "agent",
+   "El sábado a las nueve tengo mesa en la terraza o en el salón. ¿Dónde prefieren?"
+  ],
+  [
+   "caller",
+   "En la terraza. Y una de las personas es celíaca."
+  ],
+  [
+   "agent",
+   "No hay problema, lo dejo anotado y tenemos carta sin gluten. ¿A nombre de quién?"
+  ],
+  [
+   "caller",
+   "De Ana González."
+  ],
+  [
+   "agent",
+   "Reservado, Ana: sábado a las nueve, cuatro personas en terraza. Le mando la confirmación por mensaje. ¡Gracias!"
+  ]
+ ],
+ "ES-cafeterias": [
+  [
+   "agent",
+   "Café Aroma, buenos días, soy Irene. ¿En qué te ayudo?"
+  ],
+  [
+   "caller",
+   "Hola, quería encargar una tarta de chocolate para el domingo."
+  ],
+  [
+   "agent",
+   "¡Claro! ¿Para cuántas personas la quieres?"
+  ],
+  [
+   "caller",
+   "Para unas diez."
+  ],
+  [
+   "agent",
+   "Perfecto, la de diez raciones son treinta y dos euros. ¿La recoges el domingo por la mañana?"
+  ],
+  [
+   "caller",
+   "Sí, sobre las once. A nombre de Laura."
+  ],
+  [
+   "agent",
+   "Apuntado, Laura: tarta de chocolate de diez raciones, domingo a las once. ¡Gracias y hasta el domingo!"
+  ]
+ ],
+ "CL-cafeterias": [
+  [
+   "agent",
+   "Café Aroma, buenos días, habla Irene. ¿En qué te ayudo?"
+  ],
+  [
+   "caller",
+   "Hola, quería encargar una torta de chocolate para el domingo."
+  ],
+  [
+   "agent",
+   "¡Claro! ¿Para cuántas personas la necesitas?"
+  ],
+  [
+   "caller",
+   "Para unas diez."
+  ],
+  [
+   "agent",
+   "Perfecto, la de diez porciones sale veintiocho mil pesos. ¿La retiras el domingo en la mañana?"
+  ],
+  [
+   "caller",
+   "Sí, tipo once. A nombre de Camila."
+  ],
+  [
+   "agent",
+   "Anotado, Camila: torta de chocolate de diez porciones, domingo a las once. ¡Gracias y nos vemos!"
+  ]
+ ],
+ "ES-abogados": [
+  [
+   "agent",
+   "Despacho Ruiz y Asociados, buenos días, le atiende Sofía. ¿En qué podemos ayudarle?"
+  ],
+  [
+   "caller",
+   "Hola, me han despedido y quería saber si es procedente. Necesito un abogado laboralista."
+  ],
+  [
+   "agent",
+   "Lo siento mucho. Le puedo dar una primera consulta con nuestro abogado laboralista. ¿Cuándo fue el despido?"
+  ],
+  [
+   "caller",
+   "El viernes pasado."
+  ],
+  [
+   "agent",
+   "Entonces conviene actuar pronto. Tengo consulta mañana a las doce o el jueves a las cuatro. ¿Cuál le viene bien?"
+  ],
+  [
+   "caller",
+   "Mañana a las doce."
+  ],
+  [
+   "agent",
+   "Reservada. Traiga la carta de despido y sus últimas nóminas. Le envío la confirmación por email. Gracias por llamar."
+  ]
+ ],
+ "CL-abogados": [
+  [
+   "agent",
+   "Estudio Jurídico Rojas y Asociados, buenos días, habla Sofía. ¿En qué le podemos ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, me despidieron y quería saber si fue justificado. Necesito un abogado laboral."
+  ],
+  [
+   "agent",
+   "Lo lamento mucho. Le puedo agendar una primera reunión con nuestro abogado laboral. ¿Cuándo lo despidieron?"
+  ],
+  [
+   "caller",
+   "El viernes pasado."
+  ],
+  [
+   "agent",
+   "Entonces conviene actuar luego, por los plazos. Tengo mañana a las doce o el jueves a las cuatro. ¿Cuál le acomoda?"
+  ],
+  [
+   "caller",
+   "Mañana a las doce."
+  ],
+  [
+   "agent",
+   "Quedó agendada. Traiga la carta de despido y sus últimas liquidaciones de sueldo. Le envío la confirmación por correo. Gracias."
+  ]
+ ]
+}

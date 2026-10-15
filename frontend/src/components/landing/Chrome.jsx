@@ -4,7 +4,7 @@ import { Logo } from "@/components/Common";
 import { SEO_PAGES } from "@/components/Seo";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
-const LINKS = [["#soluciones", "Soluciones"], ["#como", "Cómo funciona"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
+const LINKS = [["#sectores", "Sectores"], ["#soluciones", "Soluciones"], ["#como", "Cómo funciona"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
 
 export const Brand = () => (
   <Link to="/" className="flex items-center" data-testid="landing-brand"><Logo /></Link>
@@ -42,11 +42,12 @@ export const Footer = ({ m }) => (
         <p className="mt-4 text-sm text-slate-500" data-testid="footer-owner">VozLeads.com by <a href="https://goroky.com" rel="noopener" className="font-semibold text-slate-700 hover:underline">GoRoky.com</a></p>
       </div>
       <div className="grid gap-8 text-sm sm:grid-cols-3">
-        {[["Soluciones", SEO_PAGES.filter((p) => p.type === "topic" && (m?.market === "INT" || [m?.market, "AUTO"].includes(p.country)))], ["Países", m?.market === "INT" ? SEO_PAGES.filter((p) => p.type === "country") : []]].filter(([, l]) => l.length).map(([t, list]) => (
+        {[["Sectores", SEO_PAGES.filter((p) => p.type === "sector" && p.country === (m?.market === "CL" ? "CL" : "ES"))],
+          ["Soluciones", SEO_PAGES.filter((p) => p.type === "topic" && (m?.market === "INT" || [m?.market, "AUTO"].includes(p.country)))], ["Países", m?.market === "INT" ? SEO_PAGES.filter((p) => p.type === "country") : []]].filter(([, l]) => l.length).map(([t, list]) => (
           <nav key={t} aria-label={t} className={t === "Países" ? "sm:col-span-2" : ""}>
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{t}</p>
             <ul className={`grid gap-2 ${t === "Países" ? "grid-cols-2" : ""}`}>
-              {list.map((p) => <li key={p.path}><Link to={p.path} className="text-slate-600 hover:text-slate-900" data-testid={`footer-link-${p.path.slice(1)}`}>{t === "Países" ? p.h1.replace(/^.* (en|de|para empresas de|para empresas en) /, "") : p.h1}</Link></li>)}
+              {list.map((p) => <li key={p.path}><Link to={p.path} className="text-slate-600 hover:text-slate-900" data-testid={`footer-link-${p.path.slice(1).replace("/", "-")}`}>{t === "Sectores" ? `IA para ${p.name.toLowerCase()}` : t === "Países" ? p.h1.replace(/^.* (en|de|para empresas de|para empresas en) /, "") : p.h1}</Link></li>)}
             </ul>
           </nav>
         ))}
