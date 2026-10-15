@@ -27,7 +27,7 @@ if (mode === "sitemap") {
     const head = headHtml(headFor(cfg, page), cfg);
     const html = base.replace(block, () => head)
       .replace(/<div id="?root"?><\/div>/, () => `<div id="root">${bodyHtml(page, cfg, cfg.pages)}</div>`);
-    if (!html.includes("<main>")) throw new Error("root div not found");
+    if (!html.includes("seo-static")) throw new Error("root div not found");
     const dir = page.path === "/" ? build : path.join(build, page.path);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, "index.html"), html);

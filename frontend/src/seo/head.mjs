@@ -56,7 +56,7 @@ export function bodyHtml(page, cfg, all) {
   const sec = (page.sections || []).map(([t, p]) => `<h2>${esc(t)}</h2><p>${esc(p)}</p>`).join("");
   const faq = (page.faq || []).map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join("");
   const links = all.filter((p) => p.path !== page.path).map((p) => `<li><a href="${p.path}">${esc(p.h1)}</a></li>`).join("");
-  return `<main><p>${esc(page.eyebrow)}</p><h1>${esc(page.h1)}</h1><p>${esc(page.intro)}</p>${sec}` +
+  return `<main class="seo-static"><p>${esc(page.eyebrow)}</p><h1>${esc(page.h1)}</h1><p>${esc(page.intro)}</p>${sec}` +
     `<h2>Solicita información ahora</h2><p>Déjanos tu nombre y teléfono y nuestro agente de voz te llama en segundos.</p>` +
     `<h2>Preguntas frecuentes</h2>${faq}<nav><ul>${links}</ul></nav><p>${esc(cfg.brand)}.com by ${esc(cfg.owner)}</p></main>`;
 }
