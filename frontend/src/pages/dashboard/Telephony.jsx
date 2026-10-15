@@ -53,13 +53,6 @@ const STEPS = [
   "Rellena aquí el número, el usuario y la contraseña SIP y pulsa «Conectar número». Nosotros lo damos de alta en Vapi.",
 ];
 
-const ChileWarning = () => (
-  <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200" data-testid="chile-prefix-warning">
-    <p className="font-semibold">Aviso legal Chile (SUBTEL, Res. Exenta 286, vigente desde 13/08/2025)</p>
-    <p className="mt-1 text-rose-200/80">Las llamadas comerciales, incluso las solicitadas por el cliente, deben salir desde un número con prefijo <b>600</b>. Las que salen desde móviles +56 9 o números extranjeros se consideran fraudulentas y pueden multarse con 5 a 5.000 UTM. Usa el +56 de Zadarma bajo tu responsabilidad y cámbialo por un 600 en cuanto lo tengas.</p>
-  </div>
-);
-
 const NUM = { activo: "Activo", comprando: "Preparando tu número…", error: "Pendiente: estamos resolviendo un problema", liberado: "Liberado", sin_numero: "Se asigna al contratar un plan" };
 
 export function MyNumber() {
@@ -175,9 +168,8 @@ export default function Telephony() {
           {s && <p className="break-all rounded-lg bg-slate-950 p-3 font-mono text-xs text-slate-400">{s.webhook_url}</p>}
           {s && !s.configured && <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200" data-testid="telephony-not-configured">Mientras falte algún dato, las llamadas se guardan como “Fallida” con el motivo.</p>}
           {s?.is_admin && s.has_api_key && Object.entries(s.countries).filter(([, x]) => !x.configured).map(([c, x]) => (
-            <div key={c} className="space-y-3">{c === "CL" && <ChileWarning />}<ConnectZadarma onDone={load} country={c} prefix={x.prefix} /></div>
+            <div key={c} className="space-y-3"><ConnectZadarma onDone={load} country={c} prefix={x.prefix} /></div>
           ))}
-          {s?.countries?.CL?.configured && s.countries.CL.number?.startsWith("+569") && <ChileWarning />}
           {s && !s.is_admin && !s.configured && <p className="text-xs text-slate-500">Solo el administrador de la plataforma puede conectar el número.</p>}
         </Panel>
         <div className="space-y-6">
