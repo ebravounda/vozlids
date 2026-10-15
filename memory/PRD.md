@@ -114,3 +114,5 @@
 - "/" adapts: ES visitors see /es content, CL see /cl, others international (EUR, visitor flag). /es only Spain, /cl only Chile (CLP). No currency switch on public site.
 - Demo call: 15 s max (landing.MAX_SECONDS), short greeting, endCallPhrases ['hasta luego'] when max_seconds<=20; non ES/CL countries use ES landing agent (+34); cap 40 intl demos/day; countries.norm_demo_phone.
 - SEO: 27 pages — 16 LatAm country pages (/mx, /ar, /co, /pe, /ec, /uy, /ve, /pa, /cr, /gt, /hn, /sv, /ni, /do, /bo, /py) + /call-center-con-ia, /central-telefonica-con-ia, /telefono-con-ia; hreflang es-XX for all; sitemap regenerated. (iteration_14; 2 minor fixes applied after)
+- Fix inbound IVR (platform number): vapi.enable_inbound (Zadarma inbound IP gateways numeric + netmask, phone-number server URL), /api/admin/platform-inbound GET/PUT/DELETE, Telefonía panel "Contestar llamadas entrantes". Manual Zadarma step: route number to <number>@sip.vapi.ai (auto if Zadarma API key). NOTE: Vapi account shared preview/prod — whichever env presses "Activar" last receives inbound webhooks. (iteration_15)
+- Agent no longer says "asistente virtual" (prompt rule + seed.migrate_ai_label).

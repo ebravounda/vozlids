@@ -1,0 +1,28 @@
+{
+  "summary": "Iter-15: Verified VozLeads platform-inbound bug fix (admin inbound setup on +34919932652) end-to-end. Backend pytest 8/8 passed (/app/backend/tests/test_platform_inbound.py): GET /api/admin/platform-inbound returns ES row {number:'+34919932652', enabled:true, agent_id:'6acfac3a346c4c1ebc71ff58', sip_uri:'34919932652@sip.vapi.ai'}; non-admin → 401/403; PUT with invalid agent → 404; PUT with CL (no CL line connected) → 400 Spanish 'Conecta primero la línea de este país.'; idempotent PUT ES + ES_AGENT returns {ok:true, sip_uri:'34919932652@sip.vapi.ai'} (real Vapi PATCH succeeded). Vapi webhook assistant-request: known phoneNumberId 69c05ec5-… returns assistant whose firstMessage starts 'Hola, OpenFactura.es, te atiende Marta' (no 'asistente virtual'); unknown phoneNumberId returns short assistant containing 'no podemos atenderte'. Test leads with vapi_call_id starting 'tst-' created during tests were cleaned up (2 deleted). Frontend: logged into admin via /api/auth/login then navigated to /app/telefonia; data-testid=platform-inbound-panel visible with row platform-inbound-ES showing '+34919932652 · contesta la IA', agent select platform-inbound-agent-ES defaulting to 'Marta', platform-inbound-save-ES ('Guardar') button, and platform-inbound-steps-ES listing manual Zadarma steps that include '34919932652@sip.vapi.ai'. Panel renders cleanly on the light-themed Telefonia page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/app/telefonia — Aviso legal Chile card", "issues": ["Body text under 'Aviso legal Chile (SUBTEL, Res. Exenta 286, vigente desde 13/08/2025)' is barely legible — near-white/very-light text on a pale pink/orange background (very low contrast). Not part of this bug fix but worth fixing for accessibility."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_platform_inbound.py", "/app/test_reports/pytest/iter15_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "vapi.enable_inbound correctly PATCHes credential gateways (sip.zadarma.com outbound-only + Zadarma inbound IP/netmask ranges inbound-only) and PATCHes phone-number server with webhook URL+secret — matches the intended fix for the reported 'no está disponible' inbound behaviour.",
+    "phone_numbers.assistant_request properly guards: unknown phoneNumberId / inactive tenant_numbers / quota_error all return the short _short(UNAVAILABLE) assistant with maxDurationSeconds=20 and endCallPhrases — prevents infinite inbound bills on misconfigured numbers.",
+    "release() guard `if r.get('platform')` is correct: tenant_numbers rows with platform:true (admin inbound) are never touched by tenant release flows — matches spec.",
+    "PlatformInboundIn Pydantic model restricts country to ^(ES|CL)$ (good) and agent_id min_length=1; agent existence is re-checked via Mongo so no injection risk.",
+    "Minor: GET /api/admin/platform-inbound iterates vapi.STATE['numbers'] (in-process) — if the backend restarts before admin reconnects, the panel will be empty until lines are reconnected; consider seeding STATE['numbers'] from Mongo on startup."
+  ],
+  "updated_files": ["/app/backend/tests/test_platform_inbound.py", "/app/test_reports/pytest/iter15_results.xml", "/app/test_reports/iteration_15.json"],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "100% — panel, row, select, save button, and manual steps all render with correct data-testids and content"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (seeded admin).",
+  "seed_data_creation": "Created and deleted 2 inbound leads with vapi_call_id starting 'tst-' (one for known phoneNumberId, one for unknown). Did NOT disable ES inbound at the end — remains enabled per request.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "ES platform-inbound is active with agent 6acfac3a346c4c1ebc71ff58 and sip_uri 34919932652@sip.vapi.ai. Do NOT DELETE on ES. CL line is not connected (vapi.STATE['numbers'] has no CL entry) so PUT CL correctly 400s with 'Conecta primero la línea de este país.' Reuse /app/backend/tests/test_platform_inbound.py for regression — it is self-contained (loads /app/backend/.env).",
+  "rca of the issue": "Original bug: platform number +34919932652 played 'no disponible' on inbound. RCA: (a) Vapi credential 'byo-sip-trunk' only had the Zadarma SIP gateway with inboundEnabled=false (outbound-only), so inbound SIP INVITEs from Zadarma were rejected by Vapi; (b) the phone-number row had no server webhook configured so Vapi had no assistant-request destination; (c) no tenant_numbers {platform:true,country:'ES'} row existed, so even if the webhook fired, assistant_request() would return UNAVAILABLE. Fix verified: vapi.enable_inbound() PATCHes gateways=[sip.zadarma.com outbound-only, 185.45.152.0/24, 185.45.154.0/24, 185.45.155.0/24, 195.122.19.0/24, 15.235.128.70/32, 31.31.222.201/32 — all inbound-only] + patches phone-number server {url,headers:x-vapi-secret}; PUT upserts tenant_numbers {platform:true, country:'ES', tenant_id:admin, phone_number_id, status:'activo', inbound_agent_id}. Webhook assistant-request now resolves the ES agent and returns build_assistant() with the Marta greeting. Simulated call test confirmed firstMessage='Hola, OpenFactura.es, te atiende Marta…'. User should now hear the agent instead of 'no disponible'."
+}
