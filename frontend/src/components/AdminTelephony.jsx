@@ -113,7 +113,7 @@ function LibraryVoice({ v, country, onAdded, playing, setPlaying }) {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 p-3 text-sm" data-testid={`library-voice-${v.voice_id}`}>
       <button onClick={() => setPlaying(playing === v.voice_id ? "" : v.voice_id)} className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500 text-slate-950" data-testid={`library-voice-play-${v.voice_id}`}>{playing === v.voice_id ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</button>
-      <div className="min-w-0 flex-1"><p className="truncate text-white">{v.name}</p><p className="truncate text-xs text-slate-500">{v.gender === "male" ? "Hombre" : "Mujer"} · {v.accent} · {v.age} · {v.uses} usos</p></div>
+      <div className="min-w-0 flex-1"><p className="truncate text-white">{v.name}</p><p className="truncate text-xs text-slate-500">{v.gender === "male" ? "Hombre" : "Mujer"} · {v.accent} · {v.age} · {v.uses} usos{v.free ? "" : " · requiere plan de pago"}</p></div>
       <Input value={name} onChange={(e) => setName(e.target.value)} className="h-8 w-28 bg-slate-950/60" data-testid={`library-voice-name-${v.voice_id}`} />
       <Button size="sm" onClick={add} disabled={busy || !name} data-testid={`library-voice-add-${v.voice_id}`}>{busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}</Button>
     </div>

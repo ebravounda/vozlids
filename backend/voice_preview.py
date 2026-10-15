@@ -220,7 +220,7 @@ async def eleven_library(country: str = "ES", gender: str = "", user=Depends(X.r
             out.append({"voice_id": v["voice_id"], "public_owner_id": v.get("public_owner_id"), "name": v.get("name"),
                         "gender": v.get("gender"), "accent": v.get("accent"), "age": v.get("age"),
                         "use_case": v.get("use_case"), "description": (v.get("description") or "")[:160],
-                        "preview_url": v.get("preview_url"), "uses": v.get("cloned_by_count")})
+                        "preview_url": v.get("preview_url"), "uses": v.get("cloned_by_count"), "free": bool(v.get("free_users_allowed"))})
     return out
 
 
