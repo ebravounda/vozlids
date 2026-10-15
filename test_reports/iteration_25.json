@@ -1,0 +1,35 @@
+{
+  "summary": "Tested the Agenda calendar feature (backend appointments list/create/patch/delete, plus the fix so RGPD erase keeps consumed minutes) and the /app/agenda calendar UI (week/day/month views, create by clicking a slot, edit, drag-and-drop move, conflict revert, cancel, open lead, Horario tab save). Backend pytest: 14/14 passed. All requested frontend flows work end to end in the UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST/PATCH /api/appointments", "issue": "Past start times are accepted, and so are times outside the configured availability hours. The UI also lets users create an appointment by clicking a past slot. This may be intended for manual bookings; consider at least a warning."},
+      {"endpoint": "PATCH /api/appointments/{id} (UI Detail save)", "issue": "The detail dialog always sends duration_minutes (defaulting to the slot length) even when unchanged, so agent-booked appointments with a null duration get the slot length written on any notes edit. Harmless."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Agenda calendar on mobile (390px)", "issues": ["The week view squeezes 7 columns into about 40px each. Event names are fully truncated and only an icon shows. Suggest defaulting to the Día view on small screens."]},
+      {"screen": "Lead sheet opened from an appointment", "issues": ["The LeadDetail sheet is dark-themed on top of the light dashboard. This is existing styling, but the contrast with the new light calendar is noticeable."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter25.py", "/app/test_reports/pytest/pytest_iter25.xml"],
+  "action_items": [
+    "Optional: default to the day view on mobile widths",
+    "Optional: block or warn when creating or moving appointments into past slots"
+  ],
+  "critical_code_review_comments": [
+    "The unique index on (tenant_id, start) only prevents exact start collisions. Overlapping appointments with different starts (e.g. 10:00 for 60 min and 10:30) are allowed and render on top of each other in TimeGrid, which has no overlap layout.",
+    "AgendaCalendar.load swallows errors (catch(() => {})), so a failed fetch shows an empty calendar with no error state.",
+    "Drop position uses e.clientY relative to the column, so the event snaps to the slot under the cursor rather than keeping the offset where it was grabbed. Small UX detail."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter25.py"],
+  "success_rate": {"backend": "100% (14/14)", "frontend": "100% of requested flows"},
+  "seed_data_creation": "None kept. Test appointments (TEST_iter25*), test leads and usage_archive rows were cleaned up. A concurrent session (not this tester) had PATCHed the sample Carlos Ruiz appointment from 2026-10-16T10:30 to 2026-10-15T10:00 during testing; it was restored to 2026-10-16T10:30.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Container date is 2026-10-15 (Thu) and the browser runs in UTC. The admin's availability is Mon-Fri 09:00-14:00 with 30-min slots, so the time grid shows hours 08-15. Verified: week columns cal-col-*, today highlighted, cal-now-line, hatched off-hours, prev/next/today, month grid with 42 cells, month cell click opens day view, slot-click create with prefilled start, green manual event, detail edit (duration/notes), drag via page.drag_and_drop shows the toast 'Cita movida a las 13:00', a conflicting drop reverts with the toast 'Ya hay una cita a esa hora', cancel confirm, appt-open-lead opens the LeadDetail sheet, and the Horario save shows the toast 'Horario guardado'. Backend tests use far-future dates (2031-03) to avoid collisions.",
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md)"
+}

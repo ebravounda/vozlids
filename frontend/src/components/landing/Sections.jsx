@@ -85,10 +85,10 @@ export const Hero = ({ page, m }) => (
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">{page.intro}</p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <AmbiencePreview demo label="Escuchar una llamada real" testid="landing-hero-demo-button" className="!border-slate-300 !bg-white !text-slate-900 shadow-sm hover:!bg-slate-50" />
-          <Link to="/registro" data-testid="landing-hero-register-button" className="group inline-flex items-center gap-1.5 px-2 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900">Crear cuenta <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
+          <Link to="/registro" data-testid="landing-hero-register-button" className="group inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">Empezar ahora <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
         </div>
         <ul className="mt-8 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-          {[m.t.short, "Llama en menos de 30 segundos", "Voz natural en español", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-blue-600" />{t}</li>)}
+          {[m.t.short, "Llama en menos de 30 segundos", "Agenda y calendario incluidos", "Voz natural en español", "Cumple el RGPD", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-blue-600" />{t}</li>)}
         </ul>
       </div>
       <div className="fade-up lg:sticky lg:top-24" style={{ animationDelay: "0.15s" }}><InfoForm m={m} page={page.path} /></div>
@@ -248,6 +248,7 @@ export const FinalCta = ({ page, m }) => (
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl" style={H}>Escúchalo tú mismo en 15 segundos</h2>
         <p className="mt-4 text-slate-300">Déjanos tu teléfono y nuestro agente te llama ahora. Es la misma experiencia que tendrán tus clientes.</p>
+        <Link to="/registro" className="group mt-8 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500" data-testid="final-register-button">¿Lo tienes claro? Empezar ahora <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
         <p className="mt-6 flex items-center gap-2 text-sm text-slate-400"><PhoneCall className="h-4 w-4 text-blue-400" />Muestra gratuita de 15 segundos · {m.t.num.charAt(0).toUpperCase() + m.t.num.slice(1)} incluido en todos los planes</p>
       </div>
       <InfoForm m={m} page={page.path} id="solicitar-final" title="Recibe tu muestra" dark />

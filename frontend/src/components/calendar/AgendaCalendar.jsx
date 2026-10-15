@@ -11,7 +11,7 @@ import { Legend, Toolbar } from "./Toolbar";
 const step = (view, d, dir) => (view === "month" ? new Date(d.getFullYear(), d.getMonth() + dir, 1) : addDays(d, dir * (view === "week" ? 7 : 1)));
 
 export function AgendaCalendar({ av }) {
-  const [view, setView] = useState("week");
+  const [view, setView] = useState(() => (window.innerWidth < 768 ? "day" : "week"));
   const [cursor, setCursor] = useState(new Date());
   const [appts, setAppts] = useState([]);
   const [dlg, setDlg] = useState(null);
@@ -35,7 +35,7 @@ export function AgendaCalendar({ av }) {
     catch (e) { setAppts((xs) => xs.map((a) => (a.id === id ? prev : a))); toast.error(errMsg(e)); }
   };
   const nextSlot = () => { const n = new Date(); n.setMinutes(0, 0, 0); n.setHours(n.getHours() + 1); return `${ymd(n)}T${pad(n.getHours())}:00`; };
-  const common = { appts, av, bounds, onOpen: (a) => setDlg({ appt: a }), onCreate: (s) => setDlg({ create: s }), onMove: move };
+  const common = { appts, av, bounds, onOpen: (a) => setDlg({ appt: a }), onCreate: (s) => (new Date(`${s}:00`) < new Date() ? toast.info("Ese hueco ya ha pasado. Elige una hora futura.") : setDlg({ create: s })), onMove: move };
   const count = appts.length;
 
   return (

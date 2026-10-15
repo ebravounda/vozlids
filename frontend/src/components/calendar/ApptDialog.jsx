@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api, errMsg } from "@/lib/api";
-import { endHm } from "@/lib/cal";
+import { cap, endHm } from "@/lib/cal";
 import { fmtSlot } from "@/lib/constants";
 
 const field = "border-slate-200 bg-white text-slate-900";
@@ -23,7 +23,7 @@ function Detail({ a, slot, onSaved, onCancelled, onLead }) {
   return (
     <div className="space-y-4">
       <div className="space-y-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
-        <p className="flex items-center gap-2 font-semibold capitalize text-slate-900"><CalendarClock className="h-4 w-4 text-blue-600" />{fmtSlot(a.start)} – {endHm(a, slot)}</p>
+        <p className="flex items-center gap-2 font-semibold text-slate-900"><CalendarClock className="h-4 w-4 text-blue-600" />{cap(fmtSlot(a.start))} – {endHm(a, slot)}</p>
         {a.lead_phone && <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /><a href={`tel:${a.lead_phone}`} className="font-mono hover:text-blue-600" data-testid="appt-phone">{a.lead_phone}</a></p>}
         <p className="flex items-center gap-2 text-slate-500"><Src className="h-4 w-4" />{a.source === "manual" ? "Creada a mano" : "Reservada por el agente IA"}{a.is_sample ? " · ejemplo" : ""}</p>
         {a.lead_id && <button onClick={() => onLead(a.lead_id)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline" data-testid="appt-open-lead">Ver llamada y transcripción <ExternalLink className="h-3 w-3" /></button>}

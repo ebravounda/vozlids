@@ -5,7 +5,7 @@ import { SEO_PAGES } from "@/components/Seo";
 import { COMPANY } from "@/pages/Legal";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
-const LINKS = [["#sectores", "Sectores"], ["#soluciones", "Soluciones"], ["#como", "Cómo funciona"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
+const LINKS = [["#plataforma", "Plataforma"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
 
 export const Brand = () => (
   <Link to="/" className="flex items-center" data-testid="landing-brand"><Logo /></Link>
@@ -20,7 +20,8 @@ export const Nav = () => (
       </nav>
       <div className="flex items-center gap-2">
         <Link to="/login" data-testid="landing-nav-login-button" className="hidden px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:block">Acceder</Link>
-        <a href="#solicitar" data-testid="landing-nav-info-button" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Solicita información</a>
+        <a href="#solicitar" data-testid="landing-nav-info-button" className="hidden rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 md:block">Llamada demo</a>
+        <Link to="/registro" data-testid="landing-nav-register-button" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Empezar ahora</Link>
       </div>
     </div>
   </header>
@@ -28,9 +29,10 @@ export const Nav = () => (
 
 export const MobileCta = () => (
   <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur md:hidden">
-    <a href="#solicitar" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 font-semibold text-white" data-testid="mobile-info-cta">
-      <PhoneCall className="h-4 w-4" /> Recibe una muestra gratis
-    </a>
+    <div className="grid grid-cols-2 gap-2">
+      <a href="#solicitar" className="flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800" data-testid="mobile-info-cta"><PhoneCall className="h-4 w-4" /> Llamada demo</a>
+      <Link to="/registro" className="flex h-12 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white" data-testid="mobile-register-cta">Empezar ahora</Link>
+    </div>
   </div>
 );
 

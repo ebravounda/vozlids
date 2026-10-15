@@ -13,7 +13,7 @@ const Done = ({ name, calling, reset }) => (
   </div>
 );
 
-export function InfoForm({ m, page = "/", id = "solicitar", title = "Solicita tu muestra ahora", dark = false }) {
+export function InfoForm({ m, page = "/", id = "solicitar", title = "Recibe una llamada demo gratis", dark = false }) {
   const list = m.market !== "INT" ? DEMO.filter((d) => d.code === m.market) : DEMO;
   const initial = m.visitor && list.includes(m.visitor) ? m.visitor.code : list[0].code;
   const [f, setF] = useState({ name: "", phone: "", country: initial, consent: false });
