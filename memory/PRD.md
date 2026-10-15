@@ -118,3 +118,8 @@
 - Agent no longer says "asistente virtual" (prompt rule + seed.migrate_ai_label).
 - WARNING: never call PUT /api/admin/platform-inbound from preview (shared Vapi number; re-points inbound webhooks to preview). Inbound SIP URI now <number>@<credentialId>.sip.vapi.ai
 - Inbound now via free Vapi SIP number sip:vozleads-34919932652@sip.vapi.ai (id dc43e89e…) — Zadarma must forward to vozleads-34919932652@sip.vapi.ai. (iteration_16)
+
+## 2026-06 Ambientes realistas
+- oficina_real: grabacion ARISTEIA + 2 teclados reales (Computer/Laptop), drive 3.0, tecleo mas presente
+- call_center: grabacion real del usuario (Call_center_real.wav, 90s del min 60) sin filtro clean + teclado suave; voces sinteticas eliminadas
+- URL de ambiente en Vapi versionada ?v=3 para forzar recarga

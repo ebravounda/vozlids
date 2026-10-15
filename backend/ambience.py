@@ -8,15 +8,17 @@ import numpy as np
 
 ASSETS = Path(__file__).parent / "assets" / "ambience"
 MAX_UPLOAD_SECONDS = 180
+RAW = {"Call_center_real"}
 
 SR = 16000
 DUR = 30
 PRESETS = {
     "oficina": {"voices": 4, "voice_gain": 0.35, "keys": 0.6, "room": 0.25, "seed": 11},
     "teclados": {"voices": 0, "voice_gain": 0.0, "keys": 1.0, "room": 0.18, "seed": 23},
-    "call_center": {"voices": 9, "voice_gain": 0.75, "keys": 0.3, "room": 0.3, "seed": 37},
-    "oficina_real": {"real": "Computer_keyboard", "voices": 4, "voice_gain": 0.3, "keys": 0.8, "room": 0.15, "seed": 5},
-    "teclado_real": {"real": "Laptop_keyboard", "voices": 0, "voice_gain": 0.0, "keys": 1.0, "room": 0.1, "seed": 7},
+    "call_center": {"layers": [("Call_center_real", 0.09), ("Computer_keyboard", 0.035)], "seed": 37},
+    "oficina_real": {"layers": [("Oficina_aristeia", 0.055), ("Computer_keyboard", 0.075), ("Laptop_keyboard", 0.05)],
+                     "drive": 3.0, "seed": 5},
+    "teclado_real": {"layers": [("Laptop_keyboard", 0.12)], "seed": 7},
 }
 
 
@@ -117,17 +119,35 @@ def to_wav(x, volume: int, gain: float = 0.7) -> bytes:
 @lru_cache(maxsize=4)
 def _real(name: str):
     with open(ASSETS / f"{name}.wav", "rb") as fh:
-        return clean(decode(fh.read()))
+        x = decode(fh.read())
+    return x if name in RAW else clean(x)
+
+
+def _level(x, rms):
+    r = np.sqrt(np.mean(x ** 2))
+    return x * (rms / r) if r > 0 else x
+
+
+def _presence(x):
+    return x + 0.8 * _band(x, 1500, 3400)
 
 
 @lru_cache(maxsize=48)
 def render(preset: str, volume: int) -> bytes:
     cfg = PRESETS[preset]
     rng = np.random.default_rng(cfg["seed"])
-    real = _real(cfg["real"]) if cfg.get("real") else None
-    n = len(real) if real is not None else SR * DUR
+    if "layers" in cfg:
+        srcs = [(_real(f), g, "keyboard" in f.lower()) for f, g in cfg["layers"]]
+        n = max(len(x) for x, _, _ in srcs)
+        mix = sum(_level(_presence(x) if k else x, g) if len(x) == n else _level(np.resize(_presence(x) if k else x, n), g)
+                  for x, g, k in srcs)
+        if cfg.get("voices"):
+            mix = mix + _level(sum(_voice(rng, n) for _ in range(cfg["voices"])), cfg["voice_gain"])
+        d = cfg.get("drive", 2.2)
+        return to_wav(np.tanh(mix * d) / d, volume, gain=0.7)
+    n = SR * DUR
     mix = cfg["room"] * _room(rng, n)
     if cfg["voices"]:
         mix += cfg["voice_gain"] * _norm(sum(_voice(rng, n) for _ in range(cfg["voices"])))
-    mix += cfg["keys"] * _norm(real if real is not None else _keys(rng, n))
+    mix += cfg["keys"] * _norm(_keys(rng, n))
     return to_wav(mix, volume)
