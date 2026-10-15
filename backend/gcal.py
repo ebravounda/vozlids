@@ -191,6 +191,8 @@ async def status(user=Depends(get_current_user)):
 
 @router.post("/google/connect")
 async def connect(user=Depends(get_current_user)):
+    import plan_limits as PL
+    await PL.require(user["id"], "agenda_pro")
     cfg = await app_cfg()
     if not cfg.get("client_id"):
         raise HTTPException(409, "Google Calendar aún no está disponible. Contacta con soporte.")

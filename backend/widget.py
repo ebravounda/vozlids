@@ -57,6 +57,8 @@ async def get_widget(user=Depends(get_current_user)):
 
 @router.put("/widget")
 async def put_widget(body: WidgetIn, user=Depends(get_current_user)):
+    import plan_limits as PL
+    await PL.require(user["id"], "widget")
     if not ObjectId.is_valid(body.agent_id) or not await db.agents.find_one({"_id": ObjectId(body.agent_id), "tenant_id": user["id"]}):
         raise HTTPException(422, "Elige uno de tus agentes")
     await tenant_widget(user["id"])

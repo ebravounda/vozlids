@@ -43,6 +43,9 @@ async def get_settings(user=Depends(get_current_user)):
 
 @router.put("/reminders")
 async def put_settings(body: ReminderIn, user=Depends(get_current_user)):
+    import plan_limits as PL
+    if body.call or body.email:
+        await PL.require(user["id"], "agenda_pro")
     import re
     if not all(re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", t) for t in (body.call_from, body.call_to)) or body.call_from >= body.call_to:
         raise HTTPException(422, "Horario de llamada no válido")
@@ -100,6 +103,9 @@ async def run_due() -> int:
     n = 0
     async for owner in db.users.find({"$or": [{"reminders.call": True}, {"reminders.email": True}]}, {"reminders": 1, "country": 1, "business_name": 1}):
         tid, cfg = str(owner["_id"]), {**DEFAULT, **owner["reminders"]}
+        import plan_limits as PL
+        if not await PL.has(tid, "agenda_pro"):
+            continue
         now = datetime.now(S.tz_of(owner.get("country", "ES")))
         lo, hi = now.strftime("%Y-%m-%dT%H:%M"), (now + timedelta(hours=cfg["hours_before"])).strftime("%Y-%m-%dT%H:%M")
         pending = ([{"reminder_email_at": None}] if cfg["email"] else []) + ([{"reminder_call_at": None}] if cfg["call"] else [])

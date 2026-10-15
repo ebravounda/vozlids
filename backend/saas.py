@@ -2,11 +2,11 @@ import asyncio
 import hashlib
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Literal, Optional
 from bson import ObjectId
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, Response  # noqa: F401
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, model_validator, Field
 import auth as A
 import emailer
 import services as S
@@ -50,7 +50,7 @@ async def minutes_used(tenant_id: str) -> float:
     return round(secs / 60, 1)
 
 
-async def quota_error(tenant_id: str) -> Optional[str]:
+async def _quota_error(tenant_id: str) -> Optional[str]:
     user = await db.users.find_one({"_id": ObjectId(tenant_id)})
     if not user:
         return "Cuenta no encontrada"
@@ -148,6 +148,35 @@ class PlanIn(BaseModel):
     overage_clp: float = Field(0, ge=0)
     features: List[str] = Field(default=[], max_length=8)
     public: bool = True
+    recommended: bool = False
+    promo_active: bool = False
+    promo_label: str = Field("PROMOCIÓN", max_length=30)
+    promo_price_eur: float = Field(0, ge=0)
+    promo_price_clp: float = Field(0, ge=0)
+    promo_months: int = Field(3, ge=1, le=24)
+    limits: dict = {}
+
+    @model_validator(mode="after")
+    def _limits(self):
+        import plan_limits as PL
+        self.limits = PL.LimitsIn(**(self.limits or {})).model_dump()
+        return self
+
+    @model_validator(mode="after")
+    def _promo(self):
+        if self.promo_active:
+            if not (0 < self.promo_price_eur < self.price_eur or 0 < self.promo_price_clp < self.price_clp):
+                raise ValueError("El precio de promoción debe ser mayor que 0 y menor que el precio normal (al menos en un país)")
+            for promo, normal in ((self.promo_price_eur, self.price_eur), (self.promo_price_clp, self.price_clp)):
+                if promo >= normal > 0 and promo:
+                    raise ValueError("El precio de promoción debe ser menor que el precio normal")
+            self.promo_label = self.promo_label.strip() or "PROMOCIÓN"
+        return self
+
+
+async def _one_recommended(body: PlanIn, pid=None) -> None:
+    if body.recommended:
+        await db.plans.update_many({"_id": {"$ne": pid}} if pid else {}, {"$set": {"recommended": False}})
 
 
 def plan_out(p: dict) -> dict:
@@ -166,12 +195,14 @@ async def list_plans(user=Depends(require_admin)):
 
 @router.post("/admin/plans")
 async def create_plan(body: PlanIn, user=Depends(require_admin)):
+    await _one_recommended(body)
     res = await db.plans.insert_one({**body.model_dump(), "created_at": now_iso()})
     return {**body.model_dump(), "id": str(res.inserted_id)}
 
 
 @router.put("/admin/plans/{pid}")
 async def update_plan(pid: str, body: PlanIn, user=Depends(require_admin)):
+    await _one_recommended(body, oid(pid))
     await db.plans.update_one({"_id": oid(pid)}, {"$set": body.model_dump()})
     return {**body.model_dump(), "id": pid}
 
@@ -247,14 +278,49 @@ async def stop_impersonation(request: Request, response: Response):
     return {"ok": True}
 
 
+async def quota_error(tenant_id: str) -> Optional[str]:
+    import plan_limits as PL
+    return await _quota_error(tenant_id) or await PL.concurrency_error(tenant_id)
+
+
+async def usage_alerts() -> int:
+    """Email each tenant once per month when they reach 80 % and 100 % of their plan minutes."""
+    month, sent = month_start()[:7], 0
+    async for u in db.users.find({"plan_id": {"$nin": [None, ""]}, "role": {"$ne": "admin"}, "billing_status": "active"},
+                                 {"plan_id": 1, "email": 1, "usage_alerts": 1, "allow_overage": 1}):
+        if not ObjectId.is_valid(u["plan_id"]):
+            continue
+        plan = await db.plans.find_one({"_id": ObjectId(u["plan_id"])}, {"minutes": 1, "name": 1})
+        if not plan or not plan.get("minutes"):
+            continue
+        used = await minutes_used(str(u["_id"]))
+        done = (u.get("usage_alerts") or {}).get(month, [])
+        for pct in (100, 80):
+            if used >= plan["minutes"] * pct / 100 and pct not in done:
+                site = os.environ["APP_PUBLIC_URL"].rstrip("/")
+                tail = ("Tus llamadas siguen funcionando: los minutos extra se cobran aparte." if u.get("allow_overage")
+                        else "Las llamadas quedan en pausa hasta el mes que viene o hasta que mejores tu plan.") if pct == 100 \
+                    else "Si crees que te faltarán minutos, puedes mejorar tu plan en un clic."
+                await emailer.send(u["email"], f"Has usado el {pct}% de tus minutos de VozLeads",
+                                   "Minutos agotados" if pct == 100 else "Te queda poco saldo de minutos",
+                                   [("Plan", plan["name"]), ("Minutos usados", f"{used:g} de {plan['minutes']}")],
+                                   f"{site}/app/plan", tail, "Ver mi plan")
+                await db.users.update_one({"_id": u["_id"]}, {"$set": {f"usage_alerts.{month}": sorted({*done, 80, pct})}})
+                sent += 1
+                break
+    return sent
+
+
 @router.get("/account/usage")
 async def my_usage(user=CurrentUser):
+    import plan_limits as PL
     plan = await db.plans.find_one({"_id": ObjectId(user["plan_id"])}) if user.get("plan_id") else None
     cur = "clp" if user.get("country") == "CL" else "eur"
     return {"minutes_used": await minutes_used(user["id"]),
             "plan": plan and {"name": plan["name"], "minutes": plan["minutes"], "currency": cur.upper(),
                               "price": plan.get(f"price_{cur}", 0), "overage_price": plan.get(f"overage_{cur}", 0)},
-            "allow_overage": user.get("allow_overage", False)}
+            "allow_overage": user.get("allow_overage", False), "limits": await PL.for_tenant(user["id"]),
+            "agents": await db.agents.count_documents({"tenant_id": user["id"]}), "is_admin": user.get("role") == "admin"}
 
 
 # ---------- Templates & outbound calls ----------
@@ -338,6 +404,8 @@ def _to_utc(local: str, country: str) -> str:
 
 @router.post("/scheduled-calls")
 async def schedule_calls(body: ScheduleIn, user=CurrentUser):
+    import plan_limits as PL
+    await PL.require(user["id"], "outbound")
     agent = await _agent(user["id"], body.agent_id)
     tpl = await db.call_templates.find_one({"_id": oid(body.template_id), "tenant_id": user["id"]})
     if not tpl:
@@ -373,6 +441,10 @@ async def dispatch_due():
                                                            {"$set": {"status": "en_proceso"}})
         if not job:
             return
+        import plan_limits as PL
+        if await PL.concurrency_error(job["tenant_id"]):
+            await db.scheduled_calls.update_one({"_id": job["_id"]}, {"$set": {"status": "pendiente", "run_at": (datetime.now(timezone.utc) + timedelta(minutes=2)).isoformat()}})
+            continue
         agent = await db.agents.find_one({"_id": ObjectId(job["agent_id"])})
         result = await place_call(agent, job["name"], job["phone"], job["email"], job["purpose"], job["greeting"],
                                   "programada") if agent else {"status": "fallida", "error": "Agente eliminado"}

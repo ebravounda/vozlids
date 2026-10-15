@@ -3,20 +3,26 @@ import { Link } from "react-router-dom";
 import { Bot, ExternalLink, Pencil, Plus } from "lucide-react";
 import { PageHeader, Panel } from "@/components/Common";
 import { api } from "@/lib/api";
+import { usePlan } from "@/components/PlanGate";
 import { AMBIENCES, OBJECTIVES, VOICES } from "@/lib/constants";
 
 const name = (list, id) => list.find((x) => x.id === id)?.name || (id?.startsWith("custom:") ? "Grabación propia" : id?.startsWith("x_") ? "Voz ultra natural" : id);
 
 export default function Agents() {
   const [agents, setAgents] = useState(null);
+  const { u } = usePlan();
+  const max = u && !u.is_admin ? u.limits?.max_agents : 0;
+  const full = max > 0 && (agents?.length || 0) >= max;
   useEffect(() => { api.get("/agents").then((r) => setAgents(r.data)).catch(() => setAgents([])); }, []);
 
   return (
     <div className="fade-up">
       <PageHeader eyebrow="Agentes IA" title="Tus agentes de voz" desc="Cada agente tiene su objetivo, su voz, su ambiente y su propio formulario.">
-        <Link to="/app/agentes/nuevo" data-testid="agents-create-button" className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400">
+        {max > 0 && <span className="text-sm text-slate-500" data-testid="agents-limit">{agents?.length || 0} de {max} {max === 1 ? "agente" : "agentes"} de tu plan</span>}
+        {full ? <Link to="/app/plan" data-testid="agents-limit-upgrade" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Mejorar plan para crear más</Link>
+          : <Link to="/app/agentes/nuevo" data-testid="agents-create-button" className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400">
           <Plus className="h-4 w-4" /> Nuevo agente
-        </Link>
+        </Link>}
       </PageHeader>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {agents?.map((a) => (

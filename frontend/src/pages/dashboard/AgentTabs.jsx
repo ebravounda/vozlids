@@ -1,3 +1,6 @@
+import { FEATURE_INFO, useFeature } from "@/components/PlanGate";
+import { Link } from "react-router-dom";
+import { Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { api } from "@/lib/api";
@@ -58,7 +61,15 @@ export const GeneralTab = ({ agent, update }) => (
   </Panel>
 );
 
+const PlanLockNote = ({ f }) => (
+  <Link to="/app/plan" className="flex items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 hover:border-slate-400" data-testid={`plan-lock-${f}`}>
+    <Lock className="h-4 w-4 shrink-0 text-slate-400" /><span><b className="text-slate-800">{FEATURE_INFO[f][0]}</b> no está incluido en tu plan. <span className="font-semibold text-blue-600">Mejorar plan →</span></span>
+  </Link>
+);
+
 export const VoiceTab = ({ agent, update }) => {
+  const hd = useFeature("premium_voices");
+  const ambOk = useFeature("ambience");
   const amb = agent.ambience.startsWith("custom:") ? { volume: true } : AMBIENCES.find((a) => a.id === agent.ambience);
   const [custom, setCustom] = useState([]);
   useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map((v) => ({ ...v, eleven: true, tone: v.tone || "Voz ultra natural con acento nativo" })))).catch(() => {}); }, []);
@@ -74,17 +85,17 @@ export const VoiceTab = ({ agent, update }) => {
               <p className={`text-xs font-semibold uppercase tracking-widest ${color}`}>{title}</p>
               <p className="text-xs text-slate-500">{note}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            {tier === "eleven" && !hd ? <PlanLockNote f="premium_voices" /> : <div className="grid grid-cols-2 gap-3">
               {list.filter((v) => TIER(v) === tier).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
-            </div>
+            </div>}
           </div>
         ))}
       </Panel>
       <Panel className="space-y-4">
         <Label>Ambiente de fondo</Label>
         <div className="grid gap-2" data-testid="audio-ambience-select">
-          {AMBIENCES.map((a) => <Choice key={a.id} active={agent.ambience === a.id} onClick={() => update({ ambience: a.id })} title={a.real ? `${a.name} ★` : a.name} desc={a.desc} testid={`agent-ambience-${a.id}`} />)}
-          <CustomAmbiences value={agent.ambience} onSelect={(id) => update({ ambience: id })} />
+          {AMBIENCES.filter((a) => ambOk || a.id === "none").map((a) => <Choice key={a.id} active={agent.ambience === a.id} onClick={() => update({ ambience: a.id })} title={a.real ? `${a.name} ★` : a.name} desc={a.desc} testid={`agent-ambience-${a.id}`} />)}
+          {ambOk ? <CustomAmbiences value={agent.ambience} onSelect={(id) => update({ ambience: id })} /> : <PlanLockNote f="ambience" />}
         </div>
         {amb?.volume && (
           <div className="space-y-3 pt-2">

@@ -35,6 +35,7 @@ import api_core  # noqa: E402
 import apiv1  # noqa: E402
 import privacy  # noqa: E402
 import gcal  # noqa: E402
+import plan_limits as PL  # noqa: E402
 import reminders  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
@@ -214,6 +215,7 @@ async def check_ambience(user: dict, body: AgentIn):
 @api.post("/agents")
 async def create_agent(body: AgentIn, user=CurrentUser):
     await check_ambience(user, body)
+    await PL.check_agent(user["id"], body.voice, body.ambience, True)
     agent = Agent(tenant_id=user["id"], **body.model_dump())
     res = await db.agents.insert_one(agent.to_mongo())
     return Agent.from_mongo(await db.agents.find_one({"_id": res.inserted_id})).out()
@@ -226,8 +228,9 @@ async def read_agent(agent_id: str, user=CurrentUser):
 
 @api.put("/agents/{agent_id}")
 async def update_agent(agent_id: str, body: AgentIn, user=CurrentUser):
-    await get_agent(user["id"], agent_id)
+    prev = await get_agent(user["id"], agent_id)
     await check_ambience(user, body)
+    await PL.check_agent(user["id"], body.voice if body.voice != prev.get("voice") else "", body.ambience if body.ambience != prev.get("ambience") else "none", False)
     await db.agents.update_one({"_id": oid(agent_id)}, {"$set": {**body.model_dump(), "updated_at": now_iso()}})
     return Agent.from_mongo(await get_agent(user["id"], agent_id)).out()
 
@@ -301,6 +304,8 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
     if ip and await db.leads.count_documents({"source_ip": ip, "created_at": {"$gt": ago(60)}}) >= 10:
         raise HTTPException(429, "Demasiadas solicitudes. Inténtalo más tarde.")
     tid = agent["tenant_id"]
+    if body.source == "widget" and not await PL.has(tid, "widget"):
+        raise HTTPException(404, "Este formulario no está activo")
     recent = await db.leads.find_one({"tenant_id": tid, "phone": phone, "created_at": {"$gt": ago(10)}})
     if recent or await is_dnc(tid, phone):
         return {"ok": True}

@@ -5,7 +5,8 @@ import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
-import { formatPrice, planOverage, planPrice } from "@/lib/currency";
+import { formatPrice, planOverage } from "@/lib/currency";
+import { limitLines, PlanBadge, PlanPrice, promoPrice } from "@/components/PlanPrice";
 
 const STATUS = { active: "Activa", past_due: "Pago pendiente", canceled: "Cancelada", trialing: "En prueba" };
 
@@ -30,11 +31,12 @@ function useCheckoutReturn(reload) {
 }
 
 const PlanCard = ({ p, cur, current, onBuy, busy }) => (
-  <Panel className={`flex flex-col p-6 ${current ? "border-emerald-500/60" : ""}`} data-testid={`billing-plan-${p.id}`}>
+  <Panel className={`relative flex flex-col p-6 ${current ? "border-emerald-500/60" : promoPrice(p, cur) ? "border-rose-500/70" : p.recommended ? "border-blue-500/70" : ""}`} data-testid={`billing-plan-${p.id}`}>
+    {!current && <PlanBadge p={p} currency={cur} />}
     <p className="font-semibold text-white">{p.name}</p>
-    <p className="mt-3 font-display text-3xl font-bold text-white" data-testid={`billing-plan-price-${p.id}`}>{formatPrice(planPrice(p, cur), cur)}<span className="text-sm font-normal text-slate-500"> /mes</span></p>
+    <div className="mt-3" data-testid={`billing-plan-price-${p.id}`}><PlanPrice p={p} currency={cur} dark className="font-display text-3xl font-bold text-white" /></div>
     <p className="mt-1 text-xs text-slate-400">{p.minutes} min incluidos · minuto extra {formatPrice(planOverage(p, cur), cur, 2)}</p>
-    <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-300"><li className="flex gap-2 font-semibold text-emerald-300" data-testid={`billing-plan-number-${p.id}`}><Check className="h-4 w-4 text-emerald-400" />Número de {cur === "CLP" ? "Chile (+56)" : "España (+34)"} gratis</li>{(p.features || []).map((f) => <li key={f} className="flex gap-2"><Check className="h-4 w-4 text-emerald-400" />{f}</li>)}</ul>
+    <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-300"><li className="flex gap-2 font-semibold text-emerald-300" data-testid={`billing-plan-number-${p.id}`}><Check className="h-4 w-4 text-emerald-400" />Número de {cur === "CLP" ? "Chile (+56)" : "España (+34)"} gratis</li>{[...limitLines(p), ...(p.features || [])].map((f) => <li key={f} className="flex gap-2"><Check className="h-4 w-4 text-emerald-400" />{f}</li>)}</ul>
     {current ? <p className="mt-5 text-center text-sm font-semibold text-emerald-300" data-testid={`billing-plan-current-${p.id}`}>Tu plan actual</p>
       : <Button onClick={() => onBuy(p.id)} disabled={!!busy} className="mt-5 rounded-full" data-testid={`billing-plan-buy-${p.id}`}>{busy === p.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Contratar</Button>}
   </Panel>
@@ -77,7 +79,7 @@ export default function Billing() {
           </div>
         )}
       </Panel>
-      <div className="grid gap-5 md:grid-cols-3">{plans.map((p) => <PlanCard key={p.id} p={p} cur={cur} current={me.plan_id === p.id && me.billing_status === "active"} onBuy={buy} busy={busy} />)}</div>
+      <div className="grid gap-5 pt-3 md:grid-cols-3">{plans.map((p) => <PlanCard key={p.id} p={p} cur={cur} current={me.plan_id === p.id && me.billing_status === "active"} onBuy={buy} busy={busy} />)}</div>
     </div>
   );
 }

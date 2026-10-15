@@ -140,6 +140,15 @@ def amount_for(plan: dict, currency: str) -> int:
     return int(round(plan["price_clp"])) if currency == "clp" else int(round(plan["price_eur"] * 100))
 
 
+def promo_for(plan: dict, currency: str) -> int:
+    """Promo price in Stripe units, or 0 when the plan has no active promotion for this currency."""
+    if not plan.get("promo_active"):
+        return 0
+    v = plan.get("promo_price_clp" if currency == "clp" else "promo_price_eur") or 0
+    amt = int(round(v)) if currency == "clp" else int(round(v * 100))
+    return amt if 0 < amt < amount_for(plan, currency) else 0
+
+
 async def activate(user_id: str, plan_id: str, customer: Optional[str], subscription: Optional[str], test: bool = False):
     res = await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {
         "plan_id": plan_id, "stripe_customer_id": customer, "stripe_subscription_id": subscription, "billing_test": test,
@@ -186,6 +195,21 @@ async def checkout(body: CheckoutIn, user=CurrentUser):
         "cancel_url": f"{body.origin_url.rstrip('/')}/app/plan?cancelado=1",
         "metadata": meta, "subscription_data": {"metadata": meta}, "client_reference_id": user["id"],
     }
+    promo = promo_for(plan, currency)
+    if promo and proxy:
+        params["line_items"][0]["price_data"]["unit_amount"] = promo
+        meta.update(promo_amount=str(promo), promo_months=str(plan.get("promo_months") or 3))
+    elif promo:
+        months = int(plan.get("promo_months") or 3)
+        try:
+            coupon = await asyncio.to_thread(c.v1.coupons.create, {
+                "amount_off": amount - promo, "currency": currency, "duration": "repeating", "duration_in_months": months,
+                "name": f"{plan.get('promo_label') or 'Promoción'} · {months} {'mes' if months == 1 else 'meses'}"[:40],
+                "metadata": {"plan_id": body.plan_id}})
+        except stripe.error.StripeError as e:
+            raise HTTPException(400, f"No se pudo aplicar la promoción: {e.user_message or str(e)[:200]}")
+        params["discounts"] = [{"coupon": coupon.id}]
+        meta.update(promo_amount=str(promo), promo_months=str(months))
     if user.get("stripe_customer_id") and user.get("stripe_mode", "live") == mode:
         params["customer"] = user["stripe_customer_id"]
     else:

@@ -150,6 +150,8 @@ async def dial(agent: dict, lead: dict):
             "error": f"Telefonía sin configurar para {COUNTRIES[country]['name']}: falta conectar el número "
                      f"{COUNTRIES[country]['prefix']} en Telefonía."}})
         return
+    import plan_limits as PL
+    agent = await PL.effective_agent(agent)
     try:
         call_id = await vapi.create_call(agent, lead, today_text(country), own)
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",

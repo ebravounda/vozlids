@@ -137,7 +137,8 @@ async def assistant_request(msg: dict) -> dict:
     doc = lead.to_mongo()
     doc["vapi_call_id"] = call.get("id")
     doc["_id"] = (await db.leads.insert_one(doc)).inserted_id
-    return {"assistant": vapi.build_assistant(agent, doc, S.today_text(agent.get("country", "ES")))}
+    import plan_limits as PL
+    return {"assistant": vapi.build_assistant(await PL.effective_agent(agent), doc, S.today_text(agent.get("country", "ES")))}
 
 
 # ---------- Tenant ----------

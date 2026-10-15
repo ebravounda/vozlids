@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
+import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Shield } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { formatPrice } from "@/lib/currency";
+import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature } from "@/components/PlanGate";
 
 const NAV = [
   { to: "/app", label: "Leads y llamadas", icon: PhoneCall, id: "leads", end: true },
@@ -19,19 +19,20 @@ const NAV = [
   { to: "/app/privacidad", label: "Privacidad (RGPD)", icon: Lock, id: "privacy" },
   { to: "/app/plan", label: "Mi plan", icon: CreditCard, id: "plan" },
 ];
-const ADMIN_NAV = [
-  { to: "/app/admin", label: "Super admin", icon: Shield, id: "superadmin" },
-  { to: "/app/monitor", label: "Monitor en vivo", icon: Activity, id: "monitor" },
-  { to: "/app/costes", label: "Costes y precios", icon: Euro, id: "costs" },
-  { to: "/app/telefonia", label: "Telefonía", icon: Radio, id: "settings" },
-];
+const ADMIN_NAV = [{ to: "/app/admin", label: "Super admin", icon: Shield, id: "superadmin", admin: true }];
+const LOCK = { outbound: "outbound", webwidget: "widget", api: "api" };
 
-function UsageBadge() {
-  const [u, setU] = useState(null);
-  useEffect(() => { api.get("/account/usage").then((r) => setU(r.data)).catch(() => {}); }, []);
-  if (!u?.plan) return <span />;
-  const over = u.minutes_used >= u.plan.minutes;
-  return <span data-testid="usage-badge" className={`hidden rounded-full border sm:inline px-3 py-1 text-xs font-semibold ${over ? "border-rose-500/40 text-rose-300" : "border-slate-200 bg-white text-slate-600"}`}>Plan {u.plan.name} ({formatPrice(u.plan.price, u.plan.currency)}/mes): {u.minutes_used} / {u.plan.minutes} min{over && !u.allow_overage ? " · llamadas en pausa" : ""}</span>;
+function NavItem({ n, tickets, path }) {
+  const ok = useFeature(LOCK[n.id] || "outbound");
+  const active = n.admin && ADMIN_PATHS.includes(path);
+  return (
+    <NavLink to={n.to} end={n.end} data-testid={`sidebar-nav-${n.id}`}
+      className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive || active ? "bg-blue-50 text-blue-700 shadow-[inset_3px_0_0_#2563EB]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
+      <n.icon className="h-4 w-4" /> {n.label}
+      {LOCK[n.id] && !ok && <Lock className="ml-auto h-3.5 w-3.5 text-slate-400" data-testid={`sidebar-lock-${n.id}`} />}
+      {n.id === "support" && tickets.open > 0 && <span className="ml-auto rounded-full bg-rose-500 px-2 text-xs font-bold text-white" data-testid="sidebar-support-count">{tickets.open}</span>}
+    </NavLink>
+  );
 }
 
 function useOpenTickets(path) {
@@ -83,19 +84,15 @@ export default function DashboardLayout() {
   }, [location.pathname, user?.role]);
 
   return (
+    <PlanProvider path={location.pathname}>
     <div className="app-light flex min-h-screen bg-[#F8FAFC] text-slate-700">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white p-5 md:flex">
         <Link to="/" className="mb-6 shrink-0 px-2"><Logo /></Link>
         <p className="mb-2 shrink-0 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Menú</p>
         <nav className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-2 pb-3 [scrollbar-width:thin]" data-testid="sidebar-nav">
-          {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end} data-testid={`sidebar-nav-${n.id}`}
-              className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-blue-50 text-blue-700 shadow-[inset_3px_0_0_#2563EB]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
-              <n.icon className="h-4 w-4" /> {n.label}
-              {n.id === "support" && tickets.open > 0 && <span className="ml-auto rounded-full bg-rose-500 px-2 text-xs font-bold text-white" data-testid="sidebar-support-count">{tickets.open}</span>}
-            </NavLink>
-          ))}
+          {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => <NavItem key={n.to} n={n} tickets={tickets} path={location.pathname} />)}
         </nav>
+        <UsageMeter />
         <div className="mt-3 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-business-name">{user?.business_name}</p>
           <p className="truncate text-xs text-slate-500">{user?.email}</p>
@@ -108,13 +105,14 @@ export default function DashboardLayout() {
         {user?.impersonating && <ImpersonationBar />}
         {tickets.human > 0 && <HumanAlert n={tickets.human} />}
         {user?.role !== "admin" && <ProvisioningBar />}
+        <UsageBanner />
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-5 py-3 backdrop-blur-xl md:px-10">
           <div className="flex items-center gap-3 md:hidden"><Logo /></div>
           {user?.role === "admin" ? <Link to="/app/telefonia" data-testid="telephony-status-badge"
             className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold sm:inline-flex ${tel?.configured ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}>
             <span className={`h-2 w-2 rounded-full ${tel?.configured ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
             {tel?.configured ? "Telefonía conectada" : "Telefonía sin configurar"}
-          </Link> : <UsageBadge />}
+          </Link> : <span />}
           <Link to="/app/agentes/nuevo" data-testid="header-create-agent-button" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[transform,background-color,box-shadow] hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
             <Plus className="h-4 w-4" /> <span className="whitespace-nowrap">Crear agente</span>
           </Link>
@@ -125,9 +123,11 @@ export default function DashboardLayout() {
           ))}
         </nav>
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 md:px-10">
+          {user?.role === "admin" && ADMIN_PATHS.includes(location.pathname) && <AdminTabs />}
           <div key={location.pathname} className="fade-up"><Outlet /></div>
         </main>
       </div>
     </div>
+    </PlanProvider>
   );
 }

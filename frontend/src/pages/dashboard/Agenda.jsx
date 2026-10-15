@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BellRing, CalendarDays, Loader2, Save, SlidersHorizontal } from "lucide-react";
 import { GoogleCard, RemindersCard } from "@/components/calendar/Connections";
+import { Gate } from "@/components/PlanGate";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,7 +69,7 @@ export default function Agenda() {
           <TabsTrigger value="connect" data-testid="agenda-tab-connect"><BellRing className="mr-1.5 h-4 w-4" />Recordatorios y Google</TabsTrigger>
         </TabsList>
         <TabsContent value="calendar">{av && <AgendaCalendar av={av} />}</TabsContent>
-        <TabsContent value="connect"><div className="grid gap-6 lg:grid-cols-2"><RemindersCard /><GoogleCard /></div></TabsContent>
+        <TabsContent value="connect"><Gate f="agenda_pro"><div className="grid gap-6 lg:grid-cols-2"><RemindersCard /><GoogleCard /></div></Gate></TabsContent>
         <TabsContent value="hours"><div className="max-w-2xl">{av && <Hours av={av} setAv={setAv} onSave={save} saving={saving} />}</div></TabsContent>
       </Tabs>
     </div>

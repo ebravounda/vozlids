@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { api, errMsg } from "@/lib/api";
 import { formatPrice, planPrice } from "@/lib/currency";
+import { promoPrice } from "@/components/PlanPrice";
 
 const DOCS = { ES: ["DNI", "NIE", "Pasaporte"], CL: ["RUT", "Pasaporte"] };
 const REGION = { ES: "Provincia", CL: "Región" };
@@ -27,7 +28,11 @@ function PlanPicker({ plans, value, onChange, currency }) {
         <button key={p.id} type="button" onClick={() => onChange(p.id)} data-testid={`signup-plan-${p.id}`}
           className={`rounded-xl border p-3 text-left transition-colors ${value === p.id ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-slate-200 hover:border-slate-300"}`}>
           <p className="flex items-center justify-between text-sm font-semibold text-slate-900">{p.name}{value === p.id && <Check className="h-4 w-4 text-blue-600" />}</p>
-          <p className="mt-1 text-lg font-bold text-slate-900">{formatPrice(planPrice(p, currency), currency)}<span className="text-xs font-normal text-slate-500">/mes</span></p>
+          {promoPrice(p, currency) ? <>
+            <p className="mt-1 text-xs font-semibold text-slate-400 line-through" data-testid={`signup-plan-old-${p.id}`}>{formatPrice(planPrice(p, currency), currency)}/mes</p>
+            <p className="text-lg font-bold text-rose-600">{formatPrice(promoPrice(p, currency), currency)}<span className="text-xs font-normal text-slate-500">/mes</span></p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600" data-testid={`signup-plan-promo-${p.id}`}>{p.promo_label || "PROMOCIÓN"} · {p.promo_months} {p.promo_months === 1 ? "mes" : "meses"}</p>
+          </> : <p className="mt-1 text-lg font-bold text-slate-900">{formatPrice(planPrice(p, currency), currency)}<span className="text-xs font-normal text-slate-500">/mes</span>{p.recommended && <span className="ml-1.5 align-middle text-[10px] font-bold uppercase text-blue-600">· Más elegido</span>}</p>}
           <p className="text-xs text-slate-500">{p.minutes.toLocaleString("es-ES")} min</p>
         </button>
       ))}

@@ -24,6 +24,7 @@ import Support from "@/pages/dashboard/Support";
 import Developers from "@/pages/dashboard/Developers";
 import Privacy from "@/pages/dashboard/Privacy";
 import PublicAppointment from "@/pages/PublicAppointment";
+import { Gate } from "@/components/PlanGate";
 import SuperAdmin from "@/pages/dashboard/SuperAdmin";
 import Billing from "@/pages/dashboard/Billing";
 
@@ -57,11 +58,11 @@ function App() {
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
             <Route path="monitor" element={<AdminMonitor />} />
-            <Route path="boton-web" element={<WebWidget />} />
+            <Route path="boton-web" element={<Gate f="widget"><WebWidget /></Gate>} />
             <Route path="bienvenida" element={<Welcome />} />
-            <Route path="llamadas" element={<Outbound />} />
+            <Route path="llamadas" element={<Gate f="outbound"><Outbound /></Gate>} />
             <Route path="asistencia" element={<Support />} />
-            <Route path="api" element={<Developers />} />
+            <Route path="api" element={<Gate f="api"><Developers /></Gate>} />
             <Route path="privacidad" element={<Privacy />} />
             <Route path="admin" element={<SuperAdmin />} />
             <Route path="plan" element={<Billing />} />

@@ -105,12 +105,19 @@ async def _audit(tid: str, action: str, phone: str, email: str, counts: dict) ->
 
 # ---------- Retention ----------
 async def get_retention(tid: str) -> int:
-    return int((await db.users.find_one({"_id": ObjectId(tid)}, {"transcript_retention_days": 1}) or {}).get("transcript_retention_days") or 0)
+    import plan_limits as PL
+    own = int((await db.users.find_one({"_id": ObjectId(tid)}, {"transcript_retention_days": 1}) or {}).get("transcript_retention_days") or 0)
+    cap = (await PL.for_tenant(tid))["recording_days"]
+    return min(own, cap) if own and cap else (own or cap)
 
 
 async def set_retention(tid: str, days: int) -> int:
     if days not in RETENTION_CHOICES:
         raise HTTPException(422, {"code": "invalid_retention", "detail": f"Valores permitidos: {', '.join(map(str, RETENTION_CHOICES))} (0 = nunca)."})
+    import plan_limits as PL
+    cap = (await PL.for_tenant(tid))["recording_days"]
+    if cap and (days == 0 or days > cap):
+        raise HTTPException(422, {"code": "plan_retention_limit", "detail": f"Tu plan guarda grabaciones y transcripciones hasta {cap} días."})
     await db.users.update_one({"_id": ObjectId(tid)}, {"$set": {"transcript_retention_days": days}})
     return days
 
@@ -118,8 +125,11 @@ async def set_retention(tid: str, days: int) -> int:
 async def purge_expired() -> int:
     """Delete transcripts and recordings older than each tenant's retention; keep the lead and its stats."""
     total = 0
-    async for u in db.users.find({"transcript_retention_days": {"$gt": 0}}, {"transcript_retention_days": 1}):
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=u["transcript_retention_days"])).isoformat()
+    async for u in db.users.find({"$or": [{"transcript_retention_days": {"$gt": 0}}, {"plan_id": {"$nin": [None, ""]}}]}, {"_id": 1}):
+        days = await get_retention(str(u["_id"]))
+        if not days:
+            continue
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         q = {"tenant_id": str(u["_id"]), "created_at": {"$lt": cutoff}, "transcript_purged_at": None,
              "status": {"$nin": ["programada", "en_cola", "llamando", "en_curso"]}}
         async for ld in db.leads.find(q, {"vapi_call_id": 1}).limit(2000):
@@ -171,7 +181,10 @@ class RetentionIn(BaseModel):
 async def settings(user=Depends(get_current_user)):
     hist = await db.privacy_log.find({"tenant_id": user["id"]}, {"_id": 0, "tenant_id": 0}).sort("created_at", -1).to_list(20)
     purged = await db.leads.count_documents({"tenant_id": user["id"], "transcript_purged_at": {"$ne": None}})
-    return {"retention_days": await get_retention(user["id"]), "choices": RETENTION_CHOICES, "history": hist, "purged_calls": purged}
+    import plan_limits as PL
+    cap = (await PL.for_tenant(user["id"]))["recording_days"]
+    return {"retention_days": await get_retention(user["id"]), "plan_cap": cap,
+            "choices": [c for c in RETENTION_CHOICES if not cap or 0 < c <= cap] or [cap], "history": hist, "purged_calls": purged}
 
 
 @router.put("/retention")

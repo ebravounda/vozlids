@@ -102,6 +102,9 @@ async def principal(request: Request, x_api_key: str = Header("", description="T
                 raise ValueError
         except ValueError:
             raise HTTPException(403, {"code": "ip_not_allowed", "detail": "Esta IP no está autorizada para esta API key."})
+    import plan_limits as PL
+    if not await PL.has(doc["tenant_id"], "api"):
+        raise HTTPException(403, {"code": "plan_feature_missing", "detail": "Tu plan no incluye la API. Mejóralo en «Mi plan» del panel."})
     lim = await C.limits_for(doc["tenant_id"])
     await C.hit(f"k:{doc['_id']}", lim["requests_per_minute"])
     await db.api_keys.update_one({"_id": doc["_id"]}, {"$set": {"last_used_at": now_iso(), "last_used_ip": ip}})
@@ -245,8 +248,13 @@ async def _create(body: CallIn, p: Principal) -> tuple[int, dict]:
     sandbox = p.env == "test"
     async with C.tenant_lock(p.tenant_id):
         if not sandbox:
-            if err := await saas.quota_error(p.tenant_id):
+            import plan_limits as PL
+            if not await PL.has(p.tenant_id, "outbound"):
+                raise HTTPException(403, {"code": "plan_feature_missing", "detail": "Tu plan no incluye llamadas salientes."})
+            if err := await saas._quota_error(p.tenant_id):
                 raise HTTPException(402, {"code": "minutes_exhausted", "detail": err})
+            if not run_at and (err := await PL.concurrency_error(p.tenant_id)):
+                raise HTTPException(429, {"code": "concurrency_limit", "detail": err, "retry_after": 30}, headers={"Retry-After": "30"})
             active = await db.leads.count_documents({"tenant_id": p.tenant_id, "status": {"$in": ["en_cola", "llamando", "en_curso"]}, "sandbox": {"$ne": True}})
             if not run_at and active >= lim["max_concurrent_calls"]:
                 raise HTTPException(429, {"code": "concurrency_limit", "detail": f"Máximo {lim['max_concurrent_calls']} llamadas simultáneas.",
@@ -488,6 +496,8 @@ async def overview(user=Depends(get_current_user)):
 
 @router.post("/keys")
 async def make_key(body: KeyIn, user=Depends(get_current_user)):
+    import plan_limits as PL
+    await PL.require(user["id"], "api")
     key = C.new_key(body.env)
     doc = {"tenant_id": user["id"], "key_hash": C.khash(key), "prefix": key[:16], "name": body.name, "env": body.env,
            "scopes": sorted(set(body.scopes)), "allowed_ips": body.allowed_ips, "revoked": False, "disabled": False, "created_at": now_iso(),
