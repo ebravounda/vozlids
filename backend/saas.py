@@ -321,7 +321,8 @@ async def my_usage(user=CurrentUser):
     return {"minutes_used": await minutes_used(user["id"]),
             "plan": plan and {"name": plan["name"], "minutes": plan["minutes"], "currency": cur.upper(),
                               "price": plan.get(f"price_{cur}", 0), "overage_price": plan.get(f"overage_{cur}", 0)},
-            "allow_overage": user.get("allow_overage", False), "limits": await PL.for_tenant(user["id"]),
+            "allow_overage": user.get("allow_overage", False), "plan_id": user.get("plan_id"),
+            "has_subscription": bool(user.get("stripe_subscription_id")) and user.get("billing_status") == "active", "limits": await PL.for_tenant(user["id"]),
             "agents": await db.agents.count_documents({"tenant_id": user["id"]}), "is_admin": user.get("role") == "admin"}
 
 

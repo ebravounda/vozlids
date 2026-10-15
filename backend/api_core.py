@@ -284,7 +284,9 @@ async def worker() -> None:
                 await reminders.run_due()
             if tick % 120 == 7:
                 import saas
+                import billing
                 await saas.usage_alerts()
+                await billing.apply_pending_downgrades()
             if tick % 720 == 1:
                 import privacy
                 await privacy.purge_expired()

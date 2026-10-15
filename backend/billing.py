@@ -168,7 +168,8 @@ async def billing_me(user=CurrentUser):
     cur = "CLP" if user.get("country") == "CL" else "EUR"
     return {"currency": cur, "plan_id": user.get("plan_id"), "plan_name": plan and plan["name"],
             "billing_status": user.get("billing_status"), "cancel_at_period_end": user.get("cancel_at_period_end", False),
-            "has_subscription": bool(user.get("stripe_subscription_id"))}
+            "has_subscription": bool(user.get("stripe_subscription_id")),
+            "pending_plan_id": user.get("pending_plan_id"), "pending_plan_at": user.get("pending_plan_at")}
 
 
 @router.post("/billing/checkout")
@@ -326,4 +327,116 @@ async def webhook(request: Request):
                                os.environ["APP_PUBLIC_URL"] + "/app/plan")
     elif t == "invoice.paid":
         await db.users.update_one({"stripe_customer_id": obj.get("customer")}, {"$set": {"billing_status": "active"}})
+        if obj.get("billing_reason") == "subscription_cycle":
+            u = await db.users.find_one({"stripe_customer_id": obj.get("customer"), "pending_plan_id": {"$exists": True}})
+            if u:
+                await db.users.update_one({"_id": u["_id"]}, {"$set": {"plan_id": u["pending_plan_id"], "plan_changed_at": now_iso()},
+                                                             "$unset": {"pending_plan_id": "", "pending_plan_at": ""}})
     return {"ok": True}
+
+
+# ---------- Change plan from the panel (upgrade now with proration, downgrade at renewal) ----------
+class ChangeIn(BaseModel):
+    plan_id: str = Field(min_length=24, max_length=24)
+
+
+async def _change_ctx(user: dict, plan_id: str) -> dict:
+    if not user.get("stripe_subscription_id") or user.get("billing_status") != "active":
+        raise HTTPException(409, "No tienes una suscripción activa que cambiar. Contrata el plan desde «Mi plan».")
+    if plan_id == user.get("plan_id"):
+        raise HTTPException(409, "Ya estás en este plan.")
+    if (await client(user.get("stripe_mode", "live")))[2]:
+        raise HTTPException(409, "El cambio de plan en un clic necesita la cuenta de Stripe propia conectada en Super Admin (el modo de prueba compartido no lo permite).")
+    new = await db.plans.find_one({"_id": ObjectId(plan_id), "public": True}) if ObjectId.is_valid(plan_id) else None
+    old = await db.plans.find_one({"_id": ObjectId(user["plan_id"])}) if ObjectId.is_valid(user.get("plan_id") or "") else None
+    if not new:
+        raise HTTPException(404, "Plan no encontrado")
+    currency = "clp" if user.get("country") == "CL" else "eur"
+    amount = amount_for(new, currency)
+    if amount <= 0:
+        raise HTTPException(400, "Este plan no tiene precio para tu país.")
+    c, _, proxy = await client(user.get("stripe_mode", "live"))
+    try:
+        sub = await asyncio.to_thread(c.v1.subscriptions.retrieve, user["stripe_subscription_id"])
+    except stripe.error.StripeError as e:
+        raise HTTPException(400, f"No se pudo leer tu suscripción: {e.user_message or str(e)[:160]}")
+    item = sub["items"]["data"][0]
+    current = int(item["price"]["unit_amount"] or 0)
+    end = item.get("current_period_end") or sub.get("current_period_end")
+    return {"c": c, "sub": sub, "item": item, "new": new, "old": old, "currency": currency, "amount": amount,
+            "up": amount > current, "current": current, "period_end": end, "proxy": proxy}
+
+
+def _items(ctx: dict) -> list:
+    return [{"id": ctx["item"]["id"], "price_data": {"currency": ctx["currency"], "unit_amount": ctx["amount"],
+             "recurring": {"interval": "month"}, "product": ctx["item"]["price"]["product"]}}]
+
+
+def _human(amount: int, currency: str) -> float:
+    return amount if currency == "clp" else round(amount / 100, 2)
+
+
+@router.post("/billing/change-plan/preview")
+async def change_preview(body: ChangeIn, user=CurrentUser):
+    ctx = await _change_ctx(user, body.plan_id)
+    due = 0
+    if ctx["up"]:
+        try:
+            inv = await asyncio.to_thread(ctx["c"].v1.invoices.create_preview, {
+                "customer": user["stripe_customer_id"], "subscription": ctx["sub"]["id"],
+                "subscription_details": {"items": _items(ctx), "proration_behavior": "always_invoice"}})
+            due = int(inv["amount_due"] or 0)
+        except stripe.error.StripeError as e:
+            log.warning("preview failed: %s", e)
+            due = max(0, ctx["amount"] - ctx["current"])
+    from datetime import datetime, timezone
+    return {"direction": "up" if ctx["up"] else "down", "plan": ctx["new"]["name"], "minutes": ctx["new"]["minutes"],
+            "currency": ctx["currency"].upper(), "new_price": _human(ctx["amount"], ctx["currency"]),
+            "due_now": _human(due, ctx["currency"]),
+            "effective_at": None if ctx["up"] else datetime.fromtimestamp(ctx["period_end"], timezone.utc).isoformat() if ctx["period_end"] else None}
+
+
+@router.post("/billing/change-plan")
+async def change_plan(body: ChangeIn, user=CurrentUser):
+    ctx = await _change_ctx(user, body.plan_id)
+    params = {"items": _items(ctx), "metadata": {"user_id": user["id"], "plan_id": body.plan_id}}
+    if ctx["up"]:
+        params.update(proration_behavior="always_invoice", payment_behavior="error_if_incomplete")
+    else:
+        params.update(proration_behavior="none")
+    try:
+        await asyncio.to_thread(ctx["c"].v1.subscriptions.update, ctx["sub"]["id"], params)
+    except stripe.error.CardError as e:
+        raise HTTPException(402, f"Tu tarjeta ha rechazado el pago: {e.user_message or 'revisa tu método de pago'}.")
+    except stripe.error.StripeError as e:
+        raise HTTPException(400, f"No se pudo cambiar el plan: {e.user_message or str(e)[:200]}")
+    from datetime import datetime, timezone
+    if ctx["up"]:
+        await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"plan_id": body.plan_id, "plan_changed_at": now_iso()},
+                                                                  "$unset": {"pending_plan_id": "", "pending_plan_at": ""}})
+        return {"ok": True, "applied": True, "plan": ctx["new"]["name"]}
+    at = datetime.fromtimestamp(ctx["period_end"], timezone.utc).isoformat() if ctx["period_end"] else now_iso()
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"pending_plan_id": body.plan_id, "pending_plan_at": at}})
+    return {"ok": True, "applied": False, "plan": ctx["new"]["name"], "effective_at": at}
+
+
+@router.delete("/billing/change-plan")
+async def cancel_downgrade(user=CurrentUser):
+    u = await db.users.find_one({"_id": ObjectId(user["id"])})
+    if not u.get("pending_plan_id"):
+        return {"ok": True}
+    old = await db.plans.find_one({"_id": ObjectId(u["plan_id"])}) if ObjectId.is_valid(u.get("plan_id") or "") else None
+    if old:
+        ctx = await _change_ctx({**u, "id": user["id"], "plan_id": u["pending_plan_id"]}, u["plan_id"])
+        await asyncio.to_thread(ctx["c"].v1.subscriptions.update, ctx["sub"]["id"], {"items": _items(ctx), "proration_behavior": "none"})
+    await db.users.update_one({"_id": u["_id"]}, {"$unset": {"pending_plan_id": "", "pending_plan_at": ""}})
+    return {"ok": True}
+
+
+async def apply_pending_downgrades() -> int:
+    n = 0
+    async for u in db.users.find({"pending_plan_id": {"$exists": True}, "pending_plan_at": {"$lte": now_iso()}}, {"pending_plan_id": 1}):
+        await db.users.update_one({"_id": u["_id"]}, {"$set": {"plan_id": u["pending_plan_id"], "plan_changed_at": now_iso()},
+                                                     "$unset": {"pending_plan_id": "", "pending_plan_at": ""}})
+        n += 1
+    return n

@@ -211,3 +211,8 @@
 - usage_alerts: email 80% y 100% una vez al mes; /account/usage devuelve limits/agents/is_admin
 - Frontend: PlanGate.jsx (Gate, LockedCard, UsageMeter sidebar, UsageBanner, AdminTabs), PlanPrice.jsx (precio tachado, badges, limitLines). Sidebar admin: un solo item Super admin + pestañas
 - Probado iteration_28 (backend 17/17); arreglos posteriores: voz por defecto según plan, botón Crear agente al límite, plural, contraste Mi plan, doble badge, 404 plan
+
+## 2026-06 Cambio de plan en un clic
+- billing.py: POST /billing/change-plan/preview, POST /billing/change-plan (subir: subscriptions.update proration always_invoice + error_if_incomplete, plan al instante; bajar: proration none, pending_plan_id/at aplicado en invoice.paid subscription_cycle o worker apply_pending_downgrades), DELETE /billing/change-plan (anular bajada). Proxy Stripe compartido no soporta subscriptions -> 409 con mensaje
+- Frontend: components/ChangePlan.jsx (ChangePlanDialog, useNextPlan); UsageBanner abre diálogo con el siguiente plan; Mi plan: Subir/Bajar a este plan + aviso de cambio programado
+- Probado con cliente Stripe simulado (python) + captura UI; flujo real con Stripe NO probado en preview

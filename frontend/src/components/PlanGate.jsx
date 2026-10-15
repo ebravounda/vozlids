@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Activity, AlertTriangle, Euro, Lock, Radio, Shield, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
+import { ChangePlanDialog, useNextPlan } from "@/components/ChangePlan";
 
 const Ctx = createContext({ u: null, reload: () => {} });
 export const FEATURE_INFO = {
@@ -60,17 +61,22 @@ export function UsageMeter() {
 }
 
 export function UsageBanner() {
-  const { u } = usePlan();
+  const { u, reload } = usePlan();
+  const next = useNextPlan(u);
+  const [open, setOpen] = useState(false);
   if (!u?.plan || u.is_admin) return null;
   const p = pctOf(u);
   if (p < 80) return null;
   const full = p >= 100;
   const msg = full ? (u.allow_overage ? "Has usado todos los minutos de tu plan: los minutos extra se cobran aparte." : "Has usado todos los minutos de tu plan: las llamadas están en pausa.")
     : `Has usado el ${p}% de los minutos de tu plan este mes.`;
+  const cls = `flex w-full items-center justify-center gap-2 px-4 py-2 text-sm font-semibold ${full ? "bg-rose-50 text-rose-700 hover:bg-rose-100" : "bg-amber-50 text-amber-800 hover:bg-amber-100"}`;
+  if (!next || !u.has_subscription) return <Link to="/app/plan" className={cls} data-testid="usage-banner"><AlertTriangle className="h-4 w-4" />{msg} Mejorar plan →</Link>;
   return (
-    <Link to="/app/plan" className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold ${full ? "bg-rose-50 text-rose-700 hover:bg-rose-100" : "bg-amber-50 text-amber-800 hover:bg-amber-100"}`} data-testid="usage-banner">
-      <AlertTriangle className="h-4 w-4" />{msg} Mejorar plan →
-    </Link>
+    <>
+      <button onClick={() => setOpen(true)} className={cls} data-testid="usage-banner"><AlertTriangle className="h-4 w-4" />{msg} <span className="underline" data-testid="usage-banner-upgrade">Subir a {next.name} ({next.minutes.toLocaleString("es-ES")} min) →</span></button>
+      <ChangePlanDialog plan={next} open={open} onClose={() => setOpen(false)} onDone={reload} />
+    </>
   );
 }
 
