@@ -1,0 +1,31 @@
+{
+  "summary": "Iter-12: Verified prod-build black-flash fix on vozleads landing. Served /app/frontend/build via python3 http.server:8899 and used playwright to validate pre-JS paint and post-hydration. (1) build/index.html and build/cl/index.html still contain prerendered SEO <main class=\"seo-static\">...</main> with the full h1 ('Tu agente telefónico con IA llama a cada lead en menos de 30 segundos' resp. 'Agente telefónico con IA para empresas en Chile') and FAQ, so crawlers still see content. (2) With route('**/*.js', abort) to simulate pre-hydration paint, both / and /cl/ render with html.class='mk', html+body background rgb(255,255,255) (white), and the seo-static element is 1x1 absolute with clip:rect(0 0 0 0) (invisible but in DOM) — no black flash, no visible plain text. (3) Inline-script regex /^\\/(app|login|registro|f)(\\/|$)/ evaluated against all target paths: /app, /login, /registro, /f/xyz correctly return false (no mk class added); /, /cl, /cl/, /es, SEO landing slug all return true (mk added). (4) After JS loads on /, mk is removed from <html>, body bg becomes rgb(11,15,23) and React mounts the proper hero (SEO node removed by react render into #root). (5) On preview URL (dev build, no prerender) landing /, /cl, /login all render normally — /login remains dark themed (body bg rgb(11,15,23)) and shows the 'Bienvenido de nuevo' login form as expected.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/public/index.html (reviewed)",
+    "/app/frontend/src/index.js (reviewed)",
+    "/app/frontend/build/index.html (verified)",
+    "/app/frontend/build/cl/index.html (verified)"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "setTimeout(..., 1000) in src/index.js to remove 'mk' is fine but is time-based; if first paint of React takes >1s on slow devices there is a brief window where html.mk is still set AFTER React paints the dark landing (would momentarily force body white under the dark landing). Low risk since the landing itself has a white hero section, but a more robust approach would be to remove 'mk' inside a useEffect in App after first commit, or inside the root.render callback, instead of a global setTimeout.",
+    "The visually-hidden <main class=\"seo-static\"> remains in the DOM only until React hydrates into #root (which replaces root's children). Confirmed empty seo-static after hydration. Good.",
+    "The inline regex uses the whole-group backreference /^\\/(app|login|registro|f)(\\/|$)/ which also matches a bare '/f' (edge case). Not a bug today (no /f top-level route) but worth noting.",
+    "theme-color meta is '#0f172a' (dark) while pre-hydration background is white — on mobile this causes browser chrome to turn dark immediately on paint while page body is white, slightly inconsistent. Consider conditionally setting theme-color for marketing paths or switching to white.",
+    "Both /app/frontend/build/index.html and /app/frontend/build/cl/index.html contain the inline mk-class script and seo-static CSS — i.e., seo-prerender.mjs preserved them. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not tested)", "frontend": "100% — all 3 verifications pass"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (not needed for this bug — not exercised)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "To reproduce black-flash tests: cd /app/frontend/build && python3 -m http.server 8899 & ; then playwright: await page.route('**/*.js', lambda r: r.abort()); goto http://localhost:8899/ and /cl/; assert body bg == rgb(255,255,255), html.className includes 'mk', .seo-static exists & is clip-hidden. Preview URL serves dev build so mk-class is never applied there — only the production build at /app/frontend/build has the fix wired through index.html. The emergent preview preserves dark theme on /login as verified.",
+  "rca of the issue": "Pre-fix: public/index.html had no inline bg-override script and the prerender wrote raw heading+paragraphs inside #root. On production nginx (static build), the SEO prerendered text was fully visible on body background #0B0F17 for the first ~50-150ms before the JS bundle hydrated, producing the black-flash-with-plain-text FOUC the user reported. Fix delivered: (a) prerender now wraps SEO content as <main class=\"seo-static\"> inside #root; (b) inline <style> defines .seo-static as sr-only (position:absolute; width/height:1px; clip:rect(0 0 0 0); overflow:hidden); (c) tiny inline <script> adds class 'mk' to <html> for all non-app paths; (d) same inline <style> declares html.mk, html.mk body { background:#fff }; (e) src/index.js removes the 'mk' class 1 second after bundle executes so the normal dark theme takes over for the SPA chrome. Verified: pre-JS paint white, SEO text present in DOM but invisible; app routes (/login/app/registro/f/) unaffected and remain dark."
+}
