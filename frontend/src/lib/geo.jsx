@@ -29,8 +29,8 @@ const tzCountry = () => {
 };
 
 export const TXT = {
-  ES: { num: "número de España (+34)", short: "Número +34 de España gratis", where: "en España", line: "Línea operativa en España (+34)", dial: "+34 6••" },
-  CL: { num: "número de Chile (+56)", short: "Número +56 de Chile gratis", where: "en Chile", line: "Línea operativa en Chile (+56)", dial: "+56 9••" },
+  ES: { num: "número de España (+34)", short: "Número +34 de España gratis", where: "en España", dial: "+34 6••" },
+  CL: { num: "número de Chile (+56)", short: "Número +56 de Chile gratis", where: "en Chile", dial: "+56 9••" },
   INT: { num: "número de teléfono", short: "Número de teléfono incluido", where: "en tu país", line: "Agente de voz en español", dial: "+52 55•" },
 };
 

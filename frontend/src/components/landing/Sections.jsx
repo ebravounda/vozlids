@@ -78,9 +78,9 @@ export const Hero = ({ page, m }) => (
     <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden />
     <div className="relative mx-auto grid max-w-6xl items-start gap-12 px-6 py-14 lg:grid-cols-[1.15fr_1fr] lg:py-20">
       <div className="fade-up">
-        <p className="mb-6 inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm" data-testid="hero-eyebrow">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 vl-pulse" />{m.visitor && <span className="text-base leading-none" data-testid="hero-flag">{m.visitor.flag}</span>}{m.market === "INT" ? (m.visitor ? `Muestra gratuita para ${m.visitor.name}` : page.eyebrow) : m.t.line}
-        </p>
+        {m.market === "INT" && <p className="mb-6 inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm" data-testid="hero-eyebrow">
+          {m.visitor && <span className="text-base leading-none" data-testid="hero-flag">{m.visitor.flag}</span>}{m.visitor ? `Muestra gratuita para ${m.visitor.name}` : page.eyebrow}
+        </p>}
         <h1 className="text-4xl font-extrabold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl" style={H} data-testid="hero-title">{page.h1}</h1>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">{page.intro}</p>
         <div className="mt-8 flex flex-wrap items-center gap-3">

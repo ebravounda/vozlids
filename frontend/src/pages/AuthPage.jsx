@@ -80,9 +80,6 @@ function AuthShowcase() {
   return (
     <div className="relative hidden overflow-hidden bg-slate-900 text-slate-200 lg:flex lg:flex-col lg:justify-between lg:p-12" data-testid="auth-showcase">
       <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(#334155_1px,transparent_1px)] [background-size:22px_22px]" aria-hidden />
-      <p className="relative inline-flex w-fit items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-200">
-        <span className="h-2 w-2 rounded-full bg-emerald-400 vl-pulse" /> Líneas operativas · España +34 · Chile +56
-      </p>
       <div className="relative mx-auto w-full max-w-md vl-float rounded-2xl border border-slate-700 bg-slate-800/70 p-6 backdrop-blur">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-white">Llamada en curso · Nuevo lead</p>
