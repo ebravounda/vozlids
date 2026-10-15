@@ -1,0 +1,55 @@
+name: vozleads
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes: [mongo_data:/data/db]
+    networks: [vozleads_net]
+    logging: *logging
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+    depends_on: [mongo]
+    ports: ["127.0.0.1:${API_PORT:-8710}:8001"]
+    networks: [vozleads_net]
+    logging: *logging
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        REACT_APP_BACKEND_URL: ${PUBLIC_BACKEND_URL}
+    restart: unless-stopped
+    ports: ["127.0.0.1:${WEB_PORT:-8711}:80"]
+    networks: [vozleads_net]
+    logging: *logging
+
+  cron:
+    image: curlimages/curl:8.10.1
+    restart: unless-stopped
+    env_file: .env
+    depends_on: [backend]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          curl -s -o /dev/null -w "cron %{http_code}\n" -X POST http://backend:8001/api/cron/dispatch -H "Authorization: Bearer $$WEBHOOK_CRON_SECRET"
+          sleep 900
+        done
+    networks: [vozleads_net]
+    logging: *logging
+
+volumes:
+  mongo_data:
+
+networks:
+  vozleads_net:

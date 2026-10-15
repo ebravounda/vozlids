@@ -89,3 +89,9 @@ android-sdk/
 credentials.json
 *.key
 .credentials
+
+# VozLeads deploy
+deploy/.env
+deploy/.env.secrets
+deploy/backups/
+deploy/data/.imported

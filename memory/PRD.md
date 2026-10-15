@@ -92,3 +92,9 @@
 - ElevenLabs: key linked to Vapi as 11labs credential (needs User read permission); library search/add native-accent voices (needs Voices read/write). Current stored key only has TTS → user must create new key. Voice tuning stability .38/style .22/speed 1.02.
 - NOT verified with real Zadarma (no API key yet): order/create_sip/route params & SIP login format need live verification. (iteration_10 PASS with simulated records)
 - Bug fix: outbound templates had business_name hard-coded ("Clínica Dental Sonrisa"). Templates now use {nombre}/{agente}/{empresa} resolved from the calling agent (vapi.greeting); migration seed.migrate_templates; hint in Outbound template editor. (iteration_11 PASS)
+
+## Update — Self-hosted deploy kit for Plesk (session 2)
+- deploy/: docker-compose.yml (project "vozleads": mongo:7 own volume, backend :8710, frontend nginx :8711 both bound to 127.0.0.1, cron container POST /api/cron/dispatch every 15 min), .env.example, install.sh (generates secrets, decrypts data/env-secrets.enc, imports data/vozleads-config.json.enc via backend/tools/import_config.py), update.sh (backup + git pull + rebuild), backup.sh, plesk-nginx.conf (regex locations), README-PLESK.md.
+- backend/Dockerfile, frontend/Dockerfile (+nginx.conf SPA fallback with prerendered SEO pages).
+- Encrypted exports (AES-256, pbkdf2) passphrase stored only at /root/vl_pass.txt (NOT in repo) and given to user in chat.
+- Not verifiable here (no Docker in preview): import script + install env-fill logic tested locally.
