@@ -415,13 +415,6 @@ async def revoke_key(kid: str, user=CurrentUser):
     return {"ok": True}
 
 
-async def api_tenant(x_api_key: str = Header("")) -> str:
-    doc = await db.api_keys.find_one({"key_hash": _hash(x_api_key), "revoked": False}) if x_api_key else None
-    if not doc:
-        raise HTTPException(401, "API key no válida")
-    return doc["tenant_id"]
-
-
 class ApiCallIn(BaseModel):
     agent_id: str
     name: str = Field(min_length=1, max_length=80)
@@ -436,42 +429,3 @@ class ApiCallIn(BaseModel):
 def _purpose(call_type: str, ctx: dict) -> str:
     details = "; ".join(f"{k}: {str(v)[:200]}" for k, v in list(ctx.items())[:10])
     return CALL_TYPES[call_type][1] + (f"\nDatos de esta llamada: {details}" if details else "")
-
-
-@router.get("/v1/agents")
-async def v1_agents(tenant_id: str = Depends(api_tenant)):
-    return [{"id": str(a["_id"]), "name": a["name"], "country": a.get("country", "ES"), "active": a["active"]}
-            async for a in db.agents.find({"tenant_id": tenant_id})]
-
-
-@router.post("/v1/calls")
-async def v1_create_call(body: ApiCallIn, tenant_id: str = Depends(api_tenant)):
-    if not body.consent:
-        raise HTTPException(400, "consent debe ser true: solo se puede llamar a contactos que lo han autorizado")
-    agent = await _agent(tenant_id, body.agent_id)
-    country = agent.get("country", "ES")
-    phone = norm_phone(body.phone, country)
-    biz = (await db.users.find_one({"_id": ObjectId(tenant_id)}) or {}).get("business_name", "")
-    greeting = f"Hola {{nombre}}, soy {agent['name']}, de {biz}. La llamada se graba. ¿Tienes un momento?"
-    purpose = _purpose(body.type, body.context)
-    if body.scheduled_at:
-        res = await db.scheduled_calls.insert_one({
-            "tenant_id": tenant_id, "agent_id": body.agent_id, "template_name": f"API · {CALL_TYPES[body.type][0]}",
-            "name": body.name, "phone": phone, "email": body.email, "purpose": purpose, "greeting": greeting,
-            "run_at": _to_utc(body.scheduled_at, country), "run_at_local": body.scheduled_at, "country": country,
-            "status": "pendiente", "created_at": now_iso()})
-        return {"scheduled_id": str(res.inserted_id), "status": "pendiente"}
-    if err := await quota_error(tenant_id):
-        raise HTTPException(402, err)
-    lead = await place_call(agent, body.name, phone, body.email, purpose, greeting, "api")
-    return {"call_id": lead.get("id"), "status": lead.get("status"), "error": lead.get("error", "")}
-
-
-@router.get("/v1/calls/{cid}")
-async def v1_get_call(cid: str, tenant_id: str = Depends(api_tenant)):
-    d = await db.leads.find_one({"_id": oid(cid), "tenant_id": tenant_id})
-    if not d:
-        raise HTTPException(404, "Llamada no encontrada")
-    return {"call_id": cid, "status": d["status"], "summary": d.get("summary"), "interest_score": d.get("interest_score"),
-            "answers": d.get("answers"), "duration_seconds": d.get("duration_seconds"), "transcript": d.get("messages", []),
-            "created_at": d["created_at"]}

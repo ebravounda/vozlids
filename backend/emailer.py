@@ -82,20 +82,44 @@ def _assert_safe_email(subject: str, html: str) -> None:
                 raise ValueError(f"Anchor text {m.group(1)!r} != real link host {real!r} (G3)")
 
 
-def _wrap(title: str, rows: list, cta: str = "") -> str:
-    brand = escape(os.environ["EMAIL_FROM_NAME"])
-    items = "".join(f'<tr><td style="padding:4px 0;color:#64748b;width:140px">{escape(k)}</td>'
-                    f'<td style="padding:4px 0;color:#0f172a">{escape(str(v))}</td></tr>' for k, v in rows if v)
-    link = (f'<p style="margin-top:20px"><a href="{escape(cta)}" style="background:#059669;color:#fff;padding:10px 18px;'
-            f'border-radius:999px;text-decoration:none">Abrir mi panel</a></p>') if cta else ""
-    return (f'<table role="presentation" width="100%" style="background:#f8fafc"><tr><td style="padding:24px">'
-            f'<table role="presentation" width="560" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px">'
-            f'<tr><td style="padding:28px;font-family:Arial,sans-serif">'
-            f'<p style="margin:0 0 6px;font-weight:bold;color:#059669">{brand}</p>'
-            f'<h2 style="margin:0 0 16px;color:#0f172a;font-size:20px">{escape(title)}</h2>'
-            f'<table role="presentation">{items}</table>{link}'
-            f'<p style="margin-top:28px;font-size:12px;color:#94a3b8">Enviado por {brand}. Nunca te pediremos contraseñas '
-            f'ni datos de pago por email.</p></td></tr></table></td></tr></table>')
+FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
+
+
+def _wrap(title: str, rows: list, cta: str = "", intro: str = "", cta_label: str = "Abrir mi panel") -> str:
+    site = os.environ["APP_PUBLIC_URL"].rstrip("/")
+    e = lambda v: escape(str(v))  # noqa: E731
+    items = "".join(
+        f'<tr><td style="padding:14px 0;border-bottom:1px solid #EEF2F7;color:#64748B;font-size:13px;width:38%;vertical-align:top">{e(k)}</td>'
+        f'<td style="padding:14px 0 14px 12px;border-bottom:1px solid #EEF2F7;color:#0B1B3F;font-size:15px;font-weight:600;vertical-align:top">{e(v)}</td></tr>'
+        for k, v in rows if v)
+    lead = f'<p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:24px">{e(intro)}</p>' if intro else ""
+    button = (f'<table role="presentation" cellpadding="0" cellspacing="0" style="margin:32px 0 4px"><tr>'
+              f'<td style="border-radius:999px;background:#1E5EFF"><a href="{e(cta)}" style="display:inline-block;padding:14px 30px;'
+              f'font-family:{FONT};font-size:15px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:999px">{e(cta_label)} &rarr;</a></td>'
+              f'</tr></table>') if cta else ""
+    legal = " &middot; ".join(f'<a href="{site}{p}" style="color:#94A3B8;text-decoration:underline">{t}</a>'
+                              for p, t in (("/terminos", "Términos"), ("/privacidad", "Privacidad"), ("/cookies", "Cookies")))
+    return (
+        f'<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        f'<meta name="color-scheme" content="light only"><title>{e(title)}</title></head>'
+        f'<body style="margin:0;padding:0;background:#F1F5FB">'
+        f'<div style="display:none;max-height:0;overflow:hidden;opacity:0">{e(intro or title)}</div>'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5FB"><tr><td align="center" style="padding:32px 12px">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;font-family:{FONT}">'
+        f'<tr><td style="padding:0 8px 20px"><a href="{site}" style="text-decoration:none">'
+        f'<img src="{site}/brand/vozleads-logo.png" width="150" height="35" alt="VozLeads" style="display:block;border:0;width:150px;height:auto"></a></td></tr>'
+        f'<tr><td style="background:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(11,27,63,.06)">'
+        f'<div style="height:6px;background:#1E5EFF;background-image:linear-gradient(90deg,#1E5EFF,#10B981)"></div>'
+        f'<div style="padding:40px 40px 36px">'
+        f'<h1 style="margin:0 0 14px;color:#0B1B3F;font-size:26px;line-height:34px;font-weight:800;letter-spacing:-0.4px">{e(title)}</h1>'
+        f'{lead}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #EEF2F7">{items}</table>{button}'
+        f'</div></td></tr>'
+        f'<tr><td style="padding:28px 8px 0;color:#94A3B8;font-size:12px;line-height:19px">'
+        f'<p style="margin:0 0 8px">Tu asistente telefónico con IA · Nunca te pediremos contraseñas ni datos de pago por email.</p>'
+        f'<p style="margin:0 0 8px">VozLeads es parte del Grupo GoRoky · GoRoky LLC · Estados Unidos, España, Chile<br>'
+        f'Raimundo Fernández Villaverde 39, Madrid, España · <a href="mailto:soporte@goroky.com" style="color:#94A3B8">soporte@goroky.com</a></p>'
+        f'<p style="margin:0">{legal}</p></td></tr>'
+        f'</table></td></tr></table></body></html>')
 
 
 async def resend_cfg() -> dict:
@@ -137,10 +161,11 @@ async def deliver(to: str, subject: str, html: str) -> str:
     return ""
 
 
-async def send(to: str, subject: str, title: str, rows: list, cta: str = "") -> bool:
+async def send(to: str, subject: str, title: str, rows: list, cta: str = "", intro: str = "",
+               cta_label: str = "Abrir mi panel") -> bool:
     if not to:
         return False
-    err = await deliver(to, subject, _wrap(title, rows, cta))
+    err = await deliver(to, subject, _wrap(title, rows, cta, intro, cta_label))
     if err:
         log.warning("Email not sent to %s: %s", to, err)
     return not err

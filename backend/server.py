@@ -31,6 +31,8 @@ import monitor  # noqa: E402
 import sector_demo  # noqa: E402
 import widget  # noqa: E402
 import onboarding  # noqa: E402
+import api_core  # noqa: E402
+import apiv1  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
@@ -482,8 +484,10 @@ async def vapi_webhook(request: Request):
     if typ == "status-update" and lead.get("call_phase") != "ended":
         await db.leads.update_one({"_id": lead["_id"]}, {"$set": {"call_phase": msg.get("status", ""),
                                                                   "updated_at": now_iso()}})
+        await api_core.on_lead_change(lead["_id"])
     elif typ == "end-of-call-report":
         await S.finalize_call(msg, lead)
+        await api_core.on_lead_change(lead["_id"])
     return {"ok": True}
 
 
@@ -503,6 +507,8 @@ app.include_router(monitor.router)
 app.include_router(sector_demo.router)
 app.include_router(widget.router)
 app.include_router(onboarding.router)
+app.include_router(apiv1.router)
+app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -547,6 +553,9 @@ async def startup():
     await X.load_custom_voices()
     await db.monitor_alerts.create_index("created_at")
     asyncio.create_task(monitor.loop())
+    await api_core.ensure_indexes()
+    await db.webhook_deliveries.update_many({"status": "sending"}, {"$set": {"status": "pending"}})
+    asyncio.create_task(api_core.worker())
 
 
 @app.on_event("shutdown")

@@ -108,11 +108,13 @@ async def assign(uid: str, body: AssignIn, user=Depends(X.require_admin)):
         "tenant_id": uid, "country": country, "number": number, "status": "activo", "error": "", "sip_id": body.sip_login.strip(),
         **v, "activated_at": now_iso(), "inbound_agent_id": cur.get("inbound_agent_id") or await N._default_agent(uid, country)},
         "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
-    await emailer.send(u["email"], "¡Felicidades! Tu línea de VozLeads ya está lista", "¡Tu línea ya está lista para operar!", [
-        ("Tu número", number), ("Compártelo", "Publícalo en tu web, Google Maps y redes: tu recepcionista con IA contestará cada llamada"),
-        ("Llamadas salientes", "Tus agentes ya llaman a tus leads desde este número"),
-        ("Siguiente paso", "Entra en tu panel, elige quién contesta y añade el botón «Solicitar llamada» a tu web")],
-        os.environ["APP_PUBLIC_URL"] + "/app/numero")
+    await emailer.send(u["email"], "¡Felicidades! Tu línea de VozLeads ya está lista", "¡Felicidades, tu línea ya está lista!", [
+        ("Tu número", number), ("Compártelo", "En tu web, Google Maps y redes sociales"),
+        ("Quién contesta", "Tu recepcionista con IA, 24/7"), ("Llamadas salientes", "Tus agentes ya llaman a tus leads desde este número"),
+        ("Siguiente paso", "Elige quién contesta y añade el botón «Solicitar llamada» a tu web")],
+        os.environ["APP_PUBLIC_URL"] + "/app/numero",
+        intro=f"Hola {u.get('first_name') or u.get('name', '')}, ya hemos configurado tu línea. Desde ahora cada llamada a tu negocio la atiende tu asistente con IA.",
+        cta_label="Ver mi número")
     return {"ok": True, "number": number, "inbound_uri": uri, "route_error": routed}
 
 
