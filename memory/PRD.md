@@ -123,3 +123,10 @@
 - oficina_real: grabacion ARISTEIA + 2 teclados reales (Computer/Laptop), drive 3.0, tecleo mas presente
 - call_center: grabacion real del usuario (Call_center_real.wav, 90s del min 60) sin filtro clean + teclado suave; voces sinteticas eliminadas
 - URL de ambiente en Vapi versionada ?v=3 para forzar recarga
+
+## 2026-06 Monitor Super Admin + Resend
+- /app/monitor (AdminMonitor.jsx, MonitorParts.jsx, MonitorLogs.jsx): saldos en vivo (Zadarma balance, ElevenLabs caracteres, Vapi gasto mes + concurrencia, Stripe balance), llamadas en curso (poll 10s), margen por cliente (mes), registro de llamadas con desglose (/admin/costs ampliado), log facturado Zadarma (/v1/statistics, cache 60s)
+- Alertas email (monitor.py loop cada 10 min, dedupe 6h; umbrales SIP 2 EUR, voces 2%; aviso instantaneo si Vapi rechaza por concurrencia o sin creditos). Coleccion monitor_alerts
+- Vapi no tiene API de saldo de creditos: se muestra gasto del mes + enlace al dashboard; limite de concurrencia se guarda de subscriptionLimits al crear llamadas (platform_settings vapi_limits)
+- Resend: platform_settings resend {api_key, from_email, reply_to}; emailer.deliver usa Resend si esta configurado, si no el envio integrado
+- Tested iteration_17: 100%

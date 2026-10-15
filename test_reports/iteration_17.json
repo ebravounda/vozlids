@@ -1,0 +1,34 @@
+{
+  "summary": "Iter-17: Super Admin monitoring (/app/monitor) + Resend settings + /app/costes regression. Backend pytest: 31/31 passed (test_vozlead_iter17.py). Frontend Playwright: logged in as admin, Monitor page renders all 23 expected data-testids with no missing. Balances card snapshot in preview: SIP=Sin conectar (Zadarma not configured, correct), Voice=87.5% libre (ElevenLabs connected, 1252/10000 chars, plan free), AI=1.24 $ this month, 40 calls, 0/10 lines busy, vapi-billing-link present, Stripe=Modo pruebas. live-calls-count '0 / 10 líneas', sip-log-error = 'Falta conectar la API de Zadarma en Super admin.' (HTTP 200, no crash). Alerts: edited email/sip_min/voice_min, saved, hard-reload confirms persistence (ui-test@example.com, sip_min=4). alerts-check-button succeeded (POST /api/admin/monitor/check 200). Values restored to defaults at end. Resend panel renders at /app/admin with resend-settings-panel + resend-status-missing (currently disconnected) + 7 testids present. Backend validated resend 422 for bad key / bad email, 200 persist (key_last4='5678', api_key never returned), POST /resend/test with fake key -> 502 (resend upstream error), DELETE -> disconnected. /app/costes loads correctly; /api/admin/costs?days=7 rows now include phone, direction (entrante/saliente), ended_reason, tenant_id. Ambience endpoints oficina_real/35.wav and call_center/35.wav return 200 audio/wav. Non-admin business user receives 403 on all /admin/monitor/* and /admin/resend endpoints. Unauth receives 401/403.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter17.py",
+    "/app/test_reports/pytest/iter17_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "monitor.py: GET /admin/resend never leaks api_key (only key_last4) — verified. Good.",
+    "monitor.py put_alerts: email validation is a minimal '@' check — Pydantic EmailStr would be stricter but current contract (422 for 'not-an-email') is honoured by '@' check. Acceptable for internal single-admin field.",
+    "monitor.py resend_save: when body.api_key is empty, it reuses the stored key (so from_email/reply_to can be updated without re-entering key). Nice. But if from_email is edited while no key is stored and body.api_key='' → falls through to the startswith('re_') check and 422s — expected.",
+    "monitor.py live(): builds vapi_call_id → lead map with async-comprehension that works fine; ObjectId.is_valid guard prevents crashes on seeded string ids. Good.",
+    "monitor.py margins(): rows filter correctly skips tenants with 0 calls and no paying subscription — matches 'clients with activity this month' requirement.",
+    "monitor.py sip_calls(): on ZadarmaError returns 200 with {calls:[],error:...} — the UI shows sip-log-error, no stacktrace. Correct per spec.",
+    "monitor.py loop() swallows all exceptions with a broad except — ok for a background task, logs at warning. Fine.",
+    "extra_routes.py admin_costs: new fields phone, direction, ended_reason, tenant_id emitted per call row; direction derived from vapi.inbound(ld) → 'entrante' / 'saliente'. Confirmed. tenant_id query param also filters correctly.",
+    "emailer.deliver(): returns ('' on success | error-string). resend_test endpoint maps non-empty error → HTTPException(502, err). Clean separation.",
+    "Minor: monitor._cache is an in-process dict; across backend restarts caches are cold (acceptable). No TTL eviction beyond key reuse — if many 'sip:{days}' keys are hit with varying days, dict grows unbounded (bounded in practice by days clamp 1..30). Low priority."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_iter17.py",
+    "/app/test_reports/pytest/iter17_results.xml",
+    "/app/test_reports/iteration_17.json"
+  ],
+  "success_rate": {"backend": "100% (31/31)", "frontend": "100% of UI assertions passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). Test business user created transient 'TEST_iter17_*@example.com' for non-admin 403 checks.",
+  "seed_data_creation": "Created transient business user(s) 'TEST_iter17_<uuid>@example.com' during non-admin fixture; no cleanup (one-shot users, no persistent artefacts beyond their row). alerts settings mutated during test then restored to {email:'', enabled:true, sip_min:2, voice_min_pct:2}. Resend row was briefly created then DELETEd — ends disconnected as required.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Monitor endpoints: GET /api/admin/monitor/{balances,live,margins,alerts,sip-calls}, PUT /api/admin/monitor/alerts (AlertsIn: email, enabled, sip_min<=10000, voice_min_pct<=100), POST /api/admin/monitor/check. Resend: GET/PUT/DELETE /api/admin/resend, POST /api/admin/resend/test. All require admin. Zadarma currently NOT configured in preview — SIP card shows 'Sin conectar' and sip-log-error renders. ElevenLabs IS configured. Vapi IS configured. Stripe is in test-proxy mode. If you need to call /api/admin/resend/test when Resend is disconnected, limit to once per run (fires real email via built-in sender).",
+  "rca of the issue": "N/A — new-feature verification iteration, no bug."
+}
