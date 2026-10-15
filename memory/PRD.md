@@ -91,3 +91,4 @@
 - Voicemail: outbound voicemailDetection (vapi, audio) hangs up; prompt rule; status "buzon".
 - ElevenLabs: key linked to Vapi as 11labs credential (needs User read permission); library search/add native-accent voices (needs Voices read/write). Current stored key only has TTS → user must create new key. Voice tuning stability .38/style .22/speed 1.02.
 - NOT verified with real Zadarma (no API key yet): order/create_sip/route params & SIP login format need live verification. (iteration_10 PASS with simulated records)
+- Bug fix: outbound templates had business_name hard-coded ("Clínica Dental Sonrisa"). Templates now use {nombre}/{agente}/{empresa} resolved from the calling agent (vapi.greeting); migration seed.migrate_templates; hint in Outbound template editor. (iteration_11 PASS)
