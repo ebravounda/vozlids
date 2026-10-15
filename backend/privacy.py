@@ -81,9 +81,13 @@ async def erase_subject(tid: str, phone: str, email: str) -> dict:
     for x in leads:
         if x.get("vapi_call_id"):
             await _drop_vapi(x["vapi_call_id"])
+    appt_q = {"tenant_id": tid, "$or": [{"lead_id": {"$in": ids}}] + ([{"lead_phone": phone}] if phone else [])}
+    import gcal
+    async for ap in db.appointments.find(appt_q, {"google_event_id": 1}):
+        await gcal.remove(tid, ap.get("google_event_id"))
     counts = {
         "calls": (await db.leads.delete_many({"_id": {"$in": [x["_id"] for x in leads]}})).deleted_count,
-        "appointments": (await db.appointments.delete_many({"tenant_id": tid, "$or": [{"lead_id": {"$in": ids}}] + ([{"lead_phone": phone}] if phone else [])})).deleted_count,
+        "appointments": (await db.appointments.delete_many(appt_q)).deleted_count,
         "scheduled_calls": (await db.scheduled_calls.delete_many(_match(tid, phone, email))).deleted_count,
         "support_tickets": (await db.support_tickets.delete_many({"tenant_id": tid, "lead_id": {"$in": ids}})).deleted_count,
         "webhook_deliveries": (await db.webhook_deliveries.delete_many({"tenant_id": tid, "payload.data.id": {"$in": ids}})).deleted_count,

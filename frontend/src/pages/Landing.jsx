@@ -5,7 +5,7 @@ import { GeoProvider, useMarket } from "@/lib/geo";
 import { Footer, MobileCta, Nav } from "@/components/landing/Chrome";
 import { SectorHero, Sectors } from "@/components/landing/Sectors";
 import { PlatformTour } from "@/components/landing/Showcase";
-import { FeatureGrid, LostCalls, Testimonials } from "@/components/landing/Features";
+import { FeatureGrid, LogoStrip, LostCalls, Testimonials } from "@/components/landing/Features";
 import { ApiBlock, Compatible, Faq, FinalCta, Hero, Steps, TopicSections, TrustBar, Uses, WhyNow } from "@/components/landing/Sections";
 
 
@@ -36,6 +36,7 @@ function LandingPage({ path = "/" }) {
       <Nav />
       <main>
         {sector ? <SectorHero page={page} m={m} /> : <Hero page={view} m={m} />}
+        <LogoStrip />
         <TrustBar m={m} />
         <PlatformTour />
         {page.sections?.length > 0 && <TopicSections sections={page.sections} title={sector ? `Cómo ayuda a ${page.name.toLowerCase()}` : ""} />}

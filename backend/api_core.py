@@ -279,6 +279,9 @@ async def worker() -> None:
             tick += 1
             if tick % 6 == 0:
                 await saas.dispatch_due()
+            if tick % 12 == 3:
+                import reminders
+                await reminders.run_due()
             if tick % 720 == 1:
                 import privacy
                 await privacy.purge_expired()

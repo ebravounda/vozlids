@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bot, UserRound } from "lucide-react";
+import { Bot, CheckCircle2, UserRound } from "lucide-react";
 import { HOUR_PX, addDays, apptDay, apptMin, bar, cap, dayLabel, endHm, fromMin, sameDay, toMin, tone, ymd } from "@/lib/cal";
 
 const useNow = () => {
@@ -21,14 +21,14 @@ function Event({ a, slot, h0, onOpen, now }) {
       style={{ top, height: h }} data-testid={`cal-event-${a.id}`}>
       <span className={`w-1 shrink-0 ${bar(a, past)}`} />
       <span className="min-w-0 px-2 py-1">
-        <span className="flex items-center gap-1 truncate text-xs font-semibold"><Icon className="h-3 w-3 shrink-0 opacity-70" />{a.lead_name}</span>
+        <span className="flex items-center gap-1 truncate text-xs font-semibold"><Icon className="h-3 w-3 shrink-0 opacity-70" />{a.lead_name}{a.confirmed_at && <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" data-testid={`cal-event-confirmed-${a.id}`} />}</span>
         {h > 34 && <span className="block truncate font-mono text-[10px] opacity-70">{a.start.slice(11, 16)}–{endHm(a, slot)}</span>}
       </span>
     </button>
   );
 }
 
-function Column({ day, appts, av, slot, h0, h1, onOpen, onCreate, onMove, now }) {
+function Column({ day, appts, gbusy, av, slot, h0, h1, onOpen, onCreate, onMove, now }) {
   const [over, setOver] = useState(false);
   const cfg = av?.days?.[(day.getDay() + 6) % 7];
   const minutesAt = (e) => {
@@ -47,6 +47,12 @@ function Column({ day, appts, av, slot, h0, h1, onOpen, onCreate, onMove, now })
       <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(135deg,#F1F5F9_0_6px,#F8FAFC_6px_12px)]" />
       {cfg?.enabled && <div className="pointer-events-none absolute inset-x-0 bg-white" style={open(toMin(cfg.start), toMin(cfg.end))} />}
       {Array.from({ length: h1 - h0 }, (_, i) => <div key={i} className="pointer-events-none absolute inset-x-0 border-t border-slate-100" style={{ top: i * HOUR_PX }} />)}
+      {gbusy.filter((b) => b.start.slice(0, 10) <= ymd(day) && b.end > ymd(day)).map((b, i) => {
+        const lo = b.start.slice(0, 10) < ymd(day) ? 0 : toMin(b.start.slice(11, 16));
+        const hi = b.end.slice(0, 10) > ymd(day) ? 24 * 60 : toMin(b.end.slice(11, 16));
+        const st = open(Math.max(lo, h0 * 60), Math.min(hi, h1 * 60));
+        return st.height > 0 && <div key={i} title={`Ocupado en Google: ${b.title}`} className="pointer-events-none absolute inset-x-1 z-[5] overflow-hidden rounded-md border border-dashed border-slate-300 bg-slate-100/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-500" style={st} data-testid="cal-google-busy">Google · {b.title}</div>;
+      })}
       {appts.filter((a) => apptDay(a) === ymd(day)).map((a) => <Event key={a.id} a={a} slot={slot} h0={h0} onOpen={onOpen} now={now} />)}
       {isToday && nowTop > 0 && nowTop < (h1 - h0) * HOUR_PX && (
         <div className="pointer-events-none absolute inset-x-0 z-20 flex items-center" style={{ top: nowTop }} data-testid="cal-now-line">
@@ -57,7 +63,7 @@ function Column({ day, appts, av, slot, h0, h1, onOpen, onCreate, onMove, now })
   );
 }
 
-export function TimeGrid({ start, days, appts, av, bounds, onOpen, onCreate, onMove }) {
+export function TimeGrid({ start, days, appts, gbusy = [], av, bounds, onOpen, onCreate, onMove }) {
   const now = useNow();
   const [h0, h1] = bounds;
   const slot = av?.slot_minutes || 30;
@@ -79,7 +85,7 @@ export function TimeGrid({ start, days, appts, av, bounds, onOpen, onCreate, onM
           <div className="relative" style={{ height: (h1 - h0) * HOUR_PX }}>
             {Array.from({ length: h1 - h0 }, (_, i) => <span key={i} className="absolute right-2 -translate-y-1/2 font-mono text-[10px] text-slate-400" style={{ top: i * HOUR_PX }}>{i ? `${String(h0 + i).padStart(2, "0")}:00` : ""}</span>)}
           </div>
-          {cols.map((d) => <Column key={ymd(d)} day={d} appts={appts} av={av} slot={slot} h0={h0} h1={h1} onOpen={onOpen} onCreate={onCreate} onMove={onMove} now={now} />)}
+          {cols.map((d) => <Column key={ymd(d)} day={d} appts={appts} gbusy={gbusy} av={av} slot={slot} h0={h0} h1={h1} onOpen={onOpen} onCreate={onCreate} onMove={onMove} now={now} />)}
         </div>
       </div>
     </div>

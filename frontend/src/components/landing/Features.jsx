@@ -43,6 +43,19 @@ export const FeatureGrid = () => (
   </section>
 );
 
+const LOGOS = [["Tramilex Abogados", "/clients/tramilex.webp", "h-12"], ["IberoAcademy", "/clients/iberoacademy.webp", "h-16"], ["GoRoky.com", "/clients/goroky.webp", "h-10"]];
+
+export const LogoStrip = () => (
+  <section className="border-b border-slate-200 bg-white" aria-label="Clientes" data-testid="logo-strip">
+    <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-10 md:flex-row md:justify-between">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Confían en VozLeads</p>
+      <div className="flex flex-wrap items-center justify-center gap-x-14 gap-y-6">
+        {LOGOS.map(([n, src, h]) => <img key={n} src={src} alt={n} loading="lazy" className={`${h} w-auto object-contain opacity-70 grayscale transition-[filter,opacity] duration-300 hover:opacity-100 hover:grayscale-0`} data-testid={`client-logo-${n.split(" ")[0].toLowerCase()}`} />)}
+      </div>
+    </div>
+  </section>
+);
+
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
 const TESTIMONIALS = [
   ["Tramilex Abogados", "Despacho de abogados · Málaga, España", IMG("photo-1758518731462-d091b0b4ed0d"), "Recepcionista IA + Agenda",
@@ -66,7 +79,7 @@ export const Testimonials = () => (
             <div className="flex flex-1 flex-col p-6">
               <Quote className="h-6 w-6 text-blue-200" />
               <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-slate-700">{quote}</blockquote>
-              <figcaption className="mt-6 border-t border-slate-100 pt-4"><p className="font-bold text-slate-900" style={H}>{biz}</p><p className="text-sm text-slate-500">{role} · {where}</p></figcaption>
+              <figcaption className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-4"><img src={LOGOS[i][1]} alt="" className="h-10 w-16 shrink-0 object-contain" /><div><p className="font-bold text-slate-900" style={H}>{biz}</p><p className="text-sm text-slate-500">{role} · {where}</p></div></figcaption>
             </div>
           </figure>
         ))}

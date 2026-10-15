@@ -84,11 +84,16 @@ class Appointment(BaseDocument):
     lead_id: Optional[str] = None
     lead_name: str = ""
     lead_phone: str = ""
+    lead_email: str = ""
     agent_id: Optional[str] = None
     start: str
     notes: str = ""
     duration_minutes: Optional[int] = None
     source: str = "agent"
+    reminder_sent_at: Optional[str] = None
+    reminder_channels: List[str] = []
+    confirmed_at: Optional[str] = None
+    google_event_id: Optional[str] = None
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)
 

@@ -14,12 +14,13 @@ export function AgendaCalendar({ av }) {
   const [view, setView] = useState(() => (window.innerWidth < 768 ? "day" : "week"));
   const [cursor, setCursor] = useState(new Date());
   const [appts, setAppts] = useState([]);
+  const [gbusy, setGbusy] = useState([]);
   const [dlg, setDlg] = useState(null);
   const [leadId, setLeadId] = useState(null);
   const [lo, hi] = useMemo(() => range(view, cursor), [view, cursor]);
 
   const load = useCallback(() => api.get("/appointments", { params: { start: ymd(lo), end: ymd(hi) } }).then((r) => setAppts(r.data)).catch(() => {}), [lo, hi]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); api.get("/google/busy", { params: { start: ymd(lo), end: ymd(hi) } }).then((r) => setGbusy(r.data)).catch(() => setGbusy([])); }, [load, lo, hi]);
 
   const bounds = useMemo(() => {
     const [a, b] = hoursBounds(av);
@@ -35,7 +36,7 @@ export function AgendaCalendar({ av }) {
     catch (e) { setAppts((xs) => xs.map((a) => (a.id === id ? prev : a))); toast.error(errMsg(e)); }
   };
   const nextSlot = () => { const n = new Date(); n.setMinutes(0, 0, 0); n.setHours(n.getHours() + 1); return `${ymd(n)}T${pad(n.getHours())}:00`; };
-  const common = { appts, av, bounds, onOpen: (a) => setDlg({ appt: a }), onCreate: (s) => (new Date(`${s}:00`) < new Date() ? toast.info("Ese hueco ya ha pasado. Elige una hora futura.") : setDlg({ create: s })), onMove: move };
+  const common = { appts, av, bounds, gbusy, onOpen: (a) => setDlg({ appt: a }), onCreate: (s) => (new Date(`${s}:00`) < new Date() ? toast.info("Ese hueco ya ha pasado. Elige una hora futura.") : setDlg({ create: s })), onMove: move };
   const count = appts.length;
 
   return (

@@ -156,6 +156,37 @@ export function ResendSettings() {
   );
 }
 
+export function GoogleSettings() {
+  const [s, setS] = useState(null);
+  const [f, setF] = useState({ client_id: "", client_secret: "" });
+  const [busy, setBusy] = useState(false);
+  const load = () => api.get("/admin/google").then((r) => { setS(r.data); setF((x) => ({ ...x, client_id: r.data.client_id })); });
+  useEffect(() => { load(); }, []);
+  const save = async () => { setBusy(true); try { await api.put("/admin/google", f); toast.success("Google Calendar activado para tus clientes"); setF((x) => ({ ...x, client_secret: "" })); load(); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); } };
+  if (!s) return null;
+  return (
+    <Panel className="space-y-4" data-testid="google-settings-panel">
+      <h3 className="text-lg font-semibold text-white">Google Calendar (app OAuth)</h3>
+      {s.configured
+        ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="google-settings-configured">Activo · {s.connected_accounts} cuentas conectadas</p>
+        : <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200" data-testid="google-settings-missing">Sin configurar: tus clientes ven el botón “Conectar Google Calendar” desactivado.</p>}
+      <Input value={f.client_id} onChange={(e) => setF({ ...f, client_id: e.target.value })} placeholder="ID de cliente …apps.googleusercontent.com" className="bg-slate-950/60 font-mono" data-testid="google-client-id-input" />
+      <Input type="password" value={f.client_secret} onChange={(e) => setF({ ...f, client_secret: e.target.value })} placeholder={s.configured ? "Nuevo secreto (opcional)" : "Secreto de cliente GOCSPX-…"} className="bg-slate-950/60 font-mono" data-testid="google-client-secret-input" />
+      <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
+        <li>console.cloud.google.com → crea un proyecto → APIs y servicios → Biblioteca → activa <b>Google Calendar API</b>.</li>
+        <li>Pantalla de consentimiento OAuth: tipo Externo, nombre VozLeads, ámbitos calendar.events, calendar.freebusy y userinfo.email. Publica la app (o añade usuarios de prueba).</li>
+        <li>Credenciales → Crear ID de cliente OAuth → Aplicación web. Origen autorizado: <code className="text-slate-200">{s.origin}</code></li>
+        <li>URI de redirección autorizada: <code className="break-all text-slate-200" data-testid="google-redirect-uri">{s.redirect_uri}</code></li>
+        <li>Pega aquí el ID y el secreto y guarda.</li>
+      </ol>
+      <div className="flex gap-2">
+        <Button onClick={save} disabled={busy || !f.client_id.includes(".apps.googleusercontent.com") || (!s.configured && f.client_secret.length < 10)} className="rounded-full" data-testid="google-settings-save">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Guardar</Button>
+        {s.configured && <Button variant="ghost" onClick={() => api.delete("/admin/google").then(load)} className="rounded-full" data-testid="google-settings-delete">Desactivar</Button>}
+      </div>
+    </Panel>
+  );
+}
+
 const EMPTY = { name: "", gender: "Mujer", country: "ES", voice_id: "", tone: "" };
 
 export function CustomVoices() {

@@ -34,6 +34,8 @@ import onboarding  # noqa: E402
 import api_core  # noqa: E402
 import apiv1  # noqa: E402
 import privacy  # noqa: E402
+import gcal  # noqa: E402
+import reminders  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
@@ -389,6 +391,7 @@ class ApptIn(BaseModel):
     start: str = Field(max_length=16)
     lead_name: str = Field(min_length=1, max_length=80)
     lead_phone: str = Field("", max_length=25)
+    lead_email: str = Field("", max_length=200)
     notes: str = Field("", max_length=500)
     duration_minutes: Optional[int] = Field(None, ge=5, le=480)
 
@@ -412,12 +415,13 @@ async def create_appointment(body: ApptIn, user=CurrentUser):
         phone = norm_phone(body.lead_phone, country) if body.lead_phone.strip() else ""
     except (ValueError, HTTPException):
         raise HTTPException(422, "Teléfono no válido")
-    appt = Appointment(tenant_id=user["id"], lead_name=body.lead_name.strip(), lead_phone=phone, start=_slot(body.start),
+    appt = Appointment(tenant_id=user["id"], lead_name=body.lead_name.strip(), lead_phone=phone, lead_email=body.lead_email.strip().lower(), start=_slot(body.start),
                        notes=body.notes.strip(), duration_minutes=body.duration_minutes, source="manual")
     try:
         res = await db.appointments.insert_one(appt.to_mongo())
     except DuplicateKeyError:
         raise HTTPException(409, "Ya hay una cita a esa hora")
+    gcal.sync(res.inserted_id)
     return Appointment.from_mongo(await db.appointments.find_one({"_id": res.inserted_id})).out()
 
 
@@ -435,14 +439,18 @@ async def update_appointment(appt_id: str, body: ApptPatch, user=CurrentUser):
         raise HTTPException(409, "Ya hay una cita a esa hora")
     if not doc:
         raise HTTPException(404, "Cita no encontrada")
+    if "start" in upd:
+        await db.appointments.update_one({"_id": doc["_id"]}, {"$set": {"reminder_sent_at": None, "confirmed_at": None}})
+    gcal.sync(doc["_id"])
     return Appointment.from_mongo(doc).out()
 
 
 @api.delete("/appointments/{appt_id}")
 async def cancel_appointment(appt_id: str, user=CurrentUser):
-    res = await db.appointments.delete_one({"_id": oid(appt_id), "tenant_id": user["id"]})
-    if not res.deleted_count:
+    doc = await db.appointments.find_one_and_delete({"_id": oid(appt_id), "tenant_id": user["id"]})
+    if not doc:
         raise HTTPException(404, "Cita no encontrada")
+    gcal.unsync(user["id"], doc.get("google_event_id"))
     await db.leads.update_one({"tenant_id": user["id"], "appointment_id": appt_id},
                               {"$set": {"appointment_id": None, "status": "calificado", "updated_at": now_iso()}})
     return {"ok": True}
@@ -568,6 +576,8 @@ app.include_router(widget.router)
 app.include_router(onboarding.router)
 app.include_router(apiv1.router)
 app.include_router(privacy.router)
+app.include_router(gcal.router)
+app.include_router(reminders.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(
@@ -615,6 +625,7 @@ async def startup():
     asyncio.create_task(monitor.loop())
     await api_core.ensure_indexes()
     await privacy.ensure_indexes()
+    await gcal.ensure_indexes()
     await db.webhook_deliveries.update_many({"status": "sending"}, {"$set": {"status": "pending"}})
     asyncio.create_task(api_core.worker())
 

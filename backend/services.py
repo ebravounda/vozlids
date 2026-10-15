@@ -59,10 +59,13 @@ async def free_slots(tenant_id: str, d: date, country: str = "ES") -> list:
     min_start = datetime.now(tz) + timedelta(minutes=60)
     booked = {a["start"] async for a in db.appointments.find(
         {"tenant_id": tenant_id, "start": {"$regex": f"^{d.isoformat()}"}}, {"start": 1})}
+    import gcal
+    taken = await gcal.busy(tenant_id, d.isoformat(), (d + timedelta(days=1)).isoformat())
     slots = []
     while cur + step <= end:
         key = cur.strftime("%Y-%m-%dT%H:%M")
-        if cur >= min_start and key not in booked:
+        stop = (cur + step).strftime("%Y-%m-%dT%H:%M")
+        if cur >= min_start and key not in booked and not any(a < stop and b > key for a, b, _ in taken):
             slots.append(cur.strftime("%H:%M"))
         cur += step
     return slots
@@ -103,12 +106,14 @@ async def tool_book(lead: dict, args: dict) -> dict:
     if t not in await free_slots(lead["tenant_id"], d, await lead_country(lead)):
         return {"ok": False, "error": "Ese hueco no está disponible. Vuelve a consultar check_availability."}
     appt = Appointment(tenant_id=lead["tenant_id"], lead_id=str(lead["_id"]), lead_name=lead["name"],
-                       lead_phone=lead["phone"], agent_id=lead["agent_id"], start=f"{d.isoformat()}T{t}",
+                       lead_phone=lead["phone"], lead_email=lead.get("email") or "", agent_id=lead["agent_id"], start=f"{d.isoformat()}T{t}",
                        notes=str(args.get("notes", ""))[:500])
     try:
         res = await db.appointments.insert_one(appt.to_mongo())
     except DuplicateKeyError:
         return {"ok": False, "error": "Ese hueco se acaba de ocupar. Ofrece otro."}
+    import gcal
+    gcal.sync(res.inserted_id)
     await db.leads.update_one({"_id": lead["_id"]}, {"$set": {
         "appointment_id": str(res.inserted_id), "status": "cita_agendada", "updated_at": now_iso()}})
     import saas

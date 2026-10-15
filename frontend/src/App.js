@@ -23,6 +23,7 @@ import Outbound from "@/pages/dashboard/Outbound";
 import Support from "@/pages/dashboard/Support";
 import Developers from "@/pages/dashboard/Developers";
 import Privacy from "@/pages/dashboard/Privacy";
+import PublicAppointment from "@/pages/PublicAppointment";
 import SuperAdmin from "@/pages/dashboard/SuperAdmin";
 import Billing from "@/pages/dashboard/Billing";
 
@@ -44,6 +45,7 @@ function App() {
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/registro" element={<AuthPage mode="register" />} />
           <Route path="/f/:agentId" element={<PublicForm />} />
+          <Route path="/cita/:token" element={<PublicAppointment />} />
           <Route path="/app" element={<Protected><DashboardLayout /></Protected>}>
             <Route index element={<Leads />} />
             <Route path="agentes" element={<Agents />} />

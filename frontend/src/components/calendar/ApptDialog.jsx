@@ -26,6 +26,9 @@ function Detail({ a, slot, onSaved, onCancelled, onLead }) {
         <p className="flex items-center gap-2 font-semibold text-slate-900"><CalendarClock className="h-4 w-4 text-blue-600" />{cap(fmtSlot(a.start))} – {endHm(a, slot)}</p>
         {a.lead_phone && <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /><a href={`tel:${a.lead_phone}`} className="font-mono hover:text-blue-600" data-testid="appt-phone">{a.lead_phone}</a></p>}
         <p className="flex items-center gap-2 text-slate-500"><Src className="h-4 w-4" />{a.source === "manual" ? "Creada a mano" : "Reservada por el agente IA"}{a.is_sample ? " · ejemplo" : ""}</p>
+        {(a.confirmed_at || a.reminder_sent_at) && <p className="flex items-center gap-2 text-xs" data-testid="appt-reminder-status">
+          {a.confirmed_at ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800">Asistencia confirmada</span> : <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">Recordatorio enviado · sin confirmar</span>}
+          {a.reminder_channels?.length > 0 && <span className="text-slate-500">{a.reminder_channels.join(" · ")}</span>}</p>}
         {a.lead_id && <button onClick={() => onLead(a.lead_id)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline" data-testid="appt-open-lead">Ver llamada y transcripción <ExternalLink className="h-3 w-3" /></button>}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -50,7 +53,7 @@ function Detail({ a, slot, onSaved, onCancelled, onLead }) {
 }
 
 function Create({ start, slot, onSaved }) {
-  const [f, setF] = useState({ start, lead_name: "", lead_phone: "", notes: "", duration_minutes: slot });
+  const [f, setF] = useState({ start, lead_name: "", lead_phone: "", lead_email: "", notes: "", duration_minutes: slot });
   const [busy, setBusy] = useState(false);
   useEffect(() => setF((x) => ({ ...x, start })), [start]);
   const save = async () => {
@@ -62,6 +65,7 @@ function Create({ start, slot, onSaved }) {
     <div className="space-y-3">
       <div className="space-y-1.5"><Label className="text-xs text-slate-600">Nombre del cliente</Label><Input autoFocus value={f.lead_name} onChange={(e) => setF({ ...f, lead_name: e.target.value })} placeholder="Ana López" className={field} data-testid="appt-new-name" /></div>
       <div className="space-y-1.5"><Label className="text-xs text-slate-600">Teléfono (opcional)</Label><Input value={f.lead_phone} onChange={(e) => setF({ ...f, lead_phone: e.target.value })} placeholder="+34 612 345 678" className={`${field} font-mono`} data-testid="appt-new-phone" /></div>
+      <div className="space-y-1.5"><Label className="text-xs text-slate-600">Email (opcional, para el recordatorio)</Label><Input type="email" value={f.lead_email} onChange={(e) => setF({ ...f, lead_email: e.target.value })} placeholder="ana@ejemplo.com" className={field} data-testid="appt-new-email" /></div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label className="text-xs text-slate-600">Fecha y hora</Label><Input type="datetime-local" value={f.start} onChange={(e) => setF({ ...f, start: e.target.value })} className={field} data-testid="appt-new-start" /></div>
         <div className="space-y-1.5"><Label className="text-xs text-slate-600"><Clock className="mr-1 inline h-3 w-3" />Duración (min)</Label><Input type="number" min={5} max={480} step={5} value={f.duration_minutes} onChange={(e) => setF({ ...f, duration_minutes: e.target.value })} className={field} data-testid="appt-new-duration" /></div>
