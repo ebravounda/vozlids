@@ -39,7 +39,46 @@ export function StripeSettings() {
         <Button onClick={save} disabled={busy || key.length < 10} className="rounded-full" data-testid="stripe-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{s.connected ? "Cambiar clave" : "Conectar Stripe"}</Button>
         {s.connected && <Button variant="ghost" onClick={disconnect} className="rounded-full" data-testid="stripe-disconnect-button">Desconectar</Button>}
       </div>
+      <StripeTestMode s={s} reload={load} />
     </Panel>
+  );
+}
+
+function StripeTestMode({ s, reload }) {
+  const [scope, setScope] = useState(s.test_scope);
+  const [emails, setEmails] = useState(s.test_emails.join(", "));
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const run = async (fn, ok) => { setBusy(true); try { await fn(); toast.success(ok); reload(); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); } };
+  const saveMode = () => run(() => api.put("/admin/stripe/test-mode", { scope, emails: emails.split(/[\s,;]+/).filter(Boolean) }),
+    scope === "off" ? "Modo prueba desactivado: se cobra de verdad" : "Modo prueba activado");
+  const saveKey = () => run(async () => { await api.put("/admin/stripe/test-key", { secret_key: key }); setKey(""); }, "Clave de pruebas conectada");
+  const opts = [["off", "Desactivado", "todos pagan de verdad"], ["emails", "Solo emails de prueba", "el resto paga de verdad"], ["all", "Toda la web", "nadie paga de verdad"]];
+  return (
+    <div className="space-y-3 border-t border-slate-800 pt-4" data-testid="stripe-test-mode">
+      <div className="flex items-center justify-between">
+        <p className="font-semibold text-white">Modo prueba</p>
+        {s.test_scope !== "off" && <span className="rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-bold text-slate-950" data-testid="stripe-test-mode-active">ACTIVO</span>}
+      </div>
+      <p className="text-xs text-slate-400">Para probar el alta completa sin cobrar: paga con la tarjeta <b className="font-mono">4242 4242 4242 4242</b>, cualquier fecha futura y cualquier CVC. Las altas de prueba se marcan como PRUEBA y no cuentan como ingresos.</p>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {opts.map(([v, l, d]) => (
+          <button key={v} type="button" onClick={() => setScope(v)} className={`rounded-xl border p-3 text-left text-sm transition-colors ${scope === v ? "border-amber-400 bg-amber-500/10" : "border-slate-800 hover:border-slate-600"}`} data-testid={`stripe-test-scope-${v}`}>
+            <p className="font-semibold text-white">{l}</p><p className="text-xs text-slate-500">{d}</p>
+          </button>
+        ))}
+      </div>
+      {scope === "emails" && <Input value={emails} onChange={(e) => setEmails(e.target.value)} placeholder="pruebas@tudominio.com, otro@…" className="bg-slate-950/60" data-testid="stripe-test-emails-input" />}
+      <Button onClick={saveMode} disabled={busy} variant="outline" className="rounded-full" data-testid="stripe-test-mode-save">Guardar modo prueba</Button>
+      <div className="space-y-2 rounded-xl border border-slate-800 p-3">
+        <p className="text-xs text-slate-400" data-testid="stripe-test-key-status">{s.test_connected ? <>Pagos de prueba en tu cuenta <b>{s.test_account_name}</b> (clave …{s.test_key_last4}).</> : <>Los pagos de prueba usan una cuenta de pruebas ya preparada. Si quieres verlos en tu propio Stripe, pega tu clave <b>sk_test_…</b>.</>}</p>
+        <div className="flex gap-2">
+          <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk_test_… (opcional)" className="bg-slate-950/60 font-mono" data-testid="stripe-test-key-input" />
+          <Button onClick={saveKey} disabled={busy || key.length < 10} variant="outline" className="rounded-full" data-testid="stripe-test-key-save">Guardar</Button>
+          {s.test_connected && <Button variant="ghost" onClick={() => run(() => api.delete("/admin/stripe/test-key"), "Clave de pruebas quitada")} className="rounded-full" data-testid="stripe-test-key-remove">Quitar</Button>}
+        </div>
+      </div>
+    </div>
   );
 }
 

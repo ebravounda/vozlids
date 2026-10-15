@@ -75,7 +75,7 @@ async def pending(user=Depends(X.require_admin)):
         out.append({"id": str(u["_id"]), "email": u["email"], "business_name": u.get("business_name"),
                     "name": f"{u.get('first_name', u.get('name', ''))} {u.get('last_name', '')}".strip(),
                     "country": u.get("country", "ES"), "website": u.get("website", ""), "doc": f"{u.get('doc_type', '')} {u.get('doc_number', '')}".strip(),
-                    "billing": u.get("billing_address") or {}, "billing_status": u.get("billing_status"), "created_at": u.get("created_at"),
+                    "billing": u.get("billing_address") or {}, "billing_status": u.get("billing_status"), "test": bool(u.get("billing_test")), "created_at": u.get("created_at"),
                     "number": n.get("number"), "status": n.get("status") or "pendiente", "error": n.get("error", "")})
     return out
 

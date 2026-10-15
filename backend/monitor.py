@@ -168,7 +168,7 @@ async def margins(user=Depends(require_admin)):
     rates = {"ES": pricing["line_rate_usd_min"], "CL": pricing["line_rate_cl_usd_min"]}
     rows = []
     async for u in db.users.find({}, {"business_name": 1, "email": 1, "country": 1, "plan_id": 1,
-                                      "stripe_subscription_id": 1, "allow_overage": 1}):
+                                      "stripe_subscription_id": 1, "allow_overage": 1, "billing_test": 1}):
         uid = str(u["_id"])
         cost, minutes, calls = 0.0, 0.0, 0
         async for ld in db.leads.find({"tenant_id": uid, "vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}},
@@ -183,14 +183,14 @@ async def margins(user=Depends(require_admin)):
         cl = u.get("country") == "CL"
         fx = pricing["usd_clp"] if cl else pricing["usd_eur"]
         revenue = 0.0
-        if plan and u.get("stripe_subscription_id"):
+        if plan and u.get("stripe_subscription_id") and not u.get("billing_test"):
             revenue = plan["price_clp" if cl else "price_eur"]
             extra = max(0.0, minutes - plan["minutes"]) if u.get("allow_overage") else 0.0
             revenue += extra * plan["overage_clp" if cl else "overage_eur"]
         cost_local = cost * fx
         rows.append({"tenant_id": uid, "business": u.get("business_name") or u.get("email"), "email": u.get("email"),
                      "currency": "CLP" if cl else "EUR", "plan": plan["name"] if plan else None,
-                     "paying": bool(plan and u.get("stripe_subscription_id")), "calls": calls,
+                     "paying": bool(plan and u.get("stripe_subscription_id") and not u.get("billing_test")), "calls": calls,
                      "minutes": round(minutes, 1), "cost": round(cost_local, 2), "revenue": round(revenue, 2),
                      "margin": round(revenue - cost_local, 2),
                      "margin_pct": round(100 * (revenue - cost_local) / revenue, 1) if revenue else None})

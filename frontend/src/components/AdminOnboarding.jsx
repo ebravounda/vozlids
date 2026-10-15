@@ -45,7 +45,7 @@ function Row({ c, reload }) {
     <div className="border-t border-slate-800 py-4 first:border-0" data-testid={`onboarding-row-${c.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold text-white">{c.business_name} <span className="text-xs font-normal text-slate-500">· {c.country} · alta {fmtDate(c.created_at)}</span></p>
+          <p className="font-semibold text-white">{c.business_name} {c.test && <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-slate-950" data-testid={`onboarding-test-${c.id}`}>PRUEBA</span>} <span className="text-xs font-normal text-slate-500">· {c.country} · alta {fmtDate(c.created_at)}</span></p>
           <p className="text-xs text-slate-400">{c.name} · {c.email}{c.doc ? ` · ${c.doc}` : ""}{c.website ? ` · ${c.website}` : ""}</p>
           {addr && <p className="text-xs text-slate-500">{addr}</p>}
           {c.number && <p className="mt-1 font-mono text-xs text-slate-300">{c.number}</p>}
