@@ -81,7 +81,7 @@ async def provision(user_id: str) -> dict:
 
 async def release(user_id: str) -> dict:
     r = await record(user_id)
-    if not r or r.get("status") not in ("activo", "error"):
+    if not r or r.get("platform") or r.get("status") not in ("activo", "error"):
         return _out(r)
     errors = []
     if r.get("number"):
@@ -242,3 +242,49 @@ async def admin_provision(user_id: str, user=Depends(X.require_admin)):
 @router.post("/admin/numbers/{user_id}/release")
 async def admin_release(user_id: str, user=Depends(X.require_admin)):
     return await release(user_id)
+
+
+# ---------- Super admin: inbound on the platform numbers ----------
+class PlatformInboundIn(BaseModel):
+    country: str = Field(pattern="^(ES|CL)$")
+    agent_id: str = Field(min_length=1, max_length=40)
+
+
+@router.get("/admin/platform-inbound")
+async def platform_inbound(user=Depends(X.require_admin)):
+    out = []
+    for c, n in vapi.STATE["numbers"].items():
+        r = await db.tenant_numbers.find_one({"platform": True, "country": c}) or {}
+        out.append({"country": c, "number": n.get("number"), "enabled": r.get("status") == "activo",
+                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": vapi.inbound_sip_uri(n.get("number", "")),
+                    "routed": r.get("routed", False)})
+    return out
+
+
+@router.put("/admin/platform-inbound")
+async def platform_inbound_on(body: PlatformInboundIn, user=Depends(X.require_admin)):
+    n = vapi.STATE["numbers"].get(body.country)
+    if not n:
+        raise HTTPException(400, "Conecta primero la línea de este país.")
+    a = await db.agents.find_one({"_id": ObjectId(body.agent_id) if ObjectId.is_valid(body.agent_id) else None, "tenant_id": user["id"]})
+    if not a:
+        raise HTTPException(404, "Agente no encontrado")
+    await vapi.enable_inbound(n["credential_id"], n["phone_number_id"])
+    routed, note = False, ""
+    if (await Z.creds()).get("key"):
+        try:
+            await Z.route_to(n["number"], vapi.inbound_sip_uri(n["number"]))
+            routed = True
+        except Z.ZadarmaError as e:
+            note = str(e)[:200]
+    await db.tenant_numbers.update_one({"platform": True, "country": body.country}, {"$set": {
+        "tenant_id": user["id"], "number": n["number"], "phone_number_id": n["phone_number_id"], "credential_id": n["credential_id"],
+        "status": "activo", "inbound_agent_id": body.agent_id, "routed": routed, "updated_at": now_iso()},
+        "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
+    return {"ok": True, "routed": routed, "note": note, "sip_uri": vapi.inbound_sip_uri(n["number"])}
+
+
+@router.delete("/admin/platform-inbound/{country}")
+async def platform_inbound_off(country: str, user=Depends(X.require_admin)):
+    await db.tenant_numbers.update_one({"platform": True, "country": country}, {"$set": {"status": "pausado"}})
+    return {"ok": True}

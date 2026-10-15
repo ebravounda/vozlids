@@ -114,6 +114,48 @@ function BusinessCountry() {
   );
 }
 
+function PlatformInbound() {
+  const [rows, setRows] = useState(null);
+  const [agents, setAgents] = useState([]);
+  const [sel, setSel] = useState({});
+  const [busy, setBusy] = useState("");
+  const load = () => api.get("/admin/platform-inbound").then((r) => { setRows(r.data); setSel(Object.fromEntries(r.data.map((x) => [x.country, x.agent_id]))); }).catch(() => setRows([]));
+  useEffect(() => { load(); api.get("/agents").then((r) => setAgents(r.data)); }, []);
+  const save = async (c) => {
+    setBusy(c);
+    try {
+      const r = await api.put("/admin/platform-inbound", { country: c, agent_id: sel[c] });
+      toast.success(r.data.routed ? "Contestador IA activado" : "Activado en la IA. Falta el desvío en Zadarma (ver pasos)");
+      load();
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); }
+  };
+  if (!rows?.length) return null;
+  return (
+    <Panel className="space-y-4" data-testid="platform-inbound-panel">
+      <h3 className="text-xl font-semibold text-white">Contestar llamadas entrantes (recepcionista IA)</h3>
+      {rows.map((x) => (
+        <div key={x.country} className="space-y-3 rounded-xl border border-slate-800 p-4" data-testid={`platform-inbound-${x.country}`}>
+          <p className="text-sm font-semibold text-white">{x.number} · {x.enabled ? <span className="text-emerald-300">contesta la IA</span> : <span className="text-amber-300">sin contestador</span>}</p>
+          <div className="flex gap-2">
+            <Select value={sel[x.country] || ""} onValueChange={(v) => setSel({ ...sel, [x.country]: v })}>
+              <SelectTrigger className="bg-slate-950/60" data-testid={`platform-inbound-agent-${x.country}`}><SelectValue placeholder="Elige el agente que contesta" /></SelectTrigger>
+              <SelectContent>{agents.filter((a) => (a.country || "ES") === x.country).map((a) => <SelectItem key={a.id} value={a.id}>{a.name}{a.objective === "recepcion" ? " · Recepcionista" : ""}</SelectItem>)}</SelectContent>
+            </Select>
+            <Button onClick={() => save(x.country)} disabled={!sel[x.country] || busy === x.country} className="rounded-full" data-testid={`platform-inbound-save-${x.country}`}>{busy === x.country && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{x.enabled ? "Guardar" : "Activar"}</Button>
+          </div>
+          {x.enabled && !x.routed && (
+            <ol className="list-decimal space-y-1 rounded-lg bg-amber-500/10 p-3 pl-7 text-xs text-amber-200" data-testid={`platform-inbound-steps-${x.country}`}>
+              <li>Entra en my.zadarma.com → <b>Números virtuales</b> → {x.number} → <b>Configuración</b>.</li>
+              <li>En «Recibir llamadas en», elige <b>SIP URI externo</b> (o «Desvío a SIP URI») y pega: <code className="font-mono">{x.sip_uri}</code></li>
+              <li>Guarda y llama al número: contestará tu agente. (Si conectas la API de Zadarma en Super admin, este paso se hace solo.)</li>
+            </ol>
+          )}
+        </div>
+      ))}
+    </Panel>
+  );
+}
+
 export default function Telephony() {
   const [s, setS] = useState(null);
   const load = () => api.get("/telephony/status").then((r) => setS(r.data));
@@ -139,6 +181,7 @@ export default function Telephony() {
           {s && !s.is_admin && !s.configured && <p className="text-xs text-slate-500">Solo el administrador de la plataforma puede conectar el número.</p>}
         </Panel>
         <div className="space-y-6">
+        <PlatformInbound />
         <MyNumber />
         <BusinessCountry />
         <Panel className="space-y-4">

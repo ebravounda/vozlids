@@ -125,7 +125,7 @@ def server_cfg() -> dict:
 async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:
     cred = await _post("/credential", {
         "provider": "byo-sip-trunk", "name": f"VozLeads {label}"[:40],
-        "gateways": [{"ip": "sip.zadarma.com", "inboundEnabled": True}, {"ip": "pbx.zadarma.com", "inboundEnabled": True}],
+        "gateways": INBOUND_GATEWAYS,
         "outboundLeadingPlusEnabled": True,
         "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
     })
@@ -134,6 +134,17 @@ async def connect_tenant_number(sip_login: str, sip_password: str, number: str, 
         "numberE164CheckEnabled": False, "credentialId": cred["id"], "server": server_cfg(),
     })
     return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
+
+
+ZADARMA_IN = [("185.45.152.0", 24), ("185.45.154.0", 24), ("185.45.155.0", 24), ("195.122.19.0", 24),
+              ("15.235.128.70", 32), ("31.31.222.201", 32)]
+INBOUND_GATEWAYS = [{"ip": "sip.zadarma.com", "inboundEnabled": False}] + [
+    {"ip": ip, "netmask": m, "inboundEnabled": True, "outboundEnabled": False} for ip, m in ZADARMA_IN]
+
+
+async def enable_inbound(credential_id: str, phone_number_id: str) -> None:
+    await _post(f"/credential/{credential_id}", {"gateways": INBOUND_GATEWAYS}, "PATCH")
+    await _post(f"/phone-number/{phone_number_id}", {"server": server_cfg()}, "PATCH")
 
 
 def inbound_sip_uri(number: str) -> str:
@@ -152,13 +163,13 @@ async def ensure_11labs_credential(api_key: str) -> str:
 async def connect_zadarma(sip_login: str, sip_password: str, number: str, country: str = "ES") -> dict:
     cred = await _post("/credential", {
         "provider": "byo-sip-trunk", "name": f"Zadarma Trunk {country}",
-        "gateways": [{"ip": "sip.zadarma.com", "inboundEnabled": False}],
+        "gateways": INBOUND_GATEWAYS,
         "outboundLeadingPlusEnabled": True,
         "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
     })
     phone = await _post("/phone-number", {
         "provider": "byo-phone-number", "name": f"Zadarma {COUNTRIES[country]['prefix']}", "number": number.lstrip("+"),
-        "numberE164CheckEnabled": False, "credentialId": cred["id"],
+        "numberE164CheckEnabled": False, "credentialId": cred["id"], "server": server_cfg(),
     })
     return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
 OBJECTIVES = {
