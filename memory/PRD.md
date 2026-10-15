@@ -143,3 +143,9 @@
 - Formulario: limite 1 llamada/24h por numero se mantiene; si repetida -> nota pequena bajo el boton (solicitar-repeat-note), backend devuelve repeated:true
 - Paginas legales /terminos /privacidad /cookies /aviso-legal (pages/Legal.jsx, COMPANY). Footer: VozLeads es parte del Grupo GoRoky, GoRoky LLC (EEUU, Espana, Chile), Raimundo Fernandez Villaverde 39 Madrid, soporte@goroky.com. Sin banner de cookies (solo tecnicas). Sitemap 53 urls
 - Tested iteration_19: 100%
+
+## 2026-06 Seguridad + Boton web + Alta de clientes
+- Seguridad (iteration_20 OK): CORS sin credenciales con *, client_ip (cf-connecting-ip > x-real-ip > ultimo XFF), tope 20 llamadas demo/24h (limite_diario), cabeceras seguridad API + nginx (/f/ embebible), seed no resetea admin salvo ADMIN_RESET_PASSWORD=1, webhook Vapi solo cabecera x-vapi-secret, cookies SameSite=Lax
+- Boton flotante (widget.py, assets/widget.js, /app/boton-web): script universal data-id, plugin WordPress zip, personalizacion texto/color/posicion/horario/saludo; PublicForm ?embed=1&color
+- Alta (onboarding.py, SignupForm.jsx, Welcome.jsx, AdminOnboarding.jsx): registro con plan+datos fiscales (DNI/NIE/RUT validados)+direccion -> Stripe checkout signup -> /app/bienvenida; al pagar status pendiente + alerta admin (auto compra Zadarma solo si zadarma_api.auto_provision); admin asigna numero+SIP -> Vapi + email al cliente; bloquear/desbloquear; banner Aprovisionando linea; Mi numero con estado, copiar, quien contesta, escuchar voz
+- Tested iteration_21 OK (pago Stripe completo y banner no probados end-to-end)
