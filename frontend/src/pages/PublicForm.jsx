@@ -25,7 +25,7 @@ export default function PublicForm() {
     setError("");
     setState("sending");
     try {
-      await api.post(`/public/agents/${agentId}/leads`, form);
+      await api.post(`/public/agents/${agentId}/leads`, { ...form, source: q.get("src") === "widget" ? "widget" : "form" });
       setState("done");
     } catch (err) {
       setError(errMsg(err));

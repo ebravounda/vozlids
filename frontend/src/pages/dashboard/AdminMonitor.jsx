@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/Common";
 import { AlertSettings, Balances, LiveCalls, Margins } from "@/components/MonitorParts";
 import { CallLog, SipLog } from "@/components/MonitorLogs";
 import { api } from "@/lib/api";
+import { WidgetStats } from "@/components/WidgetStats";
 import { fmtDate } from "@/lib/constants";
 
 export default function AdminMonitor() {
@@ -25,6 +26,7 @@ export default function AdminMonitor() {
         {alerts && <AlertSettings data={alerts} reload={loadA} />}
       </div>
       <Margins />
+      <WidgetStats url="/admin/monitor/widget-stats" title="Botón web · todos los clientes" />
       <CallLog />
       <SipLog />
     </div>

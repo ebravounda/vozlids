@@ -238,9 +238,10 @@ async def is_dnc(tenant_id: str, phone: str) -> bool:
     return bool(await db.dnc.find_one({"tenant_id": tenant_id, "phone": phone}))
 
 
-async def create_and_dial(agent: dict, name: str, phone: str, email: str, is_test: bool, ip: str = "") -> dict:
+async def create_and_dial(agent: dict, name: str, phone: str, email: str, is_test: bool, ip: str = "",
+                          source: str = "form") -> dict:
     lead = Lead(tenant_id=agent["tenant_id"], agent_id=str(agent["_id"]), agent_name=agent["name"],
-                name=name, phone=phone, email=email, is_test=is_test)
+                name=name, phone=phone, email=email, is_test=is_test, source=source)
     doc = {**lead.to_mongo(), "source_ip": ip}
     res = await db.leads.insert_one(doc)
     doc["_id"] = res.inserted_id
@@ -267,6 +268,7 @@ class PublicLeadIn(BaseModel):
     phone: str = Field(min_length=9, max_length=20)
     email: str = Field("", max_length=200)
     consent: bool
+    source: Literal["form", "widget"] = "form"
 
 
 @api.get("/public/agents/{agent_id}")
@@ -297,7 +299,7 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
     recent = await db.leads.find_one({"tenant_id": tid, "phone": phone, "created_at": {"$gt": ago(10)}})
     if recent or await is_dnc(tid, phone):
         return {"ok": True}
-    await create_and_dial(agent, body.name.strip(), phone, email, False, ip)
+    await create_and_dial(agent, body.name.strip(), phone, email, False, ip, body.source)
     return {"ok": True}
 
 

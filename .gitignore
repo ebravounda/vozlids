@@ -95,3 +95,4 @@ deploy/.env
 deploy/.env.secrets
 deploy/backups/
 deploy/data/.imported
+frontend/node_modules/.cache/default-development/4.pack

@@ -149,3 +149,8 @@
 - Boton flotante (widget.py, assets/widget.js, /app/boton-web): script universal data-id, plugin WordPress zip, personalizacion texto/color/posicion/horario/saludo; PublicForm ?embed=1&color
 - Alta (onboarding.py, SignupForm.jsx, Welcome.jsx, AdminOnboarding.jsx): registro con plan+datos fiscales (DNI/NIE/RUT validados)+direccion -> Stripe checkout signup -> /app/bienvenida; al pagar status pendiente + alerta admin (auto compra Zadarma solo si zadarma_api.auto_provision); admin asigna numero+SIP -> Vapi + email al cliente; bloquear/desbloquear; banner Aprovisionando linea; Mi numero con estado, copiar, quien contesta, escuchar voz
 - Tested iteration_21 OK (pago Stripe completo y banner no probados end-to-end)
+
+## 2026-06 Estadisticas del boton
+- widget.js envia eventos view/open (POST /api/public/widget/{id}/event, text/plain, max 30/ip/dia); leads del iframe con source=widget
+- Embudo vistas->pulsaciones->telefono->contestada->cita (GET /api/widget/stats?days, /api/admin/monitor/widget-stats) con grafico 7/30/90 (components/WidgetStats.jsx) en Boton para tu web y Monitor
+- Self-tested curl + screenshot

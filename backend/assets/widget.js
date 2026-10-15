@@ -6,6 +6,12 @@
   var API = "__API__";
   fetch(API + "/api/public/widget/" + encodeURIComponent(id)).then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
     if (!c || !c.show) return;
+    var track = function (t) {
+      var u = API + "/api/public/widget/" + encodeURIComponent(id) + "/event", b = JSON.stringify({ t: t });
+      try { if (navigator.sendBeacon && navigator.sendBeacon(u, new Blob([b], { type: "text/plain" }))) return; } catch (e) {}
+      fetch(u, { method: "POST", body: b, keepalive: true, headers: { "Content-Type": "text/plain" } }).catch(function () {});
+    };
+    track("view");
     var host = document.createElement("div");
     host.id = "vozleads-widget";
     document.body.appendChild(host);
@@ -34,9 +40,10 @@
     var frame = null;
     var open = function () {
       greet.style.display = "none";
+      if (!frame) track("open");
       if (!frame) {
         frame = document.createElement("iframe");
-        frame.src = c.form_url + "?embed=1&color=" + encodeURIComponent(c.color);
+        frame.src = c.form_url + "?embed=1&src=widget&color=" + encodeURIComponent(c.color);
         frame.title = c.text;
         frame.allow = "clipboard-write";
         panel.appendChild(frame);

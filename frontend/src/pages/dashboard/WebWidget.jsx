@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
+import { WidgetStats } from "@/components/WidgetStats";
 
 const COLORS = ["#2563EB", "#059669", "#DC2626", "#7C3AED", "#EA580C", "#0F172A", "#DB2777"];
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -129,6 +130,7 @@ export default function WebWidget() {
         </Panel>
         <div className="space-y-3"><Label className="text-xs text-slate-500">Vista previa</Label><Preview w={w} /></div>
       </div>
+      {w.agent_id && <WidgetStats />}
       {w.agent_id ? <Install id={w.id} /> : <Panel className="text-sm text-amber-300" data-testid="widget-install-locked">Elige el agente y guarda el botón para ver cómo instalarlo.</Panel>}
     </div>
   );
