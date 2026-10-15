@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { VoiceBalanceAlert } from "@/components/VoiceBalanceAlert";
+import { ProviderAlerts } from "@/components/VoiceBalanceAlert";
 import { PageHeader, Panel } from "@/components/Common";
 import { CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
@@ -102,7 +102,7 @@ export default function SuperAdmin() {
   return (
     <div className="fade-up">
       <PageHeader eyebrow="Super admin" title="Cuentas y planes" desc="Gestiona clientes, asigna planes con límite de minutos, permite exceso, suspende cuentas o entra en ellas para dar soporte." />
-      <VoiceBalanceAlert />
+      <ProviderAlerts />
       <div className="mb-6 grid grid-cols-3 gap-4">
         {[["Cuentas", totals.accounts], ["Minutos este mes", totals.minutes.toFixed(1)], ["Llamadas totales", totals.calls]].map(([l, v]) => (
           <Panel key={l} className="p-5"><p className="text-xs uppercase tracking-widest text-slate-500">{l}</p><p className="mt-2 font-display text-3xl font-bold text-white">{v}</p></Panel>

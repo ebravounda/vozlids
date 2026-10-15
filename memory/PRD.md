@@ -198,3 +198,8 @@
 - update.sh: crea swap 4 GB si falta, compila backend y web por separado (web solo si cambió), progreso visible, timeout 25 min; guarda imágenes :previous + .previous_version antes de compilar
 - rollback.sh: vuelve a las imágenes :previous y al commit anterior (solo programa, datos intactos); -y para no preguntar
 - Dockerfile web: DISABLE_ESLINT_PLUGIN, NODE_OPTIONS max-old-space 1536
+
+## 2026-06 Avisos de proveedores + consumo de voz
+- monitor.py: provider_issues() (ElevenLabs <20%, Zadarma < sip_min, Vapi saldo anotado - gasto real < ai_min_usd, concurrencia) -> GET /admin/monitor/provider-alerts; banner ProviderAlerts en Super Admin y Monitor
+- Vapi sin API de saldo: PUT /admin/monitor/vapi-credit {amount}; resta coste de llamadas Vapi desde set_at; email 1/día
+- GET /admin/monitor/voice-usage: caracteres dichos por el agente por cliente este mes, % y por minuto (panel VoiceUsage)

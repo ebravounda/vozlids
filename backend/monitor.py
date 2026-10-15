@@ -17,7 +17,7 @@ from voice_preview import eleven_key
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.monitor")
-DEFAULT_ALERTS = {"email": "", "enabled": True, "sip_min": 2.0, "voice_min_pct": 20.0}
+DEFAULT_ALERTS = {"email": "", "enabled": True, "sip_min": 2.0, "voice_min_pct": 20.0, "ai_min_usd": 10.0}
 ACTIVE = ("queued", "ringing", "in-progress")
 _cache: dict = {}
 
@@ -75,12 +75,61 @@ async def voice_status() -> dict:
             "reset_at": reset_dt.isoformat() if reset_dt else None, "runs_out_at": runs_out}
 
 
-@router.get("/admin/monitor/voice-alert")
-async def voice_alert(user=Depends(require_admin)):
-    v = await cached("voice", 300, voice_status)
-    lim = (await alert_settings())["voice_min_pct"]
-    low = v.get("pct_left") is not None and v["pct_left"] < lim
-    return {**v, "threshold": lim, "low": low, "empty": v.get("pct_left") is not None and v["pct_left"] <= 0}
+def provider_issues(b: dict, s: dict) -> list:
+    sip, voice, ai = b["sip"], b["voice"], b["ai"]
+    out = []
+    if voice.get("pct_left") is not None and voice["pct_left"] < s["voice_min_pct"]:
+        empty = voice["pct_left"] <= 0
+        out.append({"kind": "voice", "level": "critical" if empty else "warning", "pct": max(0, voice["pct_left"]),
+                    "title": "Voces · ElevenLabs agotado: se usa la voz de respaldo" if empty else f"Voces · ElevenLabs: queda un {voice['pct_left']}%",
+                    "detail": f"{voice['used']:,} de {voice['limit']:,} caracteres · plan {voice.get('tier')}".replace(",", "."),
+                    "runs_out_at": voice.get("runs_out_at"), "reset_at": voice.get("reset_at"),
+                    "url": "https://elevenlabs.io/app/subscription", "action": "Recargar ElevenLabs"})
+    if sip.get("balance") is not None and sip["balance"] < s["sip_min"]:
+        out.append({"kind": "sip", "level": "critical" if sip["balance"] <= 0 else "warning",
+                    "title": f"Línea · Zadarma: saldo {sip['balance']:.2f} {sip.get('currency', '')}",
+                    "detail": f"Por debajo del mínimo de {s['sip_min']:g}. Sin saldo no salen ni entran llamadas.",
+                    "url": "https://my.zadarma.com/pay/", "action": "Recargar Zadarma"})
+    if ai.get("credit_left") is not None and ai["credit_left"] < s["ai_min_usd"]:
+        out.append({"kind": "ai", "level": "critical" if ai["credit_left"] <= 0 else "warning",
+                    "title": f"Motor IA · Vapi: quedan unos {ai['credit_left']:.2f} $",
+                    "detail": f"Anotaste {ai['credit_set']:.2f} $ y se han gastado {ai['credit_spent']:.2f} $ desde entonces. Al recargar, anota el nuevo saldo en Monitor.",
+                    "url": "https://dashboard.vapi.ai/org/billing/credits", "action": "Recargar Vapi"})
+    if ai.get("active") is not None and ai["active"] >= ai.get("concurrency_limit", 10):
+        out.append({"kind": "concurrency", "level": "warning", "title": "Todas las líneas simultáneas ocupadas",
+                    "detail": f"{ai['active']}/{ai['concurrency_limit']} llamadas a la vez. Las nuevas esperan o fallan.",
+                    "url": "https://dashboard.vapi.ai/org/billing", "action": "Ampliar en Vapi"})
+    return out
+
+
+@router.get("/admin/monitor/provider-alerts")
+async def provider_alerts(user=Depends(require_admin)):
+    b = await cached("balances", 300, all_balances)
+    return {"issues": provider_issues(b, await alert_settings()), "checked_at": b["checked_at"]}
+
+
+@router.get("/admin/monitor/voice-usage")
+async def voice_usage(user=Depends(require_admin)):
+    since = month_start().isoformat()
+    rows = await db.leads.aggregate([
+        {"$match": {"created_at": {"$gte": since}, "messages.0": {"$exists": True}}},
+        {"$project": {"tenant_id": 1, "duration_seconds": 1, "chars": {"$sum": {"$map": {
+            "input": {"$filter": {"input": "$messages", "cond": {"$eq": ["$$this.role", "agente"]}}},
+            "in": {"$strLenCP": {"$ifNull": ["$$this.text", ""]}}}}}}},
+        {"$group": {"_id": "$tenant_id", "chars": {"$sum": "$chars"}, "calls": {"$sum": 1},
+                    "seconds": {"$sum": {"$ifNull": ["$duration_seconds", 0]}}}},
+        {"$sort": {"chars": -1}}]).to_list(500)
+    users = {str(u["_id"]): u async for u in db.users.find(
+        {"_id": {"$in": [ObjectId(r["_id"]) for r in rows if ObjectId.is_valid(r["_id"])]}}, {"business_name": 1, "email": 1, "plan_id": 1})}
+    plans = {str(p["_id"]): p["name"] async for p in db.plans.find({}, {"name": 1})}
+    total = sum(r["chars"] for r in rows) or 1
+    voice = (await cached("voice", 300, voice_status))
+    return {"since": since, "total_chars": total if rows else 0, "plan_limit": voice.get("limit"), "plan_used": voice.get("used"),
+            "rows": [{"tenant_id": r["_id"], "business": (users.get(r["_id"]) or {}).get("business_name") or (users.get(r["_id"]) or {}).get("email", "—"),
+                      "email": (users.get(r["_id"]) or {}).get("email"), "plan": plans.get((users.get(r["_id"]) or {}).get("plan_id") or ""),
+                      "calls": r["calls"], "minutes": round(r["seconds"] / 60, 1), "chars": r["chars"],
+                      "share": round(100 * r["chars"] / total, 1),
+                      "per_min": round(r["chars"] / (r["seconds"] / 60)) if r["seconds"] >= 30 else None} for r in rows]}
 
 
 async def vapi_calls(since: datetime | None = None, limit: int = 100) -> list:
@@ -105,9 +154,29 @@ async def ai_status() -> dict:
     except (httpx.HTTPError, KeyError) as e:
         return {"connected": True, "error": f"No se pudo leer el motor IA ({e.__class__.__name__})"}
     lim = await limits()
-    return {"connected": True, "month_spend": round(sum(c.get("cost") or 0 for c in calls), 4), "month_calls": len(calls),
-            "active": sum(1 for c in calls if c.get("status") in ACTIVE),
-            "concurrency_limit": lim.get("concurrencyLimit") or 10, "limits_seen_at": lim.get("updated_at")}
+    out = {"connected": True, "month_spend": round(sum(c.get("cost") or 0 for c in calls), 4), "month_calls": len(calls),
+           "active": sum(1 for c in calls if c.get("status") in ACTIVE),
+           "concurrency_limit": lim.get("concurrencyLimit") or 10, "limits_seen_at": lim.get("updated_at")}
+    credit = await db.platform_settings.find_one({"_id": "vapi_credit"})
+    if credit:
+        since = datetime.fromisoformat(credit["set_at"])
+        spent = sum(c.get("cost") or 0 for c in (calls if since >= month_start() else await vapi_calls(since, 1000))
+                    if (c.get("createdAt") or "") >= since.isoformat().replace("+00:00", "Z")[:19])
+        out.update(credit_set=credit["amount"], credit_set_at=credit["set_at"], credit_spent=round(spent, 2),
+                   credit_left=round(credit["amount"] - spent, 2))
+    return out
+
+
+class CreditIn(BaseModel):
+    amount: float = Field(ge=0, le=1000000)
+
+
+@router.put("/admin/monitor/vapi-credit")
+async def set_vapi_credit(body: CreditIn, user=Depends(require_admin)):
+    await db.platform_settings.update_one({"_id": "vapi_credit"}, {"$set": {"amount": body.amount, "set_at": now_iso()}}, upsert=True)
+    _cache.pop("balances", None)
+    await db.monitor_alerts.delete_many({"kind": "ai_low"})
+    return {"ok": True}
 
 
 async def stripe_status() -> dict:
@@ -220,6 +289,7 @@ class AlertsIn(BaseModel):
     enabled: bool = True
     sip_min: float = Field(2.0, ge=0, le=10000)
     voice_min_pct: float = Field(20.0, ge=0, le=100)
+    ai_min_usd: float = Field(10.0, ge=0, le=100000)
 
 
 async def alert_settings() -> dict:
@@ -276,6 +346,12 @@ async def check_once() -> None:
                       ("Se renueva", fmt(voice.get("reset_at"))),
                       ("Qué hacer", "Sube de plan o compra caracteres extra en elevenlabs.io → Subscription. Si se agota, se usa una voz de respaldo menos natural.")],
                      every_hours=24)
+    if ai.get("credit_left") is not None and ai["credit_left"] < s["ai_min_usd"]:
+        await notify("ai_low", f"Quedan unos {ai['credit_left']:.2f} $ de saldo en el motor IA (Vapi)",
+                     [("Saldo anotado", f"{ai['credit_set']:.2f} $"), ("Gastado desde entonces", f"{ai['credit_spent']:.2f} $"),
+                      ("Restante estimado", f"{ai['credit_left']:.2f} $ (aviso por debajo de {s['ai_min_usd']:g} $)"),
+                      ("Qué hacer", "Recarga en dashboard.vapi.ai → Billing y anota el nuevo saldo en Monitor. Activa la recarga automática para no quedarte sin llamadas.")],
+                     every_hours=24)
     if ai.get("active") is not None and ai["active"] >= ai["concurrency_limit"]:
         await notify("concurrency", "Límite de llamadas simultáneas alcanzado",
                      [("Llamadas en curso", ai["active"]), ("Límite", ai["concurrency_limit"]),
@@ -303,7 +379,7 @@ async def save_limits(lim: dict | None) -> None:
 
 
 async def loop() -> None:
-    await db.platform_settings.update_one({"_id": "alerts", "voice_min_pct": 2.0}, {"$set": {"voice_min_pct": 20.0}})
+    await db.platform_settings.update_one({"_id": "alerts", "voice_min_pct": 2.0}, {"$set": {"voice_min_pct": 20.0, "ai_min_usd": 10.0}})
     await asyncio.sleep(60)
     while True:
         try:

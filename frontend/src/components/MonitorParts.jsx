@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Panel } from "@/components/Common";
+import { VapiCredit } from "@/components/MonitorVoice";
 import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 
@@ -25,7 +26,7 @@ const Big = ({ children, testid }) => <p className="font-display text-2xl font-b
 const Hint = ({ children }) => <p className="text-xs text-slate-500">{children}</p>;
 const Err = ({ s }) => (s?.error ? <p className="text-xs text-rose-300">{s.error}</p> : !s?.connected ? <p className="text-sm text-amber-300">Sin conectar</p> : null);
 
-export function Balances({ b, alerts }) {
+export function Balances({ b, alerts, onCredit }) {
   if (!b) return <Panel className="p-5 text-sm text-slate-400"><Loader2 className="mr-2 inline h-4 w-4 animate-spin" />Consultando saldos…</Panel>;
   const { sip, voice, ai, stripe } = b;
   const lim = alerts?.settings || {};
@@ -42,12 +43,13 @@ export function Balances({ b, alerts }) {
           <Hint>{voice.used.toLocaleString("es-ES")} / {voice.limit.toLocaleString("es-ES")} caracteres · plan {voice.tier}{voice.reset_at ? ` · renueva ${fmtDate(voice.reset_at)}` : ""}</Hint>
         </>}
       </Card>
-      <Card icon={Bot} title="Motor IA · Vapi" testid="balance-ai" warn={ai.active >= ai.concurrency_limit}>
+      <Card icon={Bot} title="Motor IA · Vapi" testid="balance-ai" warn={ai.active >= ai.concurrency_limit || (ai.credit_left != null && ai.credit_left < lim.ai_min_usd)}>
         <Err s={ai} />
         {ai.month_spend != null && <>
           <Big testid="balance-ai-value">{cur(ai.month_spend, "USD")} <span className="text-sm font-normal text-slate-500">este mes</span></Big>
           <Hint>{ai.month_calls} llamadas · {ai.active}/{ai.concurrency_limit} líneas ocupadas ahora</Hint>
-          <a href="https://dashboard.vapi.ai/org/billing/credits" target="_blank" rel="noreferrer" className="text-xs text-emerald-300 underline" data-testid="vapi-billing-link">Ver créditos restantes en Vapi</a>
+          <VapiCredit ai={ai} onSaved={onCredit} />
+          <a href="https://dashboard.vapi.ai/org/billing/credits" target="_blank" rel="noreferrer" className="text-xs text-slate-400 underline" data-testid="vapi-billing-link">Ver créditos en Vapi</a>
         </>}
       </Card>
       <Card icon={CreditCard} title="Cobros · Stripe" testid="balance-stripe">
@@ -112,15 +114,16 @@ export function Margins() {
 export function AlertSettings({ data, reload }) {
   const [f, setF] = useState(data.settings);
   const [busy, setBusy] = useState(false);
-  const save = async () => { try { await api.put("/admin/monitor/alerts", { ...f, sip_min: Number(f.sip_min), voice_min_pct: Number(f.voice_min_pct) }); toast.success("Alertas guardadas"); reload(); } catch (e) { toast.error(errMsg(e)); } };
+  const save = async () => { try { await api.put("/admin/monitor/alerts", { ...f, sip_min: Number(f.sip_min), voice_min_pct: Number(f.voice_min_pct), ai_min_usd: Number(f.ai_min_usd) }); toast.success("Alertas guardadas"); reload(); } catch (e) { toast.error(errMsg(e)); } };
   const check = async () => { setBusy(true); try { await api.post("/admin/monitor/check"); toast.success("Revisión hecha"); reload(); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); } };
   return (
     <Panel className="space-y-4" data-testid="alerts-panel">
       <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BellRing className="h-5 w-5 text-emerald-300" />Alertas por email</h3>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="space-y-1.5 sm:col-span-3"><Label className="text-xs">Enviar avisos a</Label><Input value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} className="bg-slate-950/60" data-testid="alerts-email-input" /></div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div className="space-y-1.5 sm:col-span-4"><Label className="text-xs">Enviar avisos a</Label><Input value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} className="bg-slate-950/60" data-testid="alerts-email-input" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Saldo SIP mínimo (€)</Label><Input type="number" step="0.5" value={f.sip_min} onChange={(e) => setF({ ...f, sip_min: e.target.value })} className="bg-slate-950/60 font-mono" data-testid="alerts-sip-min-input" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Voces: % mínimo libre</Label><Input type="number" step="1" value={f.voice_min_pct} onChange={(e) => setF({ ...f, voice_min_pct: e.target.value })} className="bg-slate-950/60 font-mono" data-testid="alerts-voice-min-input" /></div>
+        <div className="space-y-1.5"><Label className="text-xs">Motor IA: saldo mínimo ($)</Label><Input type="number" step="1" value={f.ai_min_usd} onChange={(e) => setF({ ...f, ai_min_usd: e.target.value })} className="bg-slate-950/60 font-mono" data-testid="alerts-ai-min-input" /></div>
         <label className="flex items-end gap-2 pb-2 text-sm text-slate-300"><Switch checked={f.enabled} onCheckedChange={(v) => setF({ ...f, enabled: v })} data-testid="alerts-enabled-switch" />Activas</label>
       </div>
       <Hint>Se revisa cada 10 minutos. También avisa al instante si se llena el límite de llamadas simultáneas o el motor IA se queda sin créditos.</Hint>
