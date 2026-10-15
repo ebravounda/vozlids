@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VoiceBalanceAlert } from "@/components/VoiceBalanceAlert";
 import { PageHeader } from "@/components/Common";
 import { AlertSettings, Balances, LiveCalls, Margins } from "@/components/MonitorParts";
 import { CallLog, SipLog } from "@/components/MonitorLogs";
@@ -19,6 +20,7 @@ export default function AdminMonitor() {
       <PageHeader eyebrow="Super admin" title="Monitor de la plataforma" desc="Saldos de cada proveedor, llamadas en directo, coste de cada llamada y margen por cliente.">
         <Button variant="outline" onClick={() => loadB(true)} className="rounded-full" data-testid="monitor-refresh-button"><RefreshCw className="mr-2 h-4 w-4" />Actualizar saldos</Button>
       </PageHeader>
+      <VoiceBalanceAlert />
       <Balances b={b} alerts={alerts} />
       {b && <p className="-mt-3 text-xs text-slate-500" data-testid="monitor-checked-at">Consultado {fmtDate(b.checked_at)}</p>}
       <div className="grid gap-6 xl:grid-cols-2">

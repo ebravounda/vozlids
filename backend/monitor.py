@@ -17,7 +17,7 @@ from voice_preview import eleven_key
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.monitor")
-DEFAULT_ALERTS = {"email": "", "enabled": True, "sip_min": 2.0, "voice_min_pct": 2.0}
+DEFAULT_ALERTS = {"email": "", "enabled": True, "sip_min": 2.0, "voice_min_pct": 20.0}
 ACTIVE = ("queued", "ringing", "in-progress")
 _cache: dict = {}
 
@@ -61,9 +61,26 @@ async def voice_status() -> dict:
                                             "La clave necesita el permiso «User» (lectura)."}
     used, limit = d.get("character_count", 0), d.get("character_limit", 0) or 0
     reset = d.get("next_character_count_reset_unix")
+    reset_dt = datetime.fromtimestamp(reset, timezone.utc) if reset else None
+    runs_out = None
+    if reset_dt and limit and used:
+        m = reset_dt.month - 1 or 12
+        start = reset_dt.replace(year=reset_dt.year - (m == 12), month=m, day=min(reset_dt.day, 28))
+        elapsed = (datetime.now(timezone.utc) - start).total_seconds() / 86400
+        if elapsed >= 1:
+            eta = datetime.now(timezone.utc) + timedelta(days=max(0, limit - used) / (used / elapsed))
+            runs_out = eta.isoformat() if eta < reset_dt else None
     return {"connected": True, "tier": d.get("tier"), "used": used, "limit": limit,
             "pct_left": round(100 * (limit - used) / limit, 1) if limit else None,
-            "reset_at": datetime.fromtimestamp(reset, timezone.utc).isoformat() if reset else None}
+            "reset_at": reset_dt.isoformat() if reset_dt else None, "runs_out_at": runs_out}
+
+
+@router.get("/admin/monitor/voice-alert")
+async def voice_alert(user=Depends(require_admin)):
+    v = await cached("voice", 300, voice_status)
+    lim = (await alert_settings())["voice_min_pct"]
+    low = v.get("pct_left") is not None and v["pct_left"] < lim
+    return {**v, "threshold": lim, "low": low, "empty": v.get("pct_left") is not None and v["pct_left"] <= 0}
 
 
 async def vapi_calls(since: datetime | None = None, limit: int = 100) -> list:
@@ -202,7 +219,7 @@ class AlertsIn(BaseModel):
     email: str = Field("", max_length=200)
     enabled: bool = True
     sip_min: float = Field(2.0, ge=0, le=10000)
-    voice_min_pct: float = Field(2.0, ge=0, le=100)
+    voice_min_pct: float = Field(20.0, ge=0, le=100)
 
 
 async def alert_settings() -> dict:
@@ -249,10 +266,16 @@ async def check_once() -> None:
         await notify("sip_low", "Saldo bajo en la línea SIP (Zadarma)",
                      [("Saldo actual", f"{sip['balance']:.2f} {sip['currency']}"), ("Mínimo", f"{s['sip_min']:.2f}"),
                       ("Qué hacer", "Recarga saldo en Zadarma o las llamadas dejarán de salir")])
+    _cache["voice"] = (time.time(), voice)
     if voice.get("pct_left") is not None and voice["pct_left"] < s["voice_min_pct"]:
-        await notify("voice_low", "Quedan pocos caracteres de voz (ElevenLabs)",
-                     [("Usados", f"{voice['used']:,} de {voice['limit']:,}"), ("Restante", f"{voice['pct_left']}%"),
-                      ("Se renueva", (voice.get("reset_at") or "")[:10])])
+        fmt = lambda iso: datetime.fromisoformat(iso).strftime("%d/%m/%Y") if iso else "—"  # noqa: E731
+        await notify("voice_low", f"Queda un {voice['pct_left']}% de saldo de voz (ElevenLabs)",
+                     [("Caracteres usados", f"{voice['used']:,} de {voice['limit']:,}".replace(",", ".")),
+                      ("Restante", f"{voice['pct_left']}% (aviso por debajo del {s['voice_min_pct']:g}%)"),
+                      ("Se agota aprox.", fmt(voice.get("runs_out_at")) if voice.get("runs_out_at") else "No antes de la renovación"),
+                      ("Se renueva", fmt(voice.get("reset_at"))),
+                      ("Qué hacer", "Sube de plan o compra caracteres extra en elevenlabs.io → Subscription. Si se agota, se usa una voz de respaldo menos natural.")],
+                     every_hours=24)
     if ai.get("active") is not None and ai["active"] >= ai["concurrency_limit"]:
         await notify("concurrency", "Límite de llamadas simultáneas alcanzado",
                      [("Llamadas en curso", ai["active"]), ("Límite", ai["concurrency_limit"]),
@@ -280,6 +303,7 @@ async def save_limits(lim: dict | None) -> None:
 
 
 async def loop() -> None:
+    await db.platform_settings.update_one({"_id": "alerts", "voice_min_pct": 2.0}, {"$set": {"voice_min_pct": 20.0}})
     await asyncio.sleep(60)
     while True:
         try:
