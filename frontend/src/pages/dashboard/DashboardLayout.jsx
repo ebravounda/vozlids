@@ -85,9 +85,9 @@ export default function DashboardLayout() {
   return (
     <div className="app-light flex min-h-screen bg-[#F8FAFC] text-slate-700">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white p-5 md:flex">
-        <Link to="/" className="mb-8 px-2"><Logo /></Link>
-        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Menú</p>
-        <nav className="flex flex-1 flex-col gap-1">
+        <Link to="/" className="mb-6 shrink-0 px-2"><Logo /></Link>
+        <p className="mb-2 shrink-0 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Menú</p>
+        <nav className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-2 pb-3 [scrollbar-width:thin]" data-testid="sidebar-nav">
           {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} data-testid={`sidebar-nav-${n.id}`}
               className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-blue-50 text-blue-700 shadow-[inset_3px_0_0_#2563EB]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
@@ -96,7 +96,7 @@ export default function DashboardLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-3 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-business-name">{user?.business_name}</p>
           <p className="truncate text-xs text-slate-500">{user?.email}</p>
           <button onClick={logout} data-testid="logout-button" className="mt-3 inline-flex items-center gap-2 text-xs text-slate-400 hover:text-rose-600">
