@@ -193,3 +193,8 @@
 - Landing: LogoStrip (public/clients/*.webp) + logos en testimonios
 - Probado: iteration_27.json (100%), mejoras menores aplicadas
 
+
+## 2026-06 Despliegue Plesk: memoria y vuelta atrás
+- update.sh: crea swap 4 GB si falta, compila backend y web por separado (web solo si cambió), progreso visible, timeout 25 min; guarda imágenes :previous + .previous_version antes de compilar
+- rollback.sh: vuelve a las imágenes :previous y al commit anterior (solo programa, datos intactos); -y para no preguntar
+- Dockerfile web: DISABLE_ESLINT_PLUGIN, NODE_OPTIONS max-old-space 1536

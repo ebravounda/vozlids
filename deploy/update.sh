@@ -17,8 +17,17 @@ ensure_swap() {
   fi
 }
 
+save_previous() {
+  local ok=0
+  for svc in backend frontend; do
+    docker image inspect "vozleads-$svc:latest" >/dev/null 2>&1 && docker tag "vozleads-$svc:latest" "vozleads-$svc:previous" && ok=$((ok+1))
+  done
+  [ "$ok" = 2 ] && git -C .. rev-parse HEAD > .previous_version && echo ">> Versión actual guardada: si algo falla, vuelve atrás con ./rollback.sh"
+}
+
 ./backup.sh
 ensure_swap
+save_previous
 OLD=$(git -C .. rev-parse HEAD)
 git -C .. pull --ff-only
 NEW=$(git -C .. rev-parse HEAD)
@@ -35,5 +44,5 @@ fi
 $DC up -d --remove-orphans
 sleep 8
 set -a; . ./.env; set +a
-curl -fsS "http://127.0.0.1:$API_PORT/api/" >/dev/null && echo ">> Actualizado y funcionando" || { echo "ERROR: el backend no responde"; $DC logs --tail 50 backend; exit 1; }
+curl -fsS "http://127.0.0.1:$API_PORT/api/" >/dev/null && echo ">> Actualizado y funcionando" || { echo "ERROR: el backend no responde"; $DC logs --tail 50 backend; echo ">> Para volver a la versión anterior ejecuta: $(pwd)/rollback.sh"; exit 1; }
 docker image prune -f --filter "label=com.docker.compose.project=vozleads" >/dev/null || true

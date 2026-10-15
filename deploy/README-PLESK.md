@@ -47,6 +47,7 @@ Hace copia de seguridad de la base de datos, baja el código, reconstruye y rein
 ```bash
 docker compose ps                     # estado
 docker compose logs -f backend        # registros del servidor
+./rollback.sh                         # vuelve a la versión anterior a la última actualización (los datos no se tocan)
 ./backup.sh                           # copia manual (deploy/backups, guarda las 14 últimas)
 docker compose exec -T mongo mongorestore --drop --archive --gzip < backups/ARCHIVO.archive.gz   # restaurar
 docker compose down                   # parar VozLeads (los datos se conservan)
