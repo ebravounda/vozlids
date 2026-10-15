@@ -197,10 +197,11 @@ def _parts(lead: dict, rate: float) -> dict:
 
 
 @router.get("/admin/costs")
-async def admin_costs(days: int = 30, user=Depends(require_admin)):
+async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_admin)):
     pricing = await get_pricing()
     since = (datetime.now(timezone.utc) - timedelta(days=max(1, min(days, 365)))).isoformat()
-    leads = await db.leads.find({"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}},
+    q = {"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}, **({"tenant_id": tenant_id} if tenant_id else {})}
+    leads = await db.leads.find(q,
                                 {"messages": 0, "transcript": 0}).sort("created_at", -1).to_list(5000)
     users = {str(u["_id"]): u async for u in db.users.find({}, {"business_name": 1, "email": 1, "country": 1})}
     agent_country = {str(a["_id"]): a.get("country", "ES") async for a in db.agents.find({}, {"country": 1})}
@@ -237,10 +238,12 @@ async def admin_costs(days: int = 30, user=Depends(require_admin)):
         t["calls"] += 1
         t["minutes"] += p["minutes"]
         t["total"] += p["total"]
-        if len(calls) < 300:
+        if len(calls) < 1000:
             calls.append({"id": str(ld["_id"]), "created_at": ld["created_at"], "business": t["business"],
                           "lead": ld["name"], "status": ld["status"], "is_test": ld.get("is_test", False),
-                          "country": country, "currency": currency, **p})
+                          "country": country, "currency": currency, "phone": ld.get("phone"),
+                          "tenant_id": ld["tenant_id"], "ended_reason": ld.get("ended_reason"), "error": ld.get("error"),
+                          "direction": "entrante" if vapi.inbound(ld) else "saliente", **p})
     for t in tenants.values():
         t["cost_per_min"] = t["total"] / t["minutes"] if t["minutes"] else None
     for bc in by_country.values():

@@ -16,6 +16,7 @@ import DoNotCall from "@/pages/dashboard/DoNotCall";
 import Telephony from "@/pages/dashboard/Telephony";
 import MyNumberPage from "@/pages/dashboard/MyNumberPage";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
+import AdminMonitor from "@/pages/dashboard/AdminMonitor";
 import Outbound from "@/pages/dashboard/Outbound";
 import Support from "@/pages/dashboard/Support";
 import Developers from "@/pages/dashboard/Developers";
@@ -50,6 +51,7 @@ function App() {
             <Route path="numero" element={<MyNumberPage />} />
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
+            <Route path="monitor" element={<AdminMonitor />} />
             <Route path="llamadas" element={<Outbound />} />
             <Route path="asistencia" element={<Support />} />
             <Route path="api" element={<Developers />} />

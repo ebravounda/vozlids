@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Panel } from "@/components/Common";
-import { CustomVoices, ElevenLabsSettings, LandingSettings, StripeSettings } from "@/components/AdminIntegrations";
+import { CustomVoices, ElevenLabsSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
 import { api, errMsg } from "@/lib/api";
 
@@ -120,6 +120,7 @@ export default function SuperAdmin() {
         <LandingSettings />
         <StripeSettings />
         <ElevenLabsSettings />
+        <ResendSettings />
         <CustomVoices />
       </div>
     </div>

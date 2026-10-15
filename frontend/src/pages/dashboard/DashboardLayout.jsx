@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
+import { Activity, BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -19,6 +19,7 @@ const NAV = [
 ];
 const ADMIN_NAV = [
   { to: "/app/admin", label: "Super admin", icon: Shield, id: "superadmin" },
+  { to: "/app/monitor", label: "Monitor en vivo", icon: Activity, id: "monitor" },
   { to: "/app/costes", label: "Costes y precios", icon: Euro, id: "costs" },
   { to: "/app/telefonia", label: "Telefonía", icon: Radio, id: "settings" },
 ];

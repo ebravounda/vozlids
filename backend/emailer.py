@@ -98,20 +98,49 @@ def _wrap(title: str, rows: list, cta: str = "") -> str:
             f'ni datos de pago por email.</p></td></tr></table></td></tr></table>')
 
 
+async def resend_cfg() -> dict:
+    from db import db
+    return (await db.platform_settings.find_one({"_id": "resend"})) or {}
+
+
+def _sender(addr: str) -> str:
+    return addr if "<" in addr else f"{os.environ['EMAIL_FROM_NAME']} <{addr.strip()}>"
+
+
+async def deliver(to: str, subject: str, html: str) -> str:
+    """Sends via the admin's Resend account if configured, else the built-in sender. Returns '' or an error."""
+    _assert_safe_email(subject, html)
+    cfg = await resend_cfg()
+    reply = cfg.get("reply_to") or os.environ.get("EMAIL_REPLY_TO")
+    try:
+        async with httpx.AsyncClient(timeout=30) as c:
+            if cfg.get("api_key"):
+                payload = {"from": _sender(cfg["from_email"]), "to": [to], "subject": subject, "html": html}
+                if reply:
+                    payload["reply_to"] = [reply]
+                r = await c.post("https://api.resend.com/emails", json=payload, headers={
+                    "Authorization": f"Bearer {cfg['api_key']}", "User-Agent": "vozleads/1.0"})
+            else:
+                payload = {"to": [to], "subject": subject, "html": html, "from_name": os.environ["EMAIL_FROM_NAME"]}
+                if reply:
+                    payload["contact_email"] = reply
+                r = await c.post(f"{EMAIL_BASE_URL}/api/v1/email/send",
+                                 headers={"X-Email-Key": os.environ["EMERGENT_EMAIL_KEY"]}, json=payload)
+    except httpx.HTTPError as e:
+        return f"No se pudo contactar con el servicio de email: {e.__class__.__name__}"
+    if r.status_code >= 400:
+        try:
+            msg = r.json().get("message") or r.text
+        except ValueError:
+            msg = r.text
+        return f"Error {r.status_code}: {str(msg)[:300]}"
+    return ""
+
+
 async def send(to: str, subject: str, title: str, rows: list, cta: str = "") -> bool:
     if not to:
         return False
-    html = _wrap(title, rows, cta)
-    _assert_safe_email(subject, html)
-    payload = {"to": [to], "subject": subject, "html": html, "from_name": os.environ["EMAIL_FROM_NAME"]}
-    if os.environ.get("EMAIL_REPLY_TO"):
-        payload["contact_email"] = os.environ["EMAIL_REPLY_TO"]
-    try:
-        async with httpx.AsyncClient(timeout=30) as c:
-            r = await c.post(f"{EMAIL_BASE_URL}/api/v1/email/send", headers={"X-Email-Key": os.environ["EMERGENT_EMAIL_KEY"]},
-                             json=payload)
-        r.raise_for_status()
-        return True
-    except httpx.HTTPError as e:
-        log.warning("Email not sent to %s: %s", to, getattr(getattr(e, "response", None), "text", e))
-        return False
+    err = await deliver(to, subject, _wrap(title, rows, cta))
+    if err:
+        log.warning("Email not sent to %s: %s", to, err)
+    return not err

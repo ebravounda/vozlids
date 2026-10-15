@@ -27,6 +27,8 @@ import billing  # noqa: E402
 import voice_preview  # noqa: E402
 import landing  # noqa: E402
 import phone_numbers  # noqa: E402
+import monitor  # noqa: E402
+import asyncio  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
 from db import client, db  # noqa: E402
@@ -467,6 +469,7 @@ app.include_router(billing.router)
 app.include_router(voice_preview.router)
 app.include_router(landing.router)
 app.include_router(phone_numbers.router)
+app.include_router(monitor.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -499,6 +502,8 @@ async def startup():
         tel.setdefault("numbers", {})["ES"] = legacy
     vapi.STATE["numbers"] = tel.get("numbers") or {}
     await X.load_custom_voices()
+    await db.monitor_alerts.create_index("created_at")
+    asyncio.create_task(monitor.loop())
 
 
 @app.on_event("shutdown")

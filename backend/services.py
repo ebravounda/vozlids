@@ -152,6 +152,8 @@ async def dial(agent: dict, lead: dict):
                                                           "updated_at": now_iso()}})
     except vapi.VapiError as e:
         log.warning("Vapi call failed: %s", e)
+        import monitor
+        await monitor.call_failed(str(e))
         await db.leads.update_one({"_id": lid}, {"$set": {"status": "fallida", "error": str(e),
                                                           "updated_at": now_iso()}})
 

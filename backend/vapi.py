@@ -418,4 +418,7 @@ async def create_call(agent: dict, lead: dict, today: str, phone_id: str | None 
         "assistant": build_assistant(agent, lead, today),
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
     }
-    return (await _post("/call", payload)).get("id")
+    res = await _post("/call", payload)
+    import monitor
+    await monitor.save_limits(res.get("subscriptionLimits"))
+    return res.get("id")

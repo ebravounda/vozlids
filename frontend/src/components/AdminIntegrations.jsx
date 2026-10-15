@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Globe2, Loader2, Mic, Plus, Trash2 } from "lucide-react";
+import { CreditCard, Globe2, Loader2, Mail, Mic, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -74,6 +74,44 @@ export function ElevenLabsSettings() {
         <Button onClick={save} disabled={busy || key.length < 20} className="rounded-full" data-testid="elevenlabs-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{s.connected ? "Cambiar clave" : "Conectar ElevenLabs"}</Button>
         {s.connected && <Button variant="ghost" onClick={disconnect} className="rounded-full" data-testid="elevenlabs-disconnect-button">Desconectar</Button>}
         {s.connected && !s.vapi_linked && <Button variant="outline" onClick={link} className="rounded-full" data-testid="elevenlabs-link-vapi-button">Vincular con Vapi</Button>}
+      </div>
+    </Panel>
+  );
+}
+
+export function ResendSettings() {
+  const [s, setS] = useState(null);
+  const [f, setF] = useState({ api_key: "", from_email: "", reply_to: "" });
+  const [busy, setBusy] = useState(false);
+  const load = () => api.get("/admin/resend").then((r) => { setS(r.data); setF((x) => ({ ...x, from_email: r.data.from_email, reply_to: r.data.reply_to })); });
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    setBusy(true);
+    try { await api.put("/admin/resend", f); toast.success("Resend conectado"); setF((x) => ({ ...x, api_key: "" })); load(); }
+    catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  const test = async () => { setBusy(true); try { const r = await api.post("/admin/resend/test"); toast.success(`Email de prueba enviado a ${r.data.to}`); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); } };
+  const disconnect = async () => { await api.delete("/admin/resend"); load(); };
+  if (!s) return null;
+  const inp = (k, ph, type = "text") => <Input type={type} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} placeholder={ph} className="bg-slate-950/60 font-mono" data-testid={`resend-${k}-input`} />;
+  return (
+    <Panel className="space-y-4" data-testid="resend-settings-panel">
+      <div className="flex items-center gap-2"><Mail className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">Emails con Resend</h3></div>
+      {s.connected
+        ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="resend-status-connected">Conectado · clave …{s.key_last4} · todos los emails salen desde <b>{s.from_email}</b></p>
+        : <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200" data-testid="resend-status-missing">Sin conectar: los emails salen por el servicio de envío integrado. Conecta tu cuenta de Resend para enviarlos desde tu dominio.</p>}
+      {inp("api_key", s.connected ? "Nueva clave re_… (opcional para cambiar)" : "Clave de API re_…", "password")}
+      {inp("from_email", "Remitente: avisos@vozleads.com")}
+      {inp("reply_to", "Responder a (opcional): soporte@vozleads.com")}
+      <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
+        <li>En resend.com → Domains, añade tu dominio (ej. vozleads.com) y crea los registros DNS que te indica hasta que salga «Verified».</li>
+        <li>API Keys → Create API Key con permiso «Sending access» y pégala aquí.</li>
+        <li>El remitente debe ser de ese dominio verificado. Pulsa «Enviar prueba» para comprobarlo.</li>
+      </ol>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={save} disabled={busy || (!s.connected && f.api_key.length < 10) || !f.from_email.includes("@")} className="rounded-full" data-testid="resend-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{s.connected ? "Guardar cambios" : "Conectar Resend"}</Button>
+        <Button variant="outline" onClick={test} disabled={busy} className="rounded-full" data-testid="resend-test-button">Enviar prueba</Button>
+        {s.connected && <Button variant="ghost" onClick={disconnect} className="rounded-full" data-testid="resend-disconnect-button">Desconectar</Button>}
       </div>
     </Panel>
   );
