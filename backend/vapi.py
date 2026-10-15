@@ -147,6 +147,18 @@ async def enable_inbound(credential_id: str, phone_number_id: str) -> None:
     await _post(f"/phone-number/{phone_number_id}", {"server": server_cfg()}, "PATCH")
 
 
+async def ensure_sip_inbound(number: str, name: str) -> dict:
+    uri = f"sip:vozleads-{number.lstrip('+')}@sip.vapi.ai"
+    async with httpx.AsyncClient(timeout=30) as x:
+        nums = (await x.get(f"{VAPI_URL}/phone-number", headers=_headers(), params={"limit": 100})).json()
+    cur = next((p for p in nums if p.get("provider") == "vapi" and (p.get("sipUri") or "").lower() == uri), None)
+    if cur:
+        await _post(f"/phone-number/{cur['id']}", {"server": server_cfg()}, "PATCH")
+        return {"id": cur["id"], "uri": uri}
+    p = await _post("/phone-number", {"provider": "vapi", "sipUri": uri, "name": name[:40], "server": server_cfg()})
+    return {"id": p["id"], "uri": uri}
+
+
 def inbound_sip_uri(number: str, credential_id: str = "") -> str:
     return f"{number.lstrip('+')}@{credential_id + '.' if credential_id else ''}sip.vapi.ai"
 

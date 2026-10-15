@@ -45,7 +45,7 @@ def test_get_platform_inbound_admin(admin_session):
     assert es["number"] == "+34919932652"
     assert es["enabled"] is True
     assert es["agent_id"] == ES_AGENT_ID
-    assert es["sip_uri"] == "34919932652@8aa11b2f-c982-434a-b6c6-1e9fded14d7e.sip.vapi.ai"
+    assert es["sip_uri"] == "vozleads-34919932652@sip.vapi.ai"
     assert "routed" in es
 
 
@@ -78,7 +78,7 @@ def test_put_platform_inbound_es_idempotent(admin_session):
     assert r.status_code == 200, r.text
     data = r.json()
     assert data.get("ok") is True
-    assert data.get("sip_uri") == "34919932652@8aa11b2f-c982-434a-b6c6-1e9fded14d7e.sip.vapi.ai"
+    assert data.get("sip_uri") == "vozleads-34919932652@sip.vapi.ai"
 
 
 # --- Vapi webhook assistant-request ---
