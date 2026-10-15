@@ -37,7 +37,7 @@ function LandingPage({ path = "/" }) {
       <main>
         {sector ? <SectorHero page={page} m={m} /> : <Hero page={view} m={m} />}
         <TrustBar m={m} />
-        {!topic && <PlatformTour />}
+        <PlatformTour />
         {page.sections?.length > 0 && <TopicSections sections={page.sections} title={sector ? `Cómo ayuda a ${page.name.toLowerCase()}` : ""} />}
         {!sector && <Sectors country={m.market} />}
         {!sector && <WhyNow />}

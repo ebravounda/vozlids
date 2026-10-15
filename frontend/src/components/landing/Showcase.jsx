@@ -102,13 +102,17 @@ export function PlatformTour() {
     const t = setInterval(() => setTab((c) => TABS[(TABS.findIndex((x) => x[0] === c) + 1) % TABS.length][0]), 6000);
     return () => clearInterval(t);
   }, [auto]);
+  useEffect(() => {
+    const b = document.querySelector(`[data-testid="tour-tab-${tab}"]`);
+    if (b?.parentElement) b.parentElement.scrollTo({ left: b.offsetLeft - 24, behavior: "smooth" });
+  }, [tab]);
   const [, , , title, points, Mock] = TABS.find((x) => x[0] === tab);
   return (
     <section id="plataforma" className="vl-reveal scroll-mt-20 border-b border-slate-200 bg-white" data-testid="platform-tour">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">La plataforma</p>
         <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Todo lo que necesitas para no perder ni un cliente, en un solo panel</h2>
-        <div className="mt-10 flex gap-2 overflow-x-auto pb-2" role="tablist">
+        <div className="relative mt-10 flex gap-2 overflow-x-auto pb-2" role="tablist">
           {TABS.map(([id, I, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setAuto(false); }}
               className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${tab === id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900"}`} data-testid={`tour-tab-${id}`}>

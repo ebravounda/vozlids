@@ -25,7 +25,7 @@ export function Pricing({ m }) {
   useEffect(() => { api.get("/public/plans").then((r) => setPlans(r.data)).catch(() => {}); }, []);
   if (!plans.length) return null;
   return (
-    <section id="precios" className="mx-auto max-w-6xl px-6 py-24" data-testid="pricing-section">
+    <section id="precios" className="scroll-mt-20 mx-auto max-w-6xl px-6 py-24" data-testid="pricing-section">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "Plus Jakarta Sans" }}>Precios</h2>

@@ -1,0 +1,32 @@
+{
+  "summary": "Frontend-only test of the sales landing (/, /es, /cl, sector pages /es/clinicas-dentales, /es/clinicas-esteticas, /es/inmobiliarias, topic page /central-telefonica-con-ia) at desktop 1920 and mobile 390. Everything requested works: nav anchors, Llamada demo -> #solicitar, all Empezar ahora CTAs -> /registro, demo form title + consent validation error (form was NOT submitted), PlatformTour 6 tabs/panels + 6s autoplay that stops after a manual click, 3 testimonials with images loading (naturalWidth 900), 16 feature cards, LostCalls calculator (ES 100x500 -> 15.000 €, CL 50x100000 -> $1.500.000, defaults 1440 € / $960.000), mobile bottom CTA bar, no horizontal overflow, tour tabs scroll horizontally. No JS page errors. Only minor issues found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Nav on topic pages", "issue": "On topic pages (e.g. /central-telefonica-con-ia) PlatformTour isn't rendered (Landing.jsx: {!topic && <PlatformTour/>}), so the nav link 'Plataforma' (#plataforma) goes nowhere. Other anchors work on topic and sector pages.", "selector": "[data-testid='landing-nav-plataforma-link']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Pricing anchor", "issues": ["#precios section (Pricing.jsx) has no scroll-mt-20 like the other sections, so after clicking 'Precios' its top lands at 0, under the 64px sticky header (the py-24 padding keeps the heading visible, but the offset doesn't match the other sections)."]},
+      {"screen": "Testimonials", "issues": ["The GoRoky.com testimonial is labeled 'Operaciones · empresa del grupo', and the footer says VozLeads is part of GoRoky. A testimonial from your own parent company hurts credibility. Consider making it a case study or dropping 'empresa del grupo'."]},
+      {"screen": "Mobile tour tabs", "issues": ["During autoplay the active tab isn't scrolled into view in the horizontal tablist on 390px, so the highlighted tab can be off-screen (scrollIntoView with inline:'nearest' on change would fix it)."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Hide or retarget the 'Plataforma' nav link on topic pages (or render PlatformTour there)",
+    "Add scroll-mt-20 to #precios section in Pricing.jsx",
+    "Optional: auto-scroll the active tour tab into view on mobile autoplay",
+    "Optional: rethink the GoRoky 'empresa del grupo' testimonial label"
+  ],
+  "critical_code_review_comments": [
+    "Console shows repeated 401 resource errors on public landing (likely an /auth/me check for anonymous visitors). Harmless, but noisy.",
+    "InfoForm Sectors hero title has a redundant ternary: page.country === 'CL' ? 'negocio' : 'negocio'"
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not requested)", "frontend": "97%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Landing components live in /app/frontend/src/components/landing/*. Sector paths are /es/<sector> (e.g. /es/inmobiliarias), not /inmobiliarias. Do not submit the solicitar form (it makes a real call). Tour autoplay is 6s interval and stops when a tab is clicked."
+}

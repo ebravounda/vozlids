@@ -175,3 +175,15 @@
 - Probado: iteration_24.json (backend 17/17, frontend OK; contraste y plurales corregidos)
 - Siguiente: Fase 2 P1 carga masiva Excel/CSV, Google Calendar; P2 WhatsApp/SMS post-llamada, plugins CRM
 
+## 2026-06 Calendario de citas + minutos RGPD
+- /app/agenda: calendario propio (semana por defecto, día en móvil, mes), arrastrar para mover, clic en hueco para crear, detalle con editar/cancelar/ver llamada; pestaña Horario
+- Backend: GET /api/appointments?start&end, POST /api/appointments (manual), PATCH /api/appointments/{id}; Appointment.duration_minutes y source
+- Borrado RGPD archiva consumo en usage_archive (sin PII); saas.minutes_used suma leads + usage_archive
+- Probado: iteration_25.json
+
+## 2026-06 Landing orientada a venta
+- Nuevas secciones: PlatformTour (6 pestañas con maquetas del panel: leads, agenda, resultados, botón web, API, RGPD), FeatureGrid (16 funciones), Testimonials (Tramilex, IberoAcademy, GoRoky; fotos Unsplash), calculadora LostCalls
+- CTA doble: "Llamada demo" (#solicitar) + "Empezar ahora" (/registro) en nav, hero, tour, calculadora, CTA final y barra móvil
+- Probado: iteration_26.json (97%, mejoras menores aplicadas)
+- Pendiente: que los clientes aprueben los textos de los testimonios
+
