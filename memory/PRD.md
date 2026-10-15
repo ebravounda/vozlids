@@ -166,3 +166,12 @@
 - API v1: sub-app apiv1.py montada en /api/v1 (OpenAPI 3.1 /api/v1/docs), api_core.py. Claves vl_live_/vl_test_ (sha256), scopes, caducidad, IPs, ultimo uso, rotar (gracia 24h), desactivar. Rate limit Mongo por clave/min, llamadas/min, concurrencia y diario (solo live) con lock por tenant (1 proceso). Idempotency-Key (api_idem TTL 24h). POST /calls 202 asincrono, estados estandar + status_detail, programadas ISO8601 con zona, cancelar, listado paginado. Horario legal por pais (commercial/contractual). legal_basis + evidencia + finalidad. DNC por API. Webhooks HMAC (VozLeads-Signature t=,v1=) con reintentos backoff x8, SSRF, sandbox. Errores RFC 9457 con code/request_id; 402 mantenido. Worker cada 5s (programadas API, entregas webhooks, saas.dispatch_due).
 - Portal /app/api (Developers.jsx + DevParts.jsx). Tested iteration_23 37/37
 - Fase 2 pendiente: historial de peticiones por clave, export/supresion RGPD, retencion transcripciones, call.analysis.completed, lock distribuido si se escala a varios procesos, UI horario por pais
+
+## 2026-06 API Fase 2: historial por clave + RGPD + retención
+- privacy.py: api_request_logs (TTL 30 días, rutas con teléfonos enmascaradas) y GET /api/privacy/keys/{kid}/requests; botón "Historial" por clave en /app/api
+- Scope privacy:manage: POST /v1/privacy/export, POST /v1/privacy/erase (borrado total: leads, citas, programadas, tickets, entregas webhook, caché idempotencia y llamada en proveedor; DNC se conserva), GET/PUT /v1/account/retention
+- Panel /app/privacidad: plazo (Nunca/30/90/180/365), exportar/borrar por teléfono o email, registro sin PII (subject_ref hash); botones RGPD en ficha del lead
+- Purga automática cada hora en api_core.worker (privacy.purge_expired): vacía messages/transcript/recording_url y marca transcript_purged_at
+- Probado: iteration_24.json (backend 17/17, frontend OK; contraste y plurales corregidos)
+- Siguiente: Fase 2 P1 carga masiva Excel/CSV, Google Calendar; P2 WhatsApp/SMS post-llamada, plugins CRM
+

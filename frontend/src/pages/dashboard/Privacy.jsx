@@ -4,7 +4,7 @@ import { Clock, Search, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader, Panel } from "@/components/Common";
-import { SubjectActions } from "@/components/PrivacyParts";
+import { plural, SubjectActions } from "@/components/PrivacyParts";
 import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 
@@ -49,7 +49,7 @@ function History({ rows }) {
       {rows.map((r, i) => (
         <p key={i} className="flex flex-wrap gap-2 text-sm text-slate-300" data-testid={`privacy-history-row-${i}`}>
           <span className={r.action === "erase" ? "text-rose-300" : "text-emerald-300"}>{r.action === "erase" ? "Borrado" : "Exportación"}</span>
-          <span className="font-mono text-xs text-slate-500">ref {r.subject_ref}</span>· {r.counts.calls} llamadas · {fmtDate(r.created_at)}
+          <span className="font-mono text-xs text-slate-500">ref {r.subject_ref}</span>· {plural(r.counts.calls, "llamada")} · {fmtDate(r.created_at)}
         </p>
       ))}
     </Panel>

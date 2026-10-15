@@ -1,0 +1,42 @@
+{
+  "summary": "Iter-24 API Phase 2 (request log per key, RGPD export/erase API+dashboard, transcript retention + purge). Backend pytest 17/17 PASS (tests/test_vozlead_iter24.py): /v1 requests incl. 404 and 403 missing_scope are logged; GET /api/privacy/keys/{kid}/requests returns summary{total,errors,avg_ms,days:30} + data rows with all fields; errors_only filters >=400; other tenant gets empty; unauth 401; DELETE /v1/dnc/+34611223344 path stored as /api/v1/dnc/***. /v1/privacy/export: {} -> 422 subject_required problem+json, '12' -> invalid_phone, extra field -> validation_error, no scope -> 403 missing_scope; national phone + country ES and case-insensitive email match; sandbox call created then erased (deleted.calls=1, other tenant erase=0, export afterwards 0 calls, GET /v1/calls/{id} 404); DNC entry kept after erase. Dashboard export/erase + settings history has subject_ref hash, no phone/email. Retention: only 0/30/90/180/365 accepted on both API (Literal, extra forbidden) and dashboard (45 -> 422). purge_expired() unit test: old lead (2020) of tenant with retention 30 -> messages/transcript/recording_url emptied, transcript_purged_at set, summary/status kept; future lead and 'programada' lead untouched; GET /api/leads/{id} returns transcript_purged_at; settings.purged_calls=1. OpenAPI has new paths. Frontend: /app/api shows dev-key-scope-privacy-manage chip and Historial button per key; key-logs-dialog shows summary (4/1/6ms), list rows, errors switch filters to the 404 only, Escape closes. Sidebar 'Privacidad (RGPD)' -> /app/privacidad; retention buttons save (toast) and persist highlight after reload; export downloads datos-rgpd-611220101.json with 1 call; erase dialog -> confirm deletes, toast 'Borrado: 1 llamadas, 0 citas', inputs cleared, history row added; invalid phone shows readable toast 'Número no válido.'. Lead sheet (non-sample) shows lead-rgpd-actions; erase closes the sheet and the row disappears on next poll. Issues found are design/contrast plus minor code-review items.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "api_request_logs path masking (privacy.log_request)", "issue": "Regex \\+?\\d{6,} also masks ObjectIds/other ids that contain 6+ consecutive digits (e.g. GET /v1/calls/000000000000000000000000 logged as /api/v1/calls/***). Real call ids with 6 digit runs will be partially hidden in the history. Consider masking only path segments that look like phones (e.g. ^\\+?\\d{6,15}$ per segment) or only under /dnc/."},
+      {"endpoint": "POST /v1/privacy/erase", "issue": "api_idem collection caches full POST /v1/calls responses (name/phone/email) for 24h and is not erased; webhook_deliveries already sent are deleted but provider-side logs aside, the idempotency cache is a residual copy of PII. Consider deleting api_idem entries whose response.id is in erased lead ids."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Lead detail sheet (dark) - lead-rgpd-actions", "issues": ["'Exportar datos' outline button text computed rgb(15,23,41) on transparent over dark sheet background -> practically invisible (only icon/border visible). Cause: .app-light override of .text-white / slate colors not applied consistently in portal; use explicit dark-friendly classes (e.g. bg-transparent text-slate-200 border-slate-700) for compact variant."]},
+      {"screen": "RGPD erase AlertDialog (dark, portal)", "issues": ["'Cancelar' (rgpd-erase-cancel) text rgb(15,23,41) on dark bg -> invisible; same root cause."]},
+      {"screen": "/app/privacidad retention chips", "issues": ["Selected chip uses text-blue-200 on bg-blue-500/15 over white panel (light theme): rgb(191,219,254) on pale blue -> very low contrast; selected '90 días' barely readable. Use text-blue-700 (or add .app-light override for text-blue-200). Same classes exist on dev-key-scope chips in DevParts."]},
+      {"screen": "Copy", "issues": ["'1 llamadas' singular/plural in toasts and history rows ('Exportadas 1 llamadas', '· 1 llamadas')."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter24.py", "/app/test_reports/pytest/iter24_results.xml"],
+  "action_items": [
+    "Fix contrast of outline buttons inside dark portals: lead sheet 'Exportar datos' and AlertDialog 'Cancelar' are invisible (dark text on dark bg).",
+    "Fix selected retention chip contrast on light theme (text-blue-200 -> darker blue or add .app-light override).",
+    "Tighten phone masking regex in privacy.log_request so ids with 6+ digit runs are not masked.",
+    "Optional: also purge api_idem cached responses for erased leads; pluralize 'llamada(s)'."
+  ],
+  "critical_code_review_comments": [
+    "apiv1.guard: asyncio.create_task(PV.log_request(...)) without keeping a reference - task may be garbage-collected before finishing under load; keep a set of background tasks or await (insert is cheap).",
+    "privacy.purge_expired loops with one update_one per lead and a vapi.delete per call; fine at limit 2000/tenant/hour but a tenant with backlog >2000 needs multiple hourly runs (acceptable, just note).",
+    "privacy.export_subject loads up to 2000 leads into memory and includes full messages - fine for RGPD, ok.",
+    "Dashboard /api/privacy/keys/{kid}/requests does not validate the key belongs to tenant, but query filters by tenant_id so no leak (verified cross-tenant returns empty).",
+    "Privacy history panel renders all 20 rows with no pagination; fine."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter24.py (new)", "/app/tests/iter24_prep.py (new, UI test data helper)"],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "100% functional; 3 contrast/design issues"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (/app/memory/test_credentials.md)",
+  "seed_data_creation": "Pytest registers a TEST_iter24_* user (deleted in teardown, case-insensitive regex), creates iter24-* sandbox keys (deleted), sandbox calls on +3461122xxxx / +3461123xxxx (erased), inserted 3 leads for the temp tenant for purge test (deleted). UI test created iter24-ui key (deleted) and leads +34611220101/+34611220102 (erased via UI). Admin retention left at 0. privacy_log entries for admin remain (audit, no PII).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: cd /app/backend && export $(grep -E 'MONGO_URL|DB_NAME' .env | tr -d '\"' | xargs) && REACT_APP_BACKEND_URL=<url> python -m pytest tests/test_vozlead_iter24.py -v. pytest.ini adds xdist (-n) by default. Purge test imports /app/backend/privacy.py in-process and runs asyncio.run(PV.purge_expired()). Login page uses input[type=email]/input[type=password] + auth-submit-button. Dashboard is light theme (.app-light CSS overrides in index.css) while dialogs/sheets render dark in portals - check contrast there.",
+  "rca of the issue": "Contrast issues: index.css remaps dark classes only under .app-light; shadcn outline Button relies on text-foreground (dark navy) and transparent bg, so inside dark Sheet/AlertDialog (bg-slate-950) the label is dark-on-dark. Selected retention chip uses text-blue-200 which has no .app-light override. Masking: regex \\+?\\d{6,} applied to the whole path rather than to phone-like segments."
+}

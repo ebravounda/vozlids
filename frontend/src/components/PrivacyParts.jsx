@@ -14,6 +14,8 @@ export const downloadJson = (data, name) => {
   URL.revokeObjectURL(url);
 };
 
+export const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+
 const statusCls = (s) => (s >= 500 ? "text-rose-300" : s >= 400 ? "text-amber-300" : "text-emerald-300");
 
 function LogRows({ rows }) {
@@ -59,15 +61,15 @@ export function SubjectActions({ subject, onErased, compact = false }) {
   const [ask, setAsk] = useState(false);
   const exp = async () => {
     setBusy("export");
-    try { const r = await api.post("/privacy/export", subject); downloadJson(r.data, `datos-rgpd-${(subject.phone || subject.email).replace(/[^\w]+/g, "")}.json`); toast.success(`Exportadas ${r.data.calls.length} llamadas`); }
+    try { const r = await api.post("/privacy/export", subject); downloadJson(r.data, `datos-rgpd-${(subject.phone || subject.email).replace(/[^\w]+/g, "")}.json`); toast.success(`Exportado: ${plural(r.data.calls.length, "llamada")}`); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); }
   };
   const erase = async () => {
     setBusy("erase");
-    try { const r = await api.post("/privacy/erase", subject); toast.success(`Borrado: ${r.data.deleted.calls} llamadas, ${r.data.deleted.appointments} citas`); onErased?.(r.data); }
+    try { const r = await api.post("/privacy/erase", subject); toast.success(`Borrado: ${plural(r.data.deleted.calls, "llamada")}, ${plural(r.data.deleted.appointments, "cita")}`); onErased?.(r.data); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); setAsk(false); }
   };
-  const cls = compact ? "rounded-full text-xs" : "rounded-full";
+  const cls = compact ? "rounded-full border-slate-700 bg-transparent text-xs text-slate-200 hover:bg-slate-800 hover:text-white" : "rounded-full";
   return (
     <div className="flex flex-wrap gap-2">
       <Button size="sm" variant="outline" onClick={exp} disabled={!!busy} className={cls} data-testid="rgpd-export-button">{busy === "export" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}Exportar datos</Button>
@@ -76,7 +78,7 @@ export function SubjectActions({ subject, onErased, compact = false }) {
         <AlertDialogContent className="border-slate-800 bg-slate-950" data-testid="rgpd-erase-dialog">
           <AlertDialogHeader><AlertDialogTitle className="text-white">¿Borrar todos los datos de este contacto?</AlertDialogTitle>
             <AlertDialogDescription>Se eliminan definitivamente sus llamadas, transcripciones, grabaciones, citas y llamadas programadas de {subject.phone || subject.email}. No se puede deshacer. Si está en tu lista de “No llamar” se mantiene ahí.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel data-testid="rgpd-erase-cancel">Cancelar</AlertDialogCancel>
+          <AlertDialogFooter><AlertDialogCancel className="border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white" data-testid="rgpd-erase-cancel">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { e.preventDefault(); erase(); }} className="bg-rose-600 hover:bg-rose-500" data-testid="rgpd-erase-confirm">{busy === "erase" && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Borrar definitivamente</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

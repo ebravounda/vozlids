@@ -82,6 +82,7 @@ async def erase_subject(tid: str, phone: str, email: str) -> dict:
         "scheduled_calls": (await db.scheduled_calls.delete_many(_match(tid, phone, email))).deleted_count,
         "support_tickets": (await db.support_tickets.delete_many({"tenant_id": tid, "lead_id": {"$in": ids}})).deleted_count,
         "webhook_deliveries": (await db.webhook_deliveries.delete_many({"tenant_id": tid, "payload.data.id": {"$in": ids}})).deleted_count,
+        "idempotency_cache": (await db.api_idem.delete_many({"_id": {"$regex": f"^{re.escape(tid)}:"}, "response.id": {"$in": ids}})).deleted_count,
         "recordings": sum(1 for x in leads if x.get("vapi_call_id"))}
     await _audit(tid, "erase", phone, email, counts)
     return {"object": "subject_erasure", "erased": True, "deleted": counts, "completed_at": now_iso(),
@@ -124,7 +125,7 @@ async def purge_expired() -> int:
 
 
 # ---------- API request log ----------
-_PHONE = re.compile(r"\+?\d{6,}")
+_PHONE = re.compile(r"(?<=/)\+?\d{6,15}(?=/|$)")
 
 
 async def log_request(tid: str, key_id: str, method: str, path: str, status: int, ms: int, ip: str, rid: str) -> None:
