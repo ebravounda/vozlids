@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, CalendarCheck, Check, Code2, Globe2, Headphones, LifeBuoy, Mic, PhoneCall, PhoneForwarded, Server, ShieldCheck, Timer, UserRound, Wallet } from "lucide-react";
+import { ArrowRight, BarChart3, BellRing, CalendarCheck, Check, Code2, Globe2, Headphones, LifeBuoy, Mic, PhoneCall, PhoneForwarded, PhoneIncoming, Server, ShieldCheck, Timer, UserRound, Wallet } from "lucide-react";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { InfoForm } from "@/components/landing/InfoForm";
 
@@ -57,6 +57,22 @@ function CallStudio({ dial }) {
   );
 }
 
+const ReceptionBlock = () => (
+  <div className="vl-reveal" data-testid="hero-reception-block">
+    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Central telefónica con IA</p>
+    <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Contesta tu teléfono 24/7, aunque estés ocupado</h2>
+    <p className="mt-4 max-w-xl text-slate-600">Tu recepcionista con IA atiende cada llamada entrante con voz natural: saluda con el nombre de tu empresa, resuelve dudas, agenda citas y toma recados. Nunca más un cliente perdido por no contestar.</p>
+    <ul className="mt-8 grid gap-4 sm:grid-cols-3">
+      {[[PhoneIncoming, "Atiende cada llamada", "Día y noche, también festivos y fuera de horario."], [CalendarCheck, "Agenda citas sola", "Consulta tu agenda y reserva en la misma llamada."], [BellRing, "Te avisa al instante", "Si piden hablar con una persona, recibes el aviso con el motivo."]].map(([I, t, d]) => (
+        <li key={t} className="rounded-xl border border-slate-200 bg-white p-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
+          <I className="h-5 w-5 text-blue-600" /><p className="mt-3 text-sm font-semibold text-slate-900">{t}</p><p className="mt-1 text-sm text-slate-500">{d}</p>
+        </li>
+      ))}
+    </ul>
+    <Link to="/central-telefonica-con-ia" className="group mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800" data-testid="hero-reception-link">Ver central telefónica con IA <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
+  </div>
+);
+
 export const Hero = ({ page, m }) => (
   <section className="relative overflow-hidden border-b border-slate-200 bg-[#F8FAFC]">
     <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden />
@@ -74,9 +90,12 @@ export const Hero = ({ page, m }) => (
         <ul className="mt-8 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
           {[m.t.short, "Llama en menos de 30 segundos", "Voz natural en español", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-blue-600" />{t}</li>)}
         </ul>
-        <div className="mt-10 hidden max-w-md lg:block"><CallStudio dial={m.t.dial} /></div>
       </div>
       <div className="fade-up lg:sticky lg:top-24" style={{ animationDelay: "0.15s" }}><InfoForm m={m} page={page.path} /></div>
+    </div>
+    <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 lg:grid-cols-[minmax(0,440px)_1fr]">
+      <div className="hidden lg:block"><CallStudio dial={m.t.dial} /></div>
+      <ReceptionBlock />
     </div>
   </section>
 );
