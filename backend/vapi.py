@@ -147,8 +147,8 @@ async def enable_inbound(credential_id: str, phone_number_id: str) -> None:
     await _post(f"/phone-number/{phone_number_id}", {"server": server_cfg()}, "PATCH")
 
 
-def inbound_sip_uri(number: str) -> str:
-    return f"{number.lstrip('+')}@sip.vapi.ai"
+def inbound_sip_uri(number: str, credential_id: str = "") -> str:
+    return f"{number.lstrip('+')}@{credential_id + '.' if credential_id else ''}sip.vapi.ai"
 
 
 async def ensure_11labs_credential(api_key: str) -> str:

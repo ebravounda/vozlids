@@ -2,6 +2,8 @@
 import os
 import sys
 import pytest
+
+SKIP_LIVE = pytest.mark.skip(reason="re-points the shared Vapi number to preview; run only on purpose")
 import requests
 from pathlib import Path
 
@@ -43,7 +45,7 @@ def test_get_platform_inbound_admin(admin_session):
     assert es["number"] == "+34919932652"
     assert es["enabled"] is True
     assert es["agent_id"] == ES_AGENT_ID
-    assert es["sip_uri"] == "34919932652@sip.vapi.ai"
+    assert es["sip_uri"] == "34919932652@8aa11b2f-c982-434a-b6c6-1e9fded14d7e.sip.vapi.ai"
     assert "routed" in es
 
 
@@ -53,6 +55,7 @@ def test_get_platform_inbound_non_admin(anon_session):
 
 
 # --- PUT /api/admin/platform-inbound ---
+@SKIP_LIVE
 def test_put_platform_inbound_invalid_agent(admin_session):
     r = admin_session.put(f"{BASE_URL}/api/admin/platform-inbound",
                           json={"country": "ES", "agent_id": "000000000000000000000000"})
@@ -68,13 +71,14 @@ def test_put_platform_inbound_country_cl_no_line(admin_session):
     assert any(w in msg.lower() for w in ["línea", "linea", "país", "conecta"]), msg
 
 
+@SKIP_LIVE
 def test_put_platform_inbound_es_idempotent(admin_session):
     r = admin_session.put(f"{BASE_URL}/api/admin/platform-inbound",
                           json={"country": "ES", "agent_id": ES_AGENT_ID})
     assert r.status_code == 200, r.text
     data = r.json()
     assert data.get("ok") is True
-    assert data.get("sip_uri") == "34919932652@sip.vapi.ai"
+    assert data.get("sip_uri") == "34919932652@8aa11b2f-c982-434a-b6c6-1e9fded14d7e.sip.vapi.ai"
 
 
 # --- Vapi webhook assistant-request ---

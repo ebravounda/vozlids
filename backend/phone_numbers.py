@@ -60,8 +60,8 @@ async def provision(user_id: str) -> dict:
         await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {"number": number}})
         pwd = secrets.token_urlsafe(10) + "Vz7"
         sip = await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)
-        await Z.route_to(number, vapi.inbound_sip_uri(number))
         v = await vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"])
+        await Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"]))
         await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {
             "status": "activo", "sip_id": sip, **v, "activated_at": now_iso(),
             "inbound_agent_id": (cur or {}).get("inbound_agent_id") or await _default_agent(user_id, country)}})
@@ -256,7 +256,7 @@ async def platform_inbound(user=Depends(X.require_admin)):
     for c, n in vapi.STATE["numbers"].items():
         r = await db.tenant_numbers.find_one({"platform": True, "country": c}) or {}
         out.append({"country": c, "number": n.get("number"), "enabled": r.get("status") == "activo",
-                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": vapi.inbound_sip_uri(n.get("number", "")),
+                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": vapi.inbound_sip_uri(n.get("number", ""), n.get("credential_id", "")),
                     "routed": r.get("routed", False)})
     return out
 
@@ -273,7 +273,7 @@ async def platform_inbound_on(body: PlatformInboundIn, user=Depends(X.require_ad
     routed, note = False, ""
     if (await Z.creds()).get("key"):
         try:
-            await Z.route_to(n["number"], vapi.inbound_sip_uri(n["number"]))
+            await Z.route_to(n["number"], vapi.inbound_sip_uri(n["number"], n["credential_id"]))
             routed = True
         except Z.ZadarmaError as e:
             note = str(e)[:200]
@@ -281,7 +281,7 @@ async def platform_inbound_on(body: PlatformInboundIn, user=Depends(X.require_ad
         "tenant_id": user["id"], "number": n["number"], "phone_number_id": n["phone_number_id"], "credential_id": n["credential_id"],
         "status": "activo", "inbound_agent_id": body.agent_id, "routed": routed, "updated_at": now_iso()},
         "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
-    return {"ok": True, "routed": routed, "note": note, "sip_uri": vapi.inbound_sip_uri(n["number"])}
+    return {"ok": True, "routed": routed, "note": note, "sip_uri": vapi.inbound_sip_uri(n["number"], n["credential_id"])}
 
 
 @router.delete("/admin/platform-inbound/{country}")
