@@ -18,7 +18,7 @@ export function Seo({ page }) {
     setMeta("og:description", "property", "og:description", h.description);
     setMeta("og:url", "property", "og:url", h.url);
     setMeta("og:locale", "property", "og:locale", h.locale);
-    setMeta("og:image", "property", "og:image", h.image || `${cfg.site}/og-image.jpg`);
+    setMeta("og:image", "property", "og:image", h.image || `${cfg.site}/og-image.jpg?v=2`);
     setMeta("twitter:title", "name", "twitter:title", h.title);
     setMeta("twitter:description", "name", "twitter:description", h.description);
     let can = document.head.querySelector('[data-seo="canonical"]');
