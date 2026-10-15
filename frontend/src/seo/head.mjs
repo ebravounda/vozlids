@@ -5,7 +5,10 @@ const NAMES = { ES: "España", CL: "Chile", MX: "México", AR: "Argentina", CO: 
 export function headFor(cfg, page) {
   const url = cfg.site + (page.path === "/" ? "/" : page.path);
   const org = { "@type": "Organization", "@id": `${cfg.site}/#org`, name: cfg.brand, url: cfg.site, logo: `${cfg.site}/logo.png`,
-    parentOrganization: { "@type": "Organization", name: cfg.owner, url: `https://${cfg.owner.toLowerCase()}` },
+    parentOrganization: { "@type": "Organization", name: "GoRoky LLC", url: `https://${cfg.owner.toLowerCase()}` },
+    email: "soporte@goroky.com",
+    address: { "@type": "PostalAddress", streetAddress: "Raimundo Fernández Villaverde 39", addressLocality: "Madrid", addressCountry: "ES" },
+    contactPoint: { "@type": "ContactPoint", contactType: "customer support", email: "soporte@goroky.com", availableLanguage: "es" },
     areaServed: Object.values(NAMES).map((name) => ({ "@type": "Country", name })) };
   const graph = [org,
     { "@type": "WebSite", "@id": `${cfg.site}/#web`, url: cfg.site, name: cfg.brand, inLanguage: "es", publisher: { "@id": `${cfg.site}/#org` } },

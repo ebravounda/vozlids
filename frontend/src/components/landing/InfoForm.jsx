@@ -20,17 +20,20 @@ export function InfoForm({ m, page = "/", id = "solicitar", title = "Solicita tu
   useEffect(() => { if (!f.phone) setF((x) => ({ ...x, country: initial })); }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [repeat, setRepeat] = useState(false);
   const [done, setDone] = useState(null);
   const c = byCode(f.country);
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
+    setRepeat(false);
     if (!f.consent) return setErr("Marca la casilla para que podamos llamarte.");
     setBusy(true);
     try {
       const phone = f.phone.trim().startsWith("+") ? f.phone : `${c.dial}${f.phone}`;
       const r = await api.post("/public/info-request", { ...f, phone, page });
-      setDone({ name: f.name, calling: r.data.calling });
+      if (r.data.repeated) setRepeat(true);
+      else setDone({ name: f.name, calling: r.data.calling });
     } catch (e2) { setErr(errMsg(e2)); } finally { setBusy(false); }
   };
   const tid = (s) => `${id}-${s}`;
@@ -71,7 +74,9 @@ export function InfoForm({ m, page = "/", id = "solicitar", title = "Solicita tu
           <button disabled={busy} className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-60" data-testid={tid("submit")}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneCall className="h-4 w-4" />} Quiero que me llamen ahora
           </button>
-          <p className="text-center text-xs text-slate-500">Muestra gratuita de 10-15 segundos · Sin compromiso</p>
+          {repeat
+            ? <p className="text-center text-xs font-medium text-amber-700" data-testid={tid("repeat-note")}>Ya hemos llamado a este número hoy. Puedes volver a solicitar otra prueba en 24 horas.</p>
+            : <p className="text-center text-xs text-slate-500">Muestra gratuita de 10-15 segundos · Sin compromiso</p>}
         </form>
       )}
     </div>

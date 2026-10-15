@@ -2021,6 +2021,630 @@
      "Quedó agendada. Traiga la carta de despido y sus últimas liquidaciones de sueldo. Le envío la confirmación por correo. Gracias."
     ]
    ]
+  },
+  {
+   "path": "/es/inmobiliarias",
+   "type": "sector",
+   "country": "ES",
+   "sector": "inmobiliarias",
+   "name": "Inmobiliarias",
+   "img": "https://images.unsplash.com/photo-1714647212027-2a0ad30cb4f1?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Home",
+   "biz": "Inmobiliaria Puerta Nueva",
+   "title": "Recepcionista virtual con IA para inmobiliarias en España | VozLeads",
+   "description": "Asistente telefónico con IA para inmobiliarias en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Inmobiliarias · España",
+   "h1": "Recepcionista con IA para inmobiliarias",
+   "intro": "Los leads de los portales llegan a cualquier hora y, si no les llamas en minutos, visitan el piso con otra agencia. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA inmobiliaria, recepcionista virtual inmobiliaria, llamar leads inmobiliarios, agendar visitas pisos por teléfono, captación inmobiliaria IA",
+   "sections": [
+    [
+     "Llama a cada lead de los portales en segundos",
+     "Quien pregunta por un inmueble en tu web o en los portales recibe una llamada en menos de 30 segundos, con la información de esa propiedad."
+    ],
+    [
+     "Califica antes de enseñar",
+     "Compra o alquiler, presupuesto, financiación y plazos: el agente filtra y solo agenda visitas con interesados reales."
+    ],
+    [
+     "Captación de propietarios",
+     "Atiende a quien quiere vender o alquilar su propiedad, recoge los datos del inmueble y agenda la tasación con tu equipo."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede hablar de varias propiedades?",
+     "Sí. Le das la ficha de cada inmueble (precio, metros, características) y responde según la propiedad por la que llama el cliente."
+    ],
+    [
+     "¿Agenda visitas en la agenda de cada agente?",
+     "Sí. Cada agente tiene su disponibilidad y el agente con IA ofrece los huecos libres."
+    ],
+    [
+     "¿Sirve para los leads de los portales?",
+     "Sí. Conecta el email o el formulario de los portales con VozLeads y cada lead recibe su llamada al instante."
+    ],
+    [
+     "¿Puede pedir datos de financiación?",
+     "Puede preguntar si necesita hipoteca o crédito y su presupuesto aproximado, sin pedir nunca datos bancarios."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Inmobiliaria Puerta Nueva, buenas tardes, soy Nerea. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, llamo por el piso de tres habitaciones en la calle Mayor que vi en el portal."
+    ],
+    [
+     "agent",
+     "¡Genial! Sigue disponible. Son noventa metros, con ascensor y terraza. ¿Lo buscas para comprar o para alquilar?"
+    ],
+    [
+     "caller",
+     "Para comprar. ¿Se puede ver esta semana?"
+    ],
+    [
+     "agent",
+     "Claro. Tengo visita el miércoles a las seis o el sábado a las once. ¿Qué te viene mejor?"
+    ],
+    [
+     "caller",
+     "El sábado a las once."
+    ],
+    [
+     "agent",
+     "Perfecto, te apunto el sábado a las once. Te envío la dirección exacta por mensaje y el agente te espera en el portal."
+    ]
+   ]
+  },
+  {
+   "path": "/cl/inmobiliarias",
+   "type": "sector",
+   "country": "CL",
+   "sector": "inmobiliarias",
+   "name": "Corredoras de propiedades",
+   "img": "https://images.unsplash.com/photo-1714647212027-2a0ad30cb4f1?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Home",
+   "biz": "Propiedades Puerta Nueva",
+   "title": "Recepcionista virtual con IA para corredoras de propiedades en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para corredoras de propiedades en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Corredoras de propiedades · Chile",
+   "h1": "Recepcionista con IA para corredoras de propiedades",
+   "intro": "Los leads de Portal Inmobiliario llegan a toda hora y, si no los llamas al tiro, visitan el departamento con otra corredora. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA corredora de propiedades, recepcionista virtual inmobiliaria Chile, llamar leads inmobiliarios Chile, agendar visitas departamentos",
+   "sections": [
+    [
+     "Llama a cada lead de los portales en segundos",
+     "Quien pregunta por un inmueble en tu web o en los portales recibe una llamada en menos de 30 segundos, con la información de esa propiedad."
+    ],
+    [
+     "Califica antes de enseñar",
+     "Compra o arriendo, presupuesto, financiación y plazos: el agente filtra y solo agenda visitas con interesados reales."
+    ],
+    [
+     "Captación de propietarios",
+     "Atiende a quien quiere vender o arrendar su propiedad, recoge los datos del inmueble y agenda la tasación con tu equipo."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede hablar de varias propiedades?",
+     "Sí. Le das la ficha de cada inmueble (precio, metros, características) y responde según la propiedad por la que llama el cliente."
+    ],
+    [
+     "¿Agenda visitas en la agenda de cada agente?",
+     "Sí. Cada corredor tiene su disponibilidad y el agente con IA ofrece los huecos libres."
+    ],
+    [
+     "¿Sirve para los leads de los portales?",
+     "Sí. Conecta el email o el formulario de los portales con VozLeads y cada lead recibe su llamada al instante."
+    ],
+    [
+     "¿Puede pedir datos de financiación?",
+     "Puede preguntar si necesita hipoteca o crédito y su presupuesto aproximado, sin pedir nunca datos bancarios."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Propiedades Puerta Nueva, buenas tardes, habla Nerea. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, llamo por el departamento de tres dormitorios en Ñuñoa que vi en el portal."
+    ],
+    [
+     "agent",
+     "¡Qué bueno! Sigue disponible. Son noventa metros, con estacionamiento y bodega. ¿Lo buscas para comprar o arrendar?"
+    ],
+    [
+     "caller",
+     "Para comprar. ¿Se puede ver esta semana?"
+    ],
+    [
+     "agent",
+     "Claro. Tengo visita el miércoles a las seis o el sábado a las once. ¿Cuál te acomoda?"
+    ],
+    [
+     "caller",
+     "El sábado a las once."
+    ],
+    [
+     "agent",
+     "Perfecto, quedó agendada el sábado a las once. Te mando la dirección por WhatsApp y el corredor te espera en el edificio."
+    ]
+   ]
+  },
+  {
+   "path": "/es/talleres-mecanicos",
+   "type": "sector",
+   "country": "ES",
+   "sector": "talleres-mecanicos",
+   "name": "Talleres mecánicos",
+   "img": "https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Wrench",
+   "biz": "Talleres Motor Sur",
+   "title": "Recepcionista virtual con IA para talleres mecánicos en España | VozLeads",
+   "description": "Asistente telefónico con IA para talleres mecánicos en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Talleres mecánicos · España",
+   "h1": "Recepcionista con IA para talleres mecánicos",
+   "intro": "Estás debajo de un coche con las manos llenas de grasa y el teléfono no para: cada llamada perdida es una reparación que se va a otro taller. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA taller mecánico, recepcionista virtual taller, cita taller por teléfono, recordatorio ITV y revisión, atención telefónica taller",
+   "sections": [
+    [
+     "Citas de taller sin dejar la herramienta",
+     "El agente atiende cada llamada, pregunta marca, modelo, año y síntoma, y agenda la entrada del vehículo en tu calendario."
+    ],
+    [
+     "Presupuestos orientativos al momento",
+     "Cambios de aceite, frenos, neumáticos o diagnóstico: informa de los precios que tú configures y reserva el hueco."
+    ],
+    [
+     "Recordatorios que traen clientes de vuelta",
+     "Llama cuando toca la revisión, la ITV o el cambio de neumáticos, para que tu agenda nunca se vacíe."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede dar precios de reparaciones?",
+     "Solo los precios fijos que tú indiques (aceite, frenos, diagnóstico). Para reparaciones complejas agenda la revisión."
+    ],
+    [
+     "¿Qué datos del vehículo recoge?",
+     "Marca, modelo, año, matrícula si el cliente la tiene a mano y el síntoma, para que llegue preparado al taller."
+    ],
+    [
+     "¿Atiende urgencias o grúa?",
+     "Si el coche está parado en la vía, toma la ubicación y te avisa al instante, o da el teléfono de asistencia que configures."
+    ],
+    [
+     "¿Puede llamar para avisar de que el coche está listo?",
+     "Sí. Puedes lanzar llamadas de aviso desde el panel o por API cuando termines la reparación."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Talleres Motor Sur, buenos días, soy Raquel. ¿En qué te ayudo?"
+    ],
+    [
+     "caller",
+     "Hola, me ha saltado el testigo del motor y el coche hace un ruido raro al frenar."
+    ],
+    [
+     "agent",
+     "Vale, conviene revisarlo cuanto antes. ¿Qué coche es y de qué año?"
+    ],
+    [
+     "caller",
+     "Un Seat León de dos mil diecisiete."
+    ],
+    [
+     "agent",
+     "Te puedo dar hueco mañana a las ocho y media para diagnóstico. La revisión de frenos y la lectura de errores son cuarenta euros."
+    ],
+    [
+     "caller",
+     "Vale, mañana a primera hora."
+    ],
+    [
+     "agent",
+     "Hecho, mañana a las ocho y media. Te avisamos por mensaje con el presupuesto antes de reparar nada."
+    ]
+   ]
+  },
+  {
+   "path": "/cl/talleres-mecanicos",
+   "type": "sector",
+   "country": "CL",
+   "sector": "talleres-mecanicos",
+   "name": "Talleres mecánicos",
+   "img": "https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Wrench",
+   "biz": "Taller Mecánico Motor Sur",
+   "title": "Recepcionista virtual con IA para talleres mecánicos en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para talleres mecánicos en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Talleres mecánicos · Chile",
+   "h1": "Recepcionista con IA para talleres mecánicos",
+   "intro": "Estás bajo un auto con las manos llenas de grasa y el teléfono no para: cada llamada perdida es una reparación que se va a otro taller. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA taller mecánico Chile, recepcionista virtual taller mecánico, agendar hora taller, recordatorio revisión técnica, atención telefónica taller",
+   "sections": [
+    [
+     "Citas de taller sin dejar la herramienta",
+     "El agente atiende cada llamada, pregunta marca, modelo, año y síntoma, y agenda la entrada del vehículo en tu calendario."
+    ],
+    [
+     "Presupuestos orientativos al momento",
+     "Cambios de aceite, frenos, neumáticos o diagnóstico: informa de los precios que tú configures y reserva el hueco."
+    ],
+    [
+     "Recordatorios que traen clientes de vuelta",
+     "Llama cuando toca la revisión, la revisión técnica o el cambio de neumáticos, para que tu agenda nunca se vacíe."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede dar precios de reparaciones?",
+     "Solo los precios fijos que tú indiques (aceite, frenos, diagnóstico). Para reparaciones complejas agenda la revisión."
+    ],
+    [
+     "¿Qué datos del vehículo recoge?",
+     "Marca, modelo, año, patente si el cliente la tiene a mano y el síntoma, para que llegue preparado al taller."
+    ],
+    [
+     "¿Atiende urgencias o grúa?",
+     "Si el coche está parado en la vía, toma la ubicación y te avisa al instante, o da el teléfono de asistencia que configures."
+    ],
+    [
+     "¿Puede llamar para avisar de que el coche está listo?",
+     "Sí. Puedes lanzar llamadas de aviso desde el panel o por API cuando termines la reparación."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Taller Mecánico Motor Sur, buenos días, habla Raquel. ¿En qué te ayudo?"
+    ],
+    [
+     "caller",
+     "Hola, se me prendió la luz del motor y el auto hace un ruido raro al frenar."
+    ],
+    [
+     "agent",
+     "Ya, conviene revisarlo luego. ¿Qué auto es y de qué año?"
+    ],
+    [
+     "caller",
+     "Un Chevrolet Sail del dos mil diecisiete."
+    ],
+    [
+     "agent",
+     "Te puedo dar hora mañana a las ocho y media para diagnóstico. La revisión de frenos y el escáner salen treinta y cinco mil pesos."
+    ],
+    [
+     "caller",
+     "Ya, mañana temprano."
+    ],
+    [
+     "agent",
+     "Listo, mañana a las ocho y media. Te avisamos por WhatsApp con el presupuesto antes de reparar cualquier cosa."
+    ]
+   ]
+  },
+  {
+   "path": "/es/gimnasios",
+   "type": "sector",
+   "country": "ES",
+   "sector": "gimnasios",
+   "name": "Gimnasios y centros deportivos",
+   "img": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Dumbbell",
+   "biz": "Gimnasio Forma Total",
+   "title": "Recepcionista virtual con IA para gimnasios y centros deportivos en España | VozLeads",
+   "description": "Asistente telefónico con IA para gimnasios y centros deportivos en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Gimnasios y centros deportivos · España",
+   "h1": "Recepcionista con IA para gimnasios y centros deportivos",
+   "intro": "Los interesados que piden información en tu web o en Instagram se enfrían si nadie les llama el mismo día. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA gimnasio, recepcionista virtual gimnasio, llamar leads gimnasio, clase de prueba gratis gimnasio, captación socios gimnasio",
+   "sections": [
+    [
+     "Cada interesado recibe su llamada al momento",
+     "Quien deja sus datos en tu web o en tus anuncios recibe una llamada en segundos, con precios, horarios y una clase de prueba reservada."
+    ],
+    [
+     "Más socios con la clase de prueba",
+     "El agente reserva plaza en la clase o el horario que el cliente prefiera y le llama el día antes para recordarlo."
+    ],
+    [
+     "Recupera socios que se dan de baja",
+     "Programa llamadas a socios inactivos o que han cancelado, con una oferta para volver."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede informar de cuotas y horarios?",
+     "Sí. Le das tus cuotas, promociones y horario de clases y responde con esa información."
+    ],
+    [
+     "¿Reserva clases con aforo limitado?",
+     "Sí. Configuras las clases con sus plazas y solo ofrece las que tienen sitio."
+    ],
+    [
+     "¿Sirve para campañas de enero o verano?",
+     "Es cuando más ayuda: en los picos de leads llama a todos en segundos, sin colas."
+    ],
+    [
+     "¿Gestiona bajas?",
+     "Puede recoger la solicitud y el motivo y avisar a tu equipo, que es quien la tramita."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Gimnasio Forma Total, ¡hola! Soy Andrea. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, quería información de las cuotas y si tenéis clases de spinning."
+    ],
+    [
+     "agent",
+     "¡Claro! La cuota mensual es de treinta y nueve euros con todas las clases incluidas, y hay spinning por la mañana y por la tarde. ¿Te apetece probar una clase gratis?"
+    ],
+    [
+     "caller",
+     "Sí, ¿el jueves por la tarde?"
+    ],
+    [
+     "agent",
+     "El jueves hay spinning a las siete. ¿Te reservo plaza?"
+    ],
+    [
+     "caller",
+     "Sí, a nombre de David."
+    ],
+    [
+     "agent",
+     "Hecho, David, el jueves a las siete. Trae toalla y agua. ¡Te esperamos!"
+    ]
+   ]
+  },
+  {
+   "path": "/cl/gimnasios",
+   "type": "sector",
+   "country": "CL",
+   "sector": "gimnasios",
+   "name": "Gimnasios y centros deportivos",
+   "img": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=70",
+   "icon": "Dumbbell",
+   "biz": "Gimnasio Forma Total",
+   "title": "Recepcionista virtual con IA para gimnasios y centros deportivos en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para gimnasios y centros deportivos en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Gimnasios y centros deportivos · Chile",
+   "h1": "Recepcionista con IA para gimnasios y centros deportivos",
+   "intro": "Los interesados que piden información en tu web o en Instagram se enfrían si nadie los llama el mismo día. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA gimnasio Chile, recepcionista virtual gimnasio, llamar leads gimnasio Chile, clase de prueba gratis gimnasio, captación socios",
+   "sections": [
+    [
+     "Cada interesado recibe su llamada al momento",
+     "Quien deja sus datos en tu web o en tus anuncios recibe una llamada en segundos, con precios, horarios y una clase de prueba reservada."
+    ],
+    [
+     "Más socios con la clase de prueba",
+     "El agente reserva cupo en la clase o el horario que el cliente prefiera y le llama el día antes para recordarlo."
+    ],
+    [
+     "Recupera socios que se dan de baja",
+     "Programa llamadas a socios inactivos o que han cancelado, con una oferta para volver."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede informar de cuotas y horarios?",
+     "Sí. Le das tus planes, promociones y horario de clases y responde con esa información."
+    ],
+    [
+     "¿Reserva clases con aforo limitado?",
+     "Sí. Configuras las clases con sus cupos y solo ofrece las que tienen sitio."
+    ],
+    [
+     "¿Sirve para campañas de enero o verano?",
+     "Es cuando más ayuda: en los picos de leads llama a todos en segundos, sin colas."
+    ],
+    [
+     "¿Gestiona bajas?",
+     "Puede recoger la solicitud y el motivo y avisar a tu equipo, que es quien la tramita."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Gimnasio Forma Total, ¡hola! Habla Andrea. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, quería saber los planes y si tienen clases de spinning."
+    ],
+    [
+     "agent",
+     "¡Claro! El plan mensual sale veintinueve mil pesos con todas las clases incluidas, y hay spinning en la mañana y en la tarde. ¿Te tinca probar una clase gratis?"
+    ],
+    [
+     "caller",
+     "Sí, ¿el jueves en la tarde?"
+    ],
+    [
+     "agent",
+     "El jueves hay spinning a las siete. ¿Te reservo un cupo?"
+    ],
+    [
+     "caller",
+     "Sí, a nombre de Diego."
+    ],
+    [
+     "agent",
+     "Listo, Diego, el jueves a las siete. Trae toalla y agua. ¡Te esperamos!"
+    ]
+   ]
+  },
+  {
+   "path": "/es/academias",
+   "type": "sector",
+   "country": "ES",
+   "sector": "academias",
+   "name": "Academias y centros de formación",
+   "img": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=70",
+   "icon": "GraduationCap",
+   "biz": "Academia Avanza",
+   "title": "Recepcionista virtual con IA para academias y centros de formación en España | VozLeads",
+   "description": "Asistente telefónico con IA para academias y centros de formación en España: contesta 24/7, agenda citas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Academias y centros de formación · España",
+   "h1": "Recepcionista con IA para academias y centros de formación",
+   "intro": "En plena época de matrículas las llamadas se acumulan y los padres y alumnos que no consiguen hablar contigo se apuntan en otra academia. Tu asistente telefónico con IA contesta cada llamada con voz natural de España, agenda citas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA academia, recepcionista virtual academia, matrícula por teléfono, llamar leads academia, centro de formación atención telefónica",
+   "sections": [
+    [
+     "Matrículas atendidas aunque estés en clase",
+     "El agente informa de cursos, horarios y precios, resuelve dudas de padres y alumnos, y reserva la clase de prueba o la plaza."
+    ],
+    [
+     "Llama a cada interesado de tu web en segundos",
+     "Quien pide información sobre un curso recibe una llamada al instante, cuando todavía está comparando academias."
+    ],
+    [
+     "Recordatorios de pagos y de inicio de curso",
+     "Recuerda cuotas pendientes con amabilidad y avisa del inicio de curso o de cambios de horario."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede informar de todos mis cursos?",
+     "Sí. Le das la lista de cursos con niveles, horarios y precios, y responde con esa información."
+    ],
+    [
+     "¿Reserva clases de prueba?",
+     "Sí, en los grupos con plazas libres, y envía la confirmación por email."
+    ],
+    [
+     "¿Sirve para formación online?",
+     "Sí. Puede informar de cursos online y enviar el enlace de inscripción o de la clase."
+    ],
+    [
+     "¿Puede recordar pagos pendientes?",
+     "Sí, con un tono cordial y sin pedir nunca datos de tarjeta por teléfono."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Academia Avanza, buenas tardes, soy Clara. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, busco clases de refuerzo de matemáticas para mi hijo, que está en segundo de la ESO."
+    ],
+    [
+     "agent",
+     "Tenemos grupos reducidos de matemáticas para la ESO, lunes y miércoles de cinco a seis y media. Son sesenta euros al mes."
+    ],
+    [
+     "caller",
+     "¿Se puede hacer una clase de prueba?"
+    ],
+    [
+     "agent",
+     "Sí, la primera clase es gratis. ¿Le apunto para el próximo lunes a las cinco?"
+    ],
+    [
+     "caller",
+     "Sí, se llama Hugo."
+    ],
+    [
+     "agent",
+     "Perfecto, Hugo queda apuntado el lunes a las cinco. Te envío por email la dirección y el material que debe traer."
+    ]
+   ]
+  },
+  {
+   "path": "/cl/academias",
+   "type": "sector",
+   "country": "CL",
+   "sector": "academias",
+   "name": "Academias y preuniversitarios",
+   "img": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=70",
+   "icon": "GraduationCap",
+   "biz": "Academia Avanza",
+   "title": "Recepcionista virtual con IA para academias y preuniversitarios en Chile | VozLeads",
+   "description": "Asistente telefónico con IA para academias y preuniversitarios en Chile: contesta 24/7, agenda horas, envía recordatorios y llama a tus leads en segundos. Escucha una llamada de ejemplo.",
+   "eyebrow": "Academias y preuniversitarios · Chile",
+   "h1": "Recepcionista con IA para academias y preuniversitarios",
+   "intro": "En temporada de matrículas las llamadas se acumulan y los apoderados y alumnos que no logran hablar contigo se matriculan en otra academia. Tu asistente telefónico con IA contesta cada llamada con voz natural de Chile, agenda horas y te deja todo por escrito.",
+   "keywords": "asistente telefónico IA academia Chile, recepcionista virtual preuniversitario, matrícula por teléfono, llamar leads academia Chile, clases de reforzamiento",
+   "sections": [
+    [
+     "Matrículas atendidas aunque estés en clase",
+     "El agente informa de cursos, horarios y precios, resuelve dudas de apoderados y alumnos, y reserva la clase de prueba o la plaza."
+    ],
+    [
+     "Llama a cada interesado de tu web en segundos",
+     "Quien pide información sobre un curso recibe una llamada al instante, cuando todavía está comparando academias."
+    ],
+    [
+     "Recordatorios de pagos y de inicio de curso",
+     "Recuerda mensualidades pendientes con amabilidad y avisa del inicio de curso o de cambios de horario."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Puede informar de todos mis cursos?",
+     "Sí. Le das la lista de cursos con niveles, horarios y precios, y responde con esa información."
+    ],
+    [
+     "¿Reserva clases de prueba?",
+     "Sí, en los grupos con cupos libres, y envía la confirmación por email."
+    ],
+    [
+     "¿Sirve para formación online?",
+     "Sí. Puede informar de cursos online y enviar el enlace de inscripción o de la clase."
+    ],
+    [
+     "¿Puede recordar pagos pendientes?",
+     "Sí, con un tono cordial y sin pedir nunca datos de tarjeta por teléfono."
+    ]
+   ],
+   "dialog": [
+    [
+     "agent",
+     "Academia Avanza, buenas tardes, habla Clara. ¿En qué te puedo ayudar?"
+    ],
+    [
+     "caller",
+     "Hola, busco clases de reforzamiento de matemáticas para mi hijo, que está en segundo medio."
+    ],
+    [
+     "agent",
+     "Tenemos grupos chicos de matemáticas para enseñanza media, lunes y miércoles de cinco a seis y media. Son cincuenta y cinco mil pesos al mes."
+    ],
+    [
+     "caller",
+     "¿Se puede hacer una clase de prueba?"
+    ],
+    [
+     "agent",
+     "Sí, la primera clase es gratis. ¿Lo inscribo para el próximo lunes a las cinco?"
+    ],
+    [
+     "caller",
+     "Sí, se llama Tomás."
+    ],
+    [
+     "agent",
+     "Perfecto, Tomás quedó inscrito el lunes a las cinco. Te mando al correo la dirección y los materiales que debe traer."
+    ]
+   ]
   }
  ]
 }

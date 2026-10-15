@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Landing from "@/pages/Landing";
-import Privacy from "@/pages/Privacy";
+import Legal, { LEGAL } from "@/pages/Legal";
 import { SEO_PAGES } from "@/components/Seo";
 import AuthPage from "@/pages/AuthPage";
 import PublicForm from "@/pages/PublicForm";
@@ -37,7 +37,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           {SEO_PAGES.map((p) => <Route key={p.path} path={p.path} element={<Landing key={p.path} path={p.path} />} />)}
-          <Route path="/privacidad" element={<Privacy />} />
+          {Object.keys(LEGAL).map((p) => <Route key={p} path={p} element={<Legal path={p} />} />)}
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/registro" element={<AuthPage mode="register" />} />
           <Route path="/f/:agentId" element={<PublicForm />} />

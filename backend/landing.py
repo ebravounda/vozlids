@@ -105,7 +105,7 @@ async def info_request(body: InfoIn, request: Request):
     await db.info_requests.insert_one(req)
     if not repeated:
         await _notify(cfg, req)
-    return {"ok": True, "calling": req["call_status"] in ("llamando", "en_curso")}
+    return {"ok": True, "calling": req["call_status"] in ("llamando", "en_curso"), "repeated": bool(repeated)}
 
 
 class LandingCfg(BaseModel):

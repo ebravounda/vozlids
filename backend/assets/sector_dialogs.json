@@ -418,5 +418,245 @@
    "agent",
    "Quedó agendada. Traiga la carta de despido y sus últimas liquidaciones de sueldo. Le envío la confirmación por correo. Gracias."
   ]
+ ],
+ "ES-inmobiliarias": [
+  [
+   "agent",
+   "Inmobiliaria Puerta Nueva, buenas tardes, soy Nerea. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, llamo por el piso de tres habitaciones en la calle Mayor que vi en el portal."
+  ],
+  [
+   "agent",
+   "¡Genial! Sigue disponible. Son noventa metros, con ascensor y terraza. ¿Lo buscas para comprar o para alquilar?"
+  ],
+  [
+   "caller",
+   "Para comprar. ¿Se puede ver esta semana?"
+  ],
+  [
+   "agent",
+   "Claro. Tengo visita el miércoles a las seis o el sábado a las once. ¿Qué te viene mejor?"
+  ],
+  [
+   "caller",
+   "El sábado a las once."
+  ],
+  [
+   "agent",
+   "Perfecto, te apunto el sábado a las once. Te envío la dirección exacta por mensaje y el agente te espera en el portal."
+  ]
+ ],
+ "CL-inmobiliarias": [
+  [
+   "agent",
+   "Propiedades Puerta Nueva, buenas tardes, habla Nerea. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, llamo por el departamento de tres dormitorios en Ñuñoa que vi en el portal."
+  ],
+  [
+   "agent",
+   "¡Qué bueno! Sigue disponible. Son noventa metros, con estacionamiento y bodega. ¿Lo buscas para comprar o arrendar?"
+  ],
+  [
+   "caller",
+   "Para comprar. ¿Se puede ver esta semana?"
+  ],
+  [
+   "agent",
+   "Claro. Tengo visita el miércoles a las seis o el sábado a las once. ¿Cuál te acomoda?"
+  ],
+  [
+   "caller",
+   "El sábado a las once."
+  ],
+  [
+   "agent",
+   "Perfecto, quedó agendada el sábado a las once. Te mando la dirección por WhatsApp y el corredor te espera en el edificio."
+  ]
+ ],
+ "ES-talleres-mecanicos": [
+  [
+   "agent",
+   "Talleres Motor Sur, buenos días, soy Raquel. ¿En qué te ayudo?"
+  ],
+  [
+   "caller",
+   "Hola, me ha saltado el testigo del motor y el coche hace un ruido raro al frenar."
+  ],
+  [
+   "agent",
+   "Vale, conviene revisarlo cuanto antes. ¿Qué coche es y de qué año?"
+  ],
+  [
+   "caller",
+   "Un Seat León de dos mil diecisiete."
+  ],
+  [
+   "agent",
+   "Te puedo dar hueco mañana a las ocho y media para diagnóstico. La revisión de frenos y la lectura de errores son cuarenta euros."
+  ],
+  [
+   "caller",
+   "Vale, mañana a primera hora."
+  ],
+  [
+   "agent",
+   "Hecho, mañana a las ocho y media. Te avisamos por mensaje con el presupuesto antes de reparar nada."
+  ]
+ ],
+ "CL-talleres-mecanicos": [
+  [
+   "agent",
+   "Taller Mecánico Motor Sur, buenos días, habla Raquel. ¿En qué te ayudo?"
+  ],
+  [
+   "caller",
+   "Hola, se me prendió la luz del motor y el auto hace un ruido raro al frenar."
+  ],
+  [
+   "agent",
+   "Ya, conviene revisarlo luego. ¿Qué auto es y de qué año?"
+  ],
+  [
+   "caller",
+   "Un Chevrolet Sail del dos mil diecisiete."
+  ],
+  [
+   "agent",
+   "Te puedo dar hora mañana a las ocho y media para diagnóstico. La revisión de frenos y el escáner salen treinta y cinco mil pesos."
+  ],
+  [
+   "caller",
+   "Ya, mañana temprano."
+  ],
+  [
+   "agent",
+   "Listo, mañana a las ocho y media. Te avisamos por WhatsApp con el presupuesto antes de reparar cualquier cosa."
+  ]
+ ],
+ "ES-gimnasios": [
+  [
+   "agent",
+   "Gimnasio Forma Total, ¡hola! Soy Andrea. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, quería información de las cuotas y si tenéis clases de spinning."
+  ],
+  [
+   "agent",
+   "¡Claro! La cuota mensual es de treinta y nueve euros con todas las clases incluidas, y hay spinning por la mañana y por la tarde. ¿Te apetece probar una clase gratis?"
+  ],
+  [
+   "caller",
+   "Sí, ¿el jueves por la tarde?"
+  ],
+  [
+   "agent",
+   "El jueves hay spinning a las siete. ¿Te reservo plaza?"
+  ],
+  [
+   "caller",
+   "Sí, a nombre de David."
+  ],
+  [
+   "agent",
+   "Hecho, David, el jueves a las siete. Trae toalla y agua. ¡Te esperamos!"
+  ]
+ ],
+ "CL-gimnasios": [
+  [
+   "agent",
+   "Gimnasio Forma Total, ¡hola! Habla Andrea. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, quería saber los planes y si tienen clases de spinning."
+  ],
+  [
+   "agent",
+   "¡Claro! El plan mensual sale veintinueve mil pesos con todas las clases incluidas, y hay spinning en la mañana y en la tarde. ¿Te tinca probar una clase gratis?"
+  ],
+  [
+   "caller",
+   "Sí, ¿el jueves en la tarde?"
+  ],
+  [
+   "agent",
+   "El jueves hay spinning a las siete. ¿Te reservo un cupo?"
+  ],
+  [
+   "caller",
+   "Sí, a nombre de Diego."
+  ],
+  [
+   "agent",
+   "Listo, Diego, el jueves a las siete. Trae toalla y agua. ¡Te esperamos!"
+  ]
+ ],
+ "ES-academias": [
+  [
+   "agent",
+   "Academia Avanza, buenas tardes, soy Clara. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, busco clases de refuerzo de matemáticas para mi hijo, que está en segundo de la ESO."
+  ],
+  [
+   "agent",
+   "Tenemos grupos reducidos de matemáticas para la ESO, lunes y miércoles de cinco a seis y media. Son sesenta euros al mes."
+  ],
+  [
+   "caller",
+   "¿Se puede hacer una clase de prueba?"
+  ],
+  [
+   "agent",
+   "Sí, la primera clase es gratis. ¿Le apunto para el próximo lunes a las cinco?"
+  ],
+  [
+   "caller",
+   "Sí, se llama Hugo."
+  ],
+  [
+   "agent",
+   "Perfecto, Hugo queda apuntado el lunes a las cinco. Te envío por email la dirección y el material que debe traer."
+  ]
+ ],
+ "CL-academias": [
+  [
+   "agent",
+   "Academia Avanza, buenas tardes, habla Clara. ¿En qué te puedo ayudar?"
+  ],
+  [
+   "caller",
+   "Hola, busco clases de reforzamiento de matemáticas para mi hijo, que está en segundo medio."
+  ],
+  [
+   "agent",
+   "Tenemos grupos chicos de matemáticas para enseñanza media, lunes y miércoles de cinco a seis y media. Son cincuenta y cinco mil pesos al mes."
+  ],
+  [
+   "caller",
+   "¿Se puede hacer una clase de prueba?"
+  ],
+  [
+   "agent",
+   "Sí, la primera clase es gratis. ¿Lo inscribo para el próximo lunes a las cinco?"
+  ],
+  [
+   "caller",
+   "Sí, se llama Tomás."
+  ],
+  [
+   "agent",
+   "Perfecto, Tomás quedó inscrito el lunes a las cinco. Te mando al correo la dirección y los materiales que debe traer."
+  ]
  ]
 }

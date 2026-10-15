@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Brain, Check, ChevronRight, Coffee, Loader2, Pause, Play, Scale, Scissors, Smile, Sparkles, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, Brain, Check, ChevronRight, Coffee, Dumbbell, GraduationCap, Home, Loader2, Pause, Play, Scale, Scissors, Smile, Sparkles, UtensilsCrossed, Wrench } from "lucide-react";
 import { SEO_PAGES } from "@/components/Seo";
 import { InfoForm } from "@/components/landing/InfoForm";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api/public/sector-demo`;
 const H = { fontFamily: "Plus Jakarta Sans" };
-const ICONS = { Smile, Sparkles, Brain, Scissors, UtensilsCrossed, Coffee, Scale };
+const ICONS = { Smile, Sparkles, Brain, Scissors, UtensilsCrossed, Coffee, Scale, Home, Wrench, Dumbbell, GraduationCap };
 const player = { audio: null, stop: null };
 
 export const sectorsFor = (country) => SEO_PAGES.filter((p) => p.type === "sector" && p.country === (country === "CL" ? "CL" : "ES"));
@@ -105,7 +105,7 @@ export const Sectors = ({ country, exclude, title = "Un recepcionista con IA par
     <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {sectorsFor(country).filter((p) => p.sector !== exclude).map((p) => <SectorCard key={p.path} p={p} />)}
       <a href="#solicitar" className="group flex flex-col justify-between rounded-2xl border border-dashed border-blue-300 bg-blue-50/50 p-6 transition-colors hover:bg-blue-50" data-testid="sector-card-other">
-        <div><p className="font-semibold text-slate-900" style={H}>¿Otro tipo de negocio?</p><p className="mt-2 text-sm text-slate-600">Inmobiliarias, talleres, gimnasios, academias… Configuramos el agente con tu información y tus horarios.</p></div>
+        <div><p className="font-semibold text-slate-900" style={H}>¿Otro tipo de negocio?</p><p className="mt-2 text-sm text-slate-600">Veterinarias, ópticas, fisioterapia, hoteles… Configuramos el agente con tu información y tus horarios.</p></div>
         <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">Recibe una llamada de prueba <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
       </a>
     </div>

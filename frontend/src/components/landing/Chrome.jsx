@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { PhoneCall } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { SEO_PAGES } from "@/components/Seo";
+import { COMPANY } from "@/pages/Legal";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
 const LINKS = [["#sectores", "Sectores"], ["#soluciones", "Soluciones"], ["#como", "Cómo funciona"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
@@ -53,6 +54,17 @@ export const Footer = ({ m }) => (
         ))}
       </div>
     </div>
-    <div className="border-t border-slate-200 py-5 text-center text-xs text-slate-500">© {new Date().getFullYear()} VozLeads.com by GoRoky.com · <Link to="/privacidad" className="hover:underline" data-testid="footer-link-privacidad">Privacidad</Link> · <Link to="/registro" className="hover:underline">Crear cuenta</Link></div>
+    <div className="border-t border-slate-200">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-6 text-xs text-slate-500 md:flex-row md:items-center md:justify-between" data-testid="footer-legal">
+        <div className="space-y-1">
+          <p data-testid="footer-company">VozLeads es parte del <a href="https://goroky.com" rel="noopener" className="font-semibold text-slate-700 hover:underline">{COMPANY.group}</a> · {COMPANY.legal} · {COMPANY.countries}</p>
+          <p data-testid="footer-address">{COMPANY.address} · <a href={`mailto:${COMPANY.email}`} className="hover:underline" data-testid="footer-email">{COMPANY.email}</a></p>
+        </div>
+        <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1">
+          {[["/terminos", "Términos y condiciones"], ["/privacidad", "Privacidad"], ["/cookies", "Cookies"], ["/aviso-legal", "Aviso legal"]].map(([to, l]) => <Link key={to} to={to} className="hover:text-slate-900 hover:underline" data-testid={`footer-link-${to.slice(1)}`}>{l}</Link>)}
+          <span>© {new Date().getFullYear()} VozLeads.com</span>
+        </nav>
+      </div>
+    </div>
   </footer>
 );
