@@ -110,7 +110,7 @@ export const ScriptTab = ({ agent, update }) => {
         <div className="space-y-2">
           <Label>Saludo inicial</Label>
           <Textarea rows={5} value={agent.greeting} onChange={(e) => update({ greeting: e.target.value })} data-testid="agent-greeting-input" className="bg-slate-950/60" />
-          <p className="text-xs text-slate-500">Usa <code className="text-emerald-300">{"{nombre}"}</code> para decir el nombre del lead. Mantén que es un asistente virtual y que la llamada se graba: lo exige la normativa.</p>
+          <p className="text-xs text-slate-500">Usa <code className="text-emerald-300">{"{nombre}"}</code> para decir el nombre del lead. Menciona que la llamada se graba.</p>
         </div>
         <div className="space-y-2">
           <Label>Instrucciones adicionales (opcional)</Label>

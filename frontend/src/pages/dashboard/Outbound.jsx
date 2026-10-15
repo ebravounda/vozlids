@@ -14,7 +14,7 @@ const TYPES = { seguimiento: "Seguimiento", cobro: "Cobro", info: "Información"
 const STATUS_CLS = { pendiente: "text-cyan-300", realizada: "text-emerald-300", cancelada: "text-slate-500", fallida: "text-red-300", no_llamar: "text-rose-300", en_proceso: "text-amber-300" };
 
 function TemplateEditor({ onSaved }) {
-  const [f, setF] = useState({ name: "", call_type: "seguimiento", purpose: "", greeting: "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?" });
+  const [f, setF] = useState({ name: "", call_type: "seguimiento", purpose: "", greeting: "Hola {nombre}, soy {agente}, de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?" });
   const save = async () => {
     try { await api.post("/templates", f); toast.success("Plantilla creada"); setF({ ...f, name: "", purpose: "" }); onSaved(); }
     catch (e) { toast.error(errMsg(e)); }

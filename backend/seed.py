@@ -13,7 +13,7 @@ SAMPLE_PRODUCT = ("Clínica dental en Madrid (Chamberí). Primera visita y revis
 
 def _sample_leads(tid: str, aid: str) -> list:
     convo = [
-        ("agente", "Hola Carlos, soy Marta, la asistente virtual de Clínica Dental Sonrisa. Te llamo porque acabas de pedir "
+        ("agente", "Hola Carlos, soy Marta, de Clínica Dental Sonrisa. Te llamo porque acabas de pedir "
                    "información sobre ortodoncia invisible. La llamada se graba para mejorar el servicio. ¿Tienes un minuto?"),
         ("lead", "Sí, sí, dime."),
         ("agente", "Genial. ¿Es para ti o para otra persona de tu familia?"),
@@ -68,14 +68,31 @@ async def migrate_voices():
 
 async def migrate_templates():
     pat = r"^Hola \{nombre\}, (soy \{agente\}, )?te llamo de .+?\. Soy una? asistente virtual y la llamada se graba\."
-    new = "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba."
+    new = "Hola {nombre}, soy {agente}, de {empresa}. Te llamo un momento y la llamada se graba."
     async for t in db.call_templates.find({"greeting": {"$regex": pat}}, {"greeting": 1}):
         await db.call_templates.update_one({"_id": t["_id"]}, {"$set": {"greeting": re.sub(pat, new, t["greeting"])}})
+
+
+AI_LABEL = [(r",? ?(la |el |una |un )?asistente virtual de ", ", de "), (r", (la |el )?asistente virtual\.", "."),
+            (r" Soy una? asistente virtual y", ""), (r"\s*Soy una? asistente virtual\.", "")]
+
+
+def strip_ai_label(t: str) -> str:
+    for pat, rep in AI_LABEL:
+        t = re.sub(pat, rep, t)
+    return t.replace(",, ", ", ")
+
+
+async def migrate_ai_label():
+    for coll in (db.agents, db.call_templates):
+        async for d in coll.find({"greeting": {"$regex": "asistente virtual"}}, {"greeting": 1}):
+            await coll.update_one({"_id": d["_id"]}, {"$set": {"greeting": strip_ai_label(d["greeting"])}})
 
 
 async def seed():
     await migrate_voices()
     await migrate_templates()
+    await migrate_ai_label()
     if not await db.plans.count_documents({}):
         await db.plans.insert_many([{**p, "public": True, "created_at": now_iso()} for p in SAMPLE_PLANS])
     email = os.environ["ADMIN_EMAIL"].lower()
@@ -97,7 +114,7 @@ async def seed():
                   objective="agendar", voice="e_sarah", ambience="oficina", ambience_volume=35, is_sample=True,
                   questions=["¿El tratamiento es para ti o para otra persona?", "¿Qué te gustaría mejorar de tu sonrisa?",
                              "¿Cuándo te gustaría empezar?"],
-                  greeting="Hola {nombre}, soy Marta, la asistente virtual de Clínica Dental Sonrisa. Te llamo porque acabas "
+                  greeting="Hola {nombre}, soy Marta, de Clínica Dental Sonrisa. Te llamo porque acabas "
                            "de pedir información en nuestra web. La llamada se graba para mejorar el servicio. ¿Tienes un minuto?")
     aid = str((await db.agents.insert_one(agent.to_mongo())).inserted_id)
     leads = _sample_leads(tid, aid)

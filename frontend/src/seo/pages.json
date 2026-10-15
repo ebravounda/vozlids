@@ -28,7 +28,7 @@
     ],
     [
      "¿El cliente sabe que habla con una IA?",
-     "Sí. El agente se presenta como asistente virtual y avisa de la grabación, como exigen el RGPD en España y la Ley 19.628 en Chile."
+     "Sí. El agente avisa de la grabación, como exigen el RGPD en España y la Ley 19.628 en Chile."
     ],
     [
      "¿Qué pasa si el cliente quiere hablar con una persona?",
@@ -57,7 +57,7 @@
     ],
     [
      "¿Cumple el RGPD?",
-     "El agente se identifica como asistente virtual, avisa de la grabación, solo llama a quien dio su consentimiento y respeta la lista de no llamar."
+     "El agente avisa de la grabación, solo llama a quien dio su consentimiento y respeta la lista de no llamar."
     ],
     [
      "¿En qué horario llama?",
@@ -251,7 +251,7 @@
     ],
     [
      "Respetuoso y legal",
-     "Solo llama a contactos con consentimiento, se identifica como asistente virtual y añade a la lista de no llamar a quien lo pida."
+     "Solo llama a contactos con consentimiento, avisa de la grabación y añade a la lista de no llamar a quien lo pida."
     ]
    ],
    "faq": [
@@ -296,7 +296,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la LFPDPPP."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la LFPDPPP."
     ]
    ]
   },
@@ -331,7 +331,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 25.326."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 25.326."
     ]
    ]
   },
@@ -366,7 +366,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 1581 de Habeas Data."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 1581 de Habeas Data."
     ]
    ]
   },
@@ -401,7 +401,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 29733."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 29733."
     ]
    ]
   },
@@ -436,7 +436,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la LOPDP."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la LOPDP."
     ]
    ]
   },
@@ -471,7 +471,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 18.331."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 18.331."
     ]
    ]
   },
@@ -506,7 +506,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
     ]
    ]
   },
@@ -541,7 +541,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 81 de protección de datos."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 81 de protección de datos."
     ]
    ]
   },
@@ -576,7 +576,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 8968."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 8968."
     ]
    ]
   },
@@ -611,7 +611,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
     ]
    ]
   },
@@ -646,7 +646,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
     ]
    ]
   },
@@ -681,7 +681,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
     ]
    ]
   },
@@ -716,7 +716,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 787."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 787."
     ]
    ]
   },
@@ -751,7 +751,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 172-13."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 172-13."
     ]
    ]
   },
@@ -786,7 +786,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
     ]
    ]
   },
@@ -821,7 +821,7 @@
     ],
     [
      "¿Cumple la normativa de privacidad?",
-     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 6534."
+     "El agente avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 6534."
     ]
    ]
   },

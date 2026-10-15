@@ -21,7 +21,7 @@ from models import now_iso
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.preview")
 ELEVEN_URL = "https://api.elevenlabs.io/v1"
-DEMO_TEXT = ("Hola Laura, soy Sara, asistente virtual de Clínica Sonrisa. Te llamo porque acabas de pedir información "
+DEMO_TEXT = ("Hola Laura, soy Sara, de Clínica Sonrisa. Te llamo porque acabas de pedir información "
              "en nuestra web. ¿Tienes un minuto?")
 _mix_cache: "OrderedDict[str, bytes]" = OrderedDict()
 

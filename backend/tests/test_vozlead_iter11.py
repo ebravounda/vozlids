@@ -32,7 +32,7 @@ def _load_react_backend_url() -> str:
 BASE_URL = _load_react_backend_url()
 ADMIN_EMAIL = "admin@vozlead.es"
 ADMIN_PASSWORD = "VozLead2026!"
-NEW_GREETING = "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?"
+NEW_GREETING = "Hola {nombre}, soy {agente}, de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?"
 
 
 # ---------- fixtures ----------
@@ -149,7 +149,7 @@ class TestVapiGreeting:
         lead = {"_id": "x", "tenant_id": "t", "name": "Juan Pérez", "greeting": NEW_GREETING, "direction": "saliente"}
         g = vapi.greeting(self._agent(), lead)
         assert "soy Marta" in g
-        assert "asistente virtual de OpenFactura.es" in g
+        assert "de OpenFactura.es" in g and "asistente virtual" not in g
         assert "Clínica" not in g and "{" not in g
 
     def test_build_assistant_firstMessage_and_system_prompt(self):
@@ -162,7 +162,7 @@ class TestVapiGreeting:
         os.environ.setdefault("VAPI_API_KEY", "test-key")
         a = vapi.build_assistant(self._agent(), lead, "Hoy es jueves")
         fm = a["firstMessage"]
-        assert "soy Marta, asistente virtual de OpenFactura.es" in fm
+        assert "soy Marta, de OpenFactura.es" in fm
         assert "Clínica" not in fm
         # system prompt
         sp = a["model"]["messages"][0]["content"]

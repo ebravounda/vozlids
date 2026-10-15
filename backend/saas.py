@@ -261,7 +261,7 @@ class TemplateIn(BaseModel):
     greeting: str = Field(min_length=1, max_length=600)
 
 
-TEMPLATE_GREETING = "Hola {nombre}, soy {agente}, asistente virtual de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?"
+TEMPLATE_GREETING = "Hola {nombre}, soy {agente}, de {empresa}. Te llamo un momento y la llamada se graba. ¿Tienes un minuto?"
 
 
 @router.get("/templates")
@@ -452,7 +452,7 @@ async def v1_create_call(body: ApiCallIn, tenant_id: str = Depends(api_tenant)):
     country = agent.get("country", "ES")
     phone = norm_phone(body.phone, country)
     biz = (await db.users.find_one({"_id": ObjectId(tenant_id)}) or {}).get("business_name", "")
-    greeting = f"Hola {{nombre}}, soy {agent['name']}, asistente virtual de {biz}. La llamada se graba. ¿Tienes un momento?"
+    greeting = f"Hola {{nombre}}, soy {agent['name']}, de {biz}. La llamada se graba. ¿Tienes un momento?"
     purpose = _purpose(body.type, body.context)
     if body.scheduled_at:
         res = await db.scheduled_calls.insert_one({

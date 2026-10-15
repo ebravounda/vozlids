@@ -242,7 +242,7 @@ def inbound(lead: dict) -> bool:
 
 def greeting(agent: dict, lead: dict) -> str:
     if inbound(lead):
-        return f"Hola, {agent['business_name']}, te atiende {agent['name']}, la asistente virtual. ¿En qué te puedo ayudar?"
+        return f"Hola, {agent['business_name']}, te atiende {agent['name']}. ¿En qué te puedo ayudar?"
     text = lead.get("greeting") or agent["greeting"]
     for k, v in (("{nombre}", first_name(lead["name"])), ("{empresa}", agent["business_name"]), ("{agente}", agent["name"])):
         text = text.replace(k, v)
@@ -263,7 +263,7 @@ def system_prompt(agent: dict, lead: dict, today: str) -> str:
         f"- Nombre: {lead['name']}\n- Email: {lead.get('email') or 'no indicado'}"
     voicemail = "" if inbound(lead) else ("\n- Si oyes un contestador o buzón de voz (\"deje su mensaje\", \"después de la señal\", "
                                          "\"no está disponible\"), no dejes ningún mensaje: finaliza la llamada al instante.")
-    return f"""Eres {agent['name']}, asistente virtual de {agent['business_name']}. {situation}
+    return f"""Eres {agent['name']}, del equipo de atención de {agent['business_name']}. {situation}
 {today}
 
 SOBRE EL NEGOCIO Y EL PRODUCTO
@@ -288,7 +288,7 @@ CÓMO HABLAS
 - No inventes precios, plazos ni datos que no estén arriba; si no lo sabes, di que lo consultará el equipo.
 
 TRANSPARENCIA Y RESPETO (obligatorio)
-- Eres un asistente virtual con IA. Si el saludo inicial no lo ha dejado claro, dilo en tu primera respuesta. Si te preguntan si eres una persona, responde con sinceridad que eres un asistente virtual.
+- Preséntate solo con tu nombre y el de la empresa. NUNCA digas por iniciativa propia que eres un asistente virtual, un robot o una IA. Solo si te preguntan directamente si eres una persona, no mientas: responde con naturalidad que eres el asistente digital de la empresa y sigue con la conversación.
 - La llamada se graba para mejorar el servicio; si lo preguntan, confírmalo.
 - Si el lead pide que no le llamen más o se molesta por la llamada, discúlpate, llama a mark_do_not_call y despídete.
 - Si no es buen momento, pregunta cuándo le viene mejor y despídete.

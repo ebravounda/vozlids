@@ -80,7 +80,7 @@ export const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sáb
 export const TIER = (v) => (v.eleven ? "eleven" : v.premium ? "premium" : "standard");
 
 export const DEFAULT_GREETING =
-  "Hola {nombre}, soy Marta, la asistente virtual de tu negocio. Te llamo porque acabas de pedir información en nuestra web. La llamada se graba para mejorar el servicio. ¿Tienes un minuto?";
+  "Hola {nombre}, soy Marta, de tu negocio. Te llamo porque acabas de pedir información en nuestra web. La llamada se graba para mejorar el servicio. ¿Tienes un minuto?";
 
 export const fmtDate = (iso) =>
   iso ? new Date(iso).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
