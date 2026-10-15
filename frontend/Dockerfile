@@ -4,7 +4,7 @@ COPY package.json yarn-lock.txt ./
 RUN cp yarn-lock.txt yarn.lock && yarn install --frozen-lockfile --network-timeout 600000
 COPY . .
 ARG REACT_APP_BACKEND_URL
-ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL GENERATE_SOURCEMAP=false
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true NODE_OPTIONS=--max-old-space-size=1536
 RUN yarn build
 
 FROM nginx:1.27-alpine
