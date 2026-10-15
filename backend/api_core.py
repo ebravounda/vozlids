@@ -20,7 +20,8 @@ from models import now_iso
 
 log = logging.getLogger("vozlead.api")
 SCOPES = {"agents:read": "Ver agentes", "calls:read": "Ver llamadas y resultados", "calls:write": "Crear y cancelar llamadas",
-          "account:read": "Ver consumo y límites", "webhooks:manage": "Gestionar webhooks", "dnc:manage": "Gestionar lista de exclusión"}
+          "account:read": "Ver consumo y límites", "webhooks:manage": "Gestionar webhooks", "dnc:manage": "Gestionar lista de exclusión",
+          "privacy:manage": "Exportar y borrar datos (RGPD)"}
 EVENTS = ["call.created", "call.started", "call.completed", "call.no_answer", "call.failed", "call.cancelled"]
 DEFAULT_LIMITS = {"requests_per_minute": 120, "calls_per_minute": 30, "max_concurrent_calls": 5, "max_daily_calls": 300}
 DEFAULT_HOURS = {"ES": {"weekdays": ["09:00", "21:00"], "saturday": ["10:00", "14:00"], "sunday": None},
@@ -278,6 +279,9 @@ async def worker() -> None:
             tick += 1
             if tick % 6 == 0:
                 await saas.dispatch_due()
+            if tick % 720 == 1:
+                import privacy
+                await privacy.purge_expired()
         except Exception as e:  # noqa: BLE001
             log.warning("API worker error: %s", e)
         await asyncio.sleep(5)

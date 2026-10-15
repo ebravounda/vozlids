@@ -3,6 +3,7 @@ import asyncio
 import ipaddress
 import re
 import secrets
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Optional
@@ -13,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 import api_core as C
 import landing
+import privacy as PV
 import saas
 import services as S
 from countries import COUNTRIES, norm_phone
@@ -25,7 +27,7 @@ DESC = """API REST de **VozLeads by GoRoky** para lanzar llamadas con agentes de
 * Errores en formato RFC 9457 (`application/problem+json`) con `code` estable y `request_id`.
 * Webhooks firmados con HMAC-SHA256 (`VozLeads-Signature: t=<ts>,v1=<hex>` sobre `"<ts>.<cuerpo>"`).
 """
-app = FastAPI(title="VozLeads API", version="1.1.0", description=DESC, docs_url="/docs", redoc_url="/redoc",
+app = FastAPI(title="VozLeads API", version="1.2.0", description=DESC, docs_url="/docs", redoc_url="/redoc",
               openapi_url="/openapi.json")
 MAX_BODY = 16_384
 
@@ -48,7 +50,11 @@ async def guard(request: Request, call_next):
     request.state.rid = request.headers.get("x-request-id", "")[:64] or f"req_{uuid.uuid4().hex[:20]}"
     if int(request.headers.get("content-length") or 0) > MAX_BODY:
         return problem(413, "payload_too_large", f"El cuerpo no puede superar {MAX_BODY} bytes.", request)
+    t0 = time.perf_counter()
     res = await call_next(request)
+    if kid := getattr(request.state, "key_id", None):
+        asyncio.create_task(PV.log_request(request.state.tenant_id, kid, request.method, request.url.path, res.status_code,
+                                           int((time.perf_counter() - t0) * 1000), landing.client_ip(request), request.state.rid))
     res.headers["X-Request-Id"] = request.state.rid
     res.headers["Cache-Control"] = "no-store"
     return res
@@ -86,6 +92,7 @@ async def principal(request: Request, x_api_key: str = Header("", description="T
     doc = await db.api_keys.find_one({"key_hash": C.khash(x_api_key), "revoked": False}) if x_api_key else None
     if not doc or doc.get("disabled"):
         raise HTTPException(401, {"code": "invalid_api_key", "detail": "API key no válida, revocada o desactivada."})
+    request.state.key_id, request.state.tenant_id = str(doc["_id"]), doc["tenant_id"]
     if doc.get("expires_at") and doc["expires_at"] < now_iso():
         raise HTTPException(401, {"code": "api_key_expired", "detail": "La API key ha caducado."})
     ip = landing.client_ip(request)
@@ -408,6 +415,37 @@ async def add_dnc(body: DncIn, p: Principal = Depends(need("dnc:manage"))):
 @app.delete("/dnc/{phone}", status_code=204, tags=["Exclusión"], summary="Quitar un número de la lista de exclusión")
 async def del_dnc(phone: str, p: Principal = Depends(need("dnc:manage"))):
     await db.dnc.delete_one({"tenant_id": p.tenant_id, "phone": phone if phone.startswith("+") else "+" + phone})
+
+
+# ---------- Privacy (RGPD) ----------
+class SubjectV1(Strict):
+    phone: str = Field("", max_length=25, description="Teléfono del contacto (E.164 o nacional)")
+    email: str = Field("", max_length=200, description="Email del contacto")
+    country: Optional[Literal["ES", "CL"]] = Field(None, description="País para interpretar números nacionales (por defecto el de tu cuenta)")
+
+
+class RetentionV1(Strict):
+    days: Literal[PV.RETENTION_CHOICES] = Field(description="Días que se conservan transcripciones y grabaciones (0 = nunca se borran)")
+
+
+@app.post("/privacy/export", tags=["Privacidad (RGPD)"], summary="Exportar todos los datos de un contacto (derecho de acceso y portabilidad)")
+async def privacy_export(body: SubjectV1, p: Principal = Depends(need("privacy:manage"))):
+    return await PV.export_subject(p.tenant_id, *await PV._subject(p.tenant_id, PV.SubjectIn(**body.model_dump())))
+
+
+@app.post("/privacy/erase", tags=["Privacidad (RGPD)"], summary="Borrar definitivamente los datos de un contacto (derecho de supresión)")
+async def privacy_erase(body: SubjectV1, p: Principal = Depends(need("privacy:manage"))):
+    return await PV.erase_subject(p.tenant_id, *await PV._subject(p.tenant_id, PV.SubjectIn(**body.model_dump())))
+
+
+@app.get("/account/retention", tags=["Privacidad (RGPD)"], summary="Plazo de borrado automático de transcripciones y grabaciones")
+async def get_retention(p: Principal = Depends(need("privacy:manage"))):
+    return {"object": "retention", "days": await PV.get_retention(p.tenant_id), "choices": list(PV.RETENTION_CHOICES)}
+
+
+@app.put("/account/retention", tags=["Privacidad (RGPD)"], summary="Cambiar el plazo de borrado automático")
+async def put_retention(body: RetentionV1, p: Principal = Depends(need("privacy:manage"))):
+    return {"object": "retention", "days": await PV.set_retention(p.tenant_id, body.days), "choices": list(PV.RETENTION_CHOICES)}
 
 
 # ---------- Dashboard (session auth) ----------

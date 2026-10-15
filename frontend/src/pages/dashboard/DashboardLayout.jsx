@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
+import { Activity, Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -16,6 +16,7 @@ const NAV = [
   { to: "/app/boton-web", label: "Botón para tu web", icon: MousePointerClick, id: "webwidget" },
   { to: "/app/no-llamar", label: "No llamar", icon: PhoneOff, id: "donotcall" },
   { to: "/app/api", label: "API desarrolladores", icon: Code2, id: "api" },
+  { to: "/app/privacidad", label: "Privacidad (RGPD)", icon: Lock, id: "privacy" },
   { to: "/app/plan", label: "Mi plan", icon: CreditCard, id: "plan" },
 ];
 const ADMIN_NAV = [

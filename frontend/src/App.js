@@ -22,6 +22,7 @@ import Welcome from "@/pages/dashboard/Welcome";
 import Outbound from "@/pages/dashboard/Outbound";
 import Support from "@/pages/dashboard/Support";
 import Developers from "@/pages/dashboard/Developers";
+import Privacy from "@/pages/dashboard/Privacy";
 import SuperAdmin from "@/pages/dashboard/SuperAdmin";
 import Billing from "@/pages/dashboard/Billing";
 
@@ -59,6 +60,7 @@ function App() {
             <Route path="llamadas" element={<Outbound />} />
             <Route path="asistencia" element={<Support />} />
             <Route path="api" element={<Developers />} />
+            <Route path="privacidad" element={<Privacy />} />
             <Route path="admin" element={<SuperAdmin />} />
             <Route path="plan" element={<Billing />} />
           </Route>

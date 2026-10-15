@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Panel } from "@/components/Common";
+import { KeyLogs, LogsButton } from "@/components/PrivacyParts";
 import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 
@@ -28,6 +29,7 @@ export function Keys({ d, reload }) {
   const [f, setF] = useState({ name: "", env: "live", scopes: Object.keys(d.scopes), expires_days: "", allowed_ips: "" });
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
+  const [logKey, setLogKey] = useState(null);
   const run = async (fn) => { setBusy(true); try { await fn(); reload(); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); } };
   const create = () => run(async () => {
     const r = await api.post("/developer/keys", { ...f, expires_days: f.expires_days ? Number(f.expires_days) : null, allowed_ips: f.allowed_ips.split(/[\s,]+/).filter(Boolean) });
@@ -60,11 +62,13 @@ export function Keys({ d, reload }) {
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={!k.disabled} onCheckedChange={(v) => run(() => api.post(`/developer/keys/${k.id}/disable`, null, { params: { disabled: !v } }))} data-testid={`dev-key-toggle-${k.id}`} />
+            <LogsButton id={k.id} onClick={() => setLogKey(k)} />
             <Button size="sm" variant="outline" onClick={() => rotate(k)} className="rounded-full" data-testid={`dev-key-rotate-${k.id}`}><RotateCw className="mr-1 h-4 w-4" />Rotar</Button>
             <Button size="sm" variant="ghost" onClick={() => window.confirm("¿Revocar esta clave? Las integraciones que la usen dejarán de funcionar.") && run(() => api.delete(`/developer/keys/${k.id}`))} data-testid={`dev-key-revoke-${k.id}`}><Trash2 className="h-4 w-4 text-rose-300" /></Button>
           </div>
         </div>
       ))}
+      {logKey && <KeyLogs k={logKey} onClose={() => setLogKey(null)} />}
     </Panel>
   );
 }

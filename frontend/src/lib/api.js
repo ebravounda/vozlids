@@ -30,5 +30,5 @@ export function errMsg(e, fallback = "Algo ha fallado. Inténtalo de nuevo.") {
   if (!d) return e?.message && !e.response ? fallback : fallback;
   if (typeof d === "string") return d;
   if (Array.isArray(d)) return d.map((x) => x?.msg || JSON.stringify(x)).join(" ");
-  return d.msg || String(d);
+  return d.detail || d.msg || String(d);
 }
