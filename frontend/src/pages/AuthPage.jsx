@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { errMsg } from "@/lib/api";
+import { SignupForm } from "@/components/SignupForm";
 
 const Field = ({ id, label, ...props }) => (
   <div className="space-y-2">
@@ -18,9 +18,9 @@ const Field = ({ id, label, ...props }) => (
 
 export default function AuthPage({ mode }) {
   const isLogin = mode === "login";
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", business_name: "", email: "", password: "", country: "ES" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -30,14 +30,8 @@ export default function AuthPage({ mode }) {
     setError("");
     setLoading(true);
     try {
-      if (isLogin) {
-        await login(form.email, form.password);
-        navigate("/app");
-      } else {
-        await register(form);
-        toast.success("Cuenta creada. Vamos a crear tu primer agente.");
-        navigate("/app/agentes/nuevo");
-      }
+      await login(form.email, form.password);
+      navigate("/app");
     } catch (err) {
       setError(errMsg(err));
     } finally {
@@ -52,7 +46,7 @@ export default function AuthPage({ mode }) {
           <Link to="/" data-testid="auth-logo-link"><Logo /></Link>
           <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900" data-testid="auth-back-link"><ArrowLeft className="h-4 w-4" /> Volver a la web</Link>
         </div>
-        <div className="mx-auto my-auto w-full max-w-sm py-12 fade-up">
+        <div className={`mx-auto my-auto w-full ${isLogin ? "max-w-sm" : "max-w-xl"} py-12 fade-up`}>
           <div className="mb-8 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist">
             {[["/login", "Iniciar sesión", true], ["/registro", "Crear cuenta", false]].map(([to, l, lg]) => (
               <Link key={to} to={to} role="tab" aria-selected={isLogin === lg} data-testid={`auth-tab-${lg ? "login" : "register"}`}
@@ -60,23 +54,8 @@ export default function AuthPage({ mode }) {
             ))}
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}</h1>
-          <p className="mt-2 text-slate-500">{isLogin ? "Entra para ver tus llamadas, agentes y citas." : "En 5 minutos tendrás un agente llamando a tus leads."}</p>
-          <form onSubmit={submit} className="mt-8 space-y-4" data-testid="auth-form">
-            {!isLogin && (
-              <>
-                <Field id="name" label="Tu nombre" value={form.name} onChange={set("name")} placeholder="Laura García" />
-                <Field id="business" label="Nombre del negocio" value={form.business_name} onChange={set("business_name")} placeholder="Clínica Dental Sonrisa" />
-                <div className="space-y-2">
-                  <Label className="text-slate-700">País del negocio</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[["ES", "🇪🇸 España"], ["CL", "🇨🇱 Chile"]].map(([c, n]) => (
-                      <button key={c} type="button" onClick={() => setForm({ ...form, country: c })} data-testid={`auth-country-${c}`}
-                        className={`h-11 rounded-lg border text-sm font-semibold transition-colors ${form.country === c ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>{n}</button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+          <p className="mt-2 text-slate-500">{isLogin ? "Entra para ver tus llamadas, agentes y citas." : "Elige tu plan, completa tus datos y activa tu línea con IA."}</p>
+          {!isLogin ? <SignupForm /> : <form onSubmit={submit} className="mt-8 space-y-4" data-testid="auth-form">
             <Field id="email" label="Email" type="email" value={form.email} onChange={set("email")} placeholder="tu@negocio.es" autoComplete="email" />
             <Field id="password" label="Contraseña" type="password" minLength={isLogin ? undefined : 8} value={form.password} onChange={set("password")} placeholder={isLogin ? "••••••••" : "Mínimo 8 caracteres"} autoComplete={isLogin ? "current-password" : "new-password"} />
             {error && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" data-testid="auth-error">{error}</p>}
@@ -84,7 +63,7 @@ export default function AuthPage({ mode }) {
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLogin ? "Entrar" : "Crear cuenta gratis"}
             </Button>
-          </form>
+          </form>}
           <p className="mt-6 text-sm text-slate-500">
             {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
             <Link to={isLogin ? "/registro" : "/login"} className="font-semibold text-blue-600 hover:text-blue-700" data-testid="auth-switch-link">{isLogin ? "Regístrate" : "Inicia sesión"}</Link>

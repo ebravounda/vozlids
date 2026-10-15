@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, CircleDashed, Loader2, Plug } from "lucide-react";
+import { CheckCircle2, CircleDashed, Copy, Loader2, Plug, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +53,30 @@ const STEPS = [
   "Rellena aquí el número, el usuario y la contraseña SIP y pulsa «Conectar número». Nosotros lo damos de alta en Vapi.",
 ];
 
-const NUM = { activo: "Activo", comprando: "Preparando tu número…", error: "Pendiente: estamos resolviendo un problema", liberado: "Liberado", sin_numero: "Se asigna al contratar un plan" };
+const NUM = {
+  activo: ["Conectado", "bg-emerald-500/15 text-emerald-300", "Tu línea funciona: tus agentes llaman desde este número y tu recepcionista contesta."],
+  pendiente: ["Aprovisionando línea", "bg-amber-500/15 text-amber-300", "Estamos preparando tu número. Recibirás un email cuando tu línea esté lista para operar."],
+  comprando: ["Aprovisionando línea", "bg-amber-500/15 text-amber-300", "Estamos preparando tu número. Recibirás un email cuando tu línea esté lista para operar."],
+  error: ["No conectado", "bg-rose-500/15 text-rose-300", "Hay un problema con tu línea y ya lo estamos revisando. Te avisaremos por email."],
+  pausado: ["Bloqueada", "bg-slate-500/20 text-slate-300", "Tu línea está bloqueada. Revisa tu plan o escríbenos a soporte."],
+  liberado: ["Sin línea", "bg-slate-500/20 text-slate-300", "Tu línea se liberó al cancelar el plan."],
+  sin_numero: ["Sin línea", "bg-slate-500/20 text-slate-300", "Tu número se asigna al contratar un plan."],
+};
+
+function VoicePreview({ agent }) {
+  const [busy, setBusy] = useState(false);
+  const play = async () => {
+    setBusy(true);
+    try {
+      const text = agent.greeting || `Hola, gracias por llamar a ${agent.business_name}. Soy ${agent.name}, ¿en qué te puedo ayudar?`;
+      const r = await api.get("/voice-preview", { params: { voice: agent.voice, text, ambience_id: agent.ambience || "none", volume: agent.ambience_volume ?? 35 }, responseType: "blob" });
+      const a = new Audio(URL.createObjectURL(r.data));
+      a.onended = () => setBusy(false);
+      await a.play();
+    } catch (e) { toast.error("No se pudo reproducir la voz"); setBusy(false); }
+  };
+  return <Button type="button" variant="outline" size="sm" onClick={play} disabled={busy} className="rounded-full" data-testid="my-number-voice-preview">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}Escuchar cómo contesta</Button>;
+}
 
 export function MyNumber() {
   const [n, setN] = useState(null);
@@ -65,13 +88,22 @@ export function MyNumber() {
   };
   if (!n) return null;
   const mine = agents.filter((a) => (a.country || "ES") === (n.country || "ES"));
+  const [label, cls, help] = NUM[n.status] || NUM.sin_numero;
+  const chosen = mine.find((a) => a.id === n.inbound_agent_id);
+  const copy = () => navigator.clipboard.writeText(n.number).then(() => toast.success("Número copiado"));
   return (
     <Panel className="space-y-4" data-testid="my-number-panel">
-      <h3 className="text-lg font-semibold text-white">Tu número</h3>
-      <p className="font-mono text-2xl text-white" data-testid="my-number-value">{n.number || "—"}</p>
-      <p className={`text-sm ${n.status === "activo" ? "text-emerald-300" : "text-slate-400"}`} data-testid="my-number-status">{NUM[n.status] || n.status}</p>
-      {n.status === "activo" && (
-        <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-white">Tu número</h3>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${cls}`} data-testid="my-number-status"><span className="h-1.5 w-1.5 rounded-full bg-current" />{label}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <p className="font-mono text-2xl text-white" data-testid="my-number-value">{n.number && n.status !== "pendiente" ? n.number : "—"}</p>
+        {n.number && n.status === "activo" && <Button variant="outline" size="sm" onClick={copy} className="rounded-full" data-testid="my-number-copy"><Copy className="mr-2 h-4 w-4" />Copiar</Button>}
+      </div>
+      <p className="text-sm text-slate-400" data-testid="my-number-help">{help}</p>
+      {["activo", "pausado"].includes(n.status) && (
+        <div className="space-y-2 border-t border-slate-800 pt-4">
           <Label>¿Quién contesta cuando te llaman?</Label>
           <Select value={n.inbound_agent_id || "none"} onValueChange={setAgent}>
             <SelectTrigger className="bg-slate-950/60" data-testid="my-number-inbound-agent-select"><SelectValue /></SelectTrigger>
@@ -80,6 +112,7 @@ export function MyNumber() {
               {mine.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}{a.objective === "recepcion" ? " · recepcionista" : ""}</SelectItem>)}
             </SelectContent>
           </Select>
+          {chosen && <VoicePreview agent={chosen} />}
           <p className="text-xs text-slate-500">Recomendado: crea un agente con el objetivo «Recepcionista». Contesta, resuelve dudas, agenda citas y te avisa si piden hablar con una persona. Las llamadas entrantes cuentan como minutos de tu plan.</p>
         </div>
       )}

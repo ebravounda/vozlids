@@ -17,6 +17,8 @@ import Telephony from "@/pages/dashboard/Telephony";
 import MyNumberPage from "@/pages/dashboard/MyNumberPage";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
 import AdminMonitor from "@/pages/dashboard/AdminMonitor";
+import WebWidget from "@/pages/dashboard/WebWidget";
+import Welcome from "@/pages/dashboard/Welcome";
 import Outbound from "@/pages/dashboard/Outbound";
 import Support from "@/pages/dashboard/Support";
 import Developers from "@/pages/dashboard/Developers";
@@ -52,6 +54,8 @@ function App() {
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
             <Route path="monitor" element={<AdminMonitor />} />
+            <Route path="boton-web" element={<WebWidget />} />
+            <Route path="bienvenida" element={<Welcome />} />
             <Route path="llamadas" element={<Outbound />} />
             <Route path="asistencia" element={<Support />} />
             <Route path="api" element={<Developers />} />

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader, Panel } from "@/components/Common";
 import { CustomVoices, ElevenLabsSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
+import { AdminOnboarding } from "@/components/AdminOnboarding";
 import { api, errMsg } from "@/lib/api";
 
 const EMPTY = { name: "", minutes: 100, price_eur: 49, price_clp: 49000, overage_eur: 0.45, overage_clp: 450, features: "", public: true };
@@ -105,6 +106,7 @@ export default function SuperAdmin() {
           <Panel key={l} className="p-5"><p className="text-xs uppercase tracking-widest text-slate-500">{l}</p><p className="mt-2 font-display text-3xl font-bold text-white">{v}</p></Panel>
         ))}
       </div>
+      <div className="mb-6"><AdminOnboarding /></div>
       <div className="grid gap-6 xl:grid-cols-3">
         <Panel className="overflow-x-auto p-0 xl:col-span-2">
           <table className="w-full min-w-[820px] text-sm" data-testid="admin-users-table">

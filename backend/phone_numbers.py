@@ -99,8 +99,11 @@ async def release(user_id: str) -> dict:
 
 async def auto_provision(user_id: str, test_payment: bool):
     cfg = await Z.creds()
-    if cfg.get("key") and (not test_payment or cfg.get("buy_on_test")):
+    if cfg.get("auto_provision") and cfg.get("key") and (not test_payment or cfg.get("buy_on_test")):
         await provision(user_id)
+    else:
+        import onboarding
+        await onboarding.mark_pending(user_id)
 
 
 # ---------- Inbound: Vapi assistant-request ----------

@@ -5,6 +5,9 @@ import { api, errMsg } from "@/lib/api";
 
 export default function PublicForm() {
   const { agentId } = useParams();
+  const q = new URLSearchParams(window.location.search);
+  const embed = q.get("embed") === "1";
+  const color = /^#[0-9a-fA-F]{6}$/.test(q.get("color") || "") ? q.get("color") : "";
   const [agent, setAgent] = useState(null);
   const [missing, setMissing] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", consent: false });
@@ -36,8 +39,8 @@ export default function PublicForm() {
     return <div className="grid min-h-screen place-items-center bg-white p-6 text-slate-600" data-testid="public-form-unavailable">Este formulario no está disponible.</div>;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-sm" data-testid="public-form-card">
+    <div className={embed ? "bg-white p-5" : "flex min-h-screen items-center justify-center bg-slate-50 p-4"} style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div className={embed ? "w-full" : "w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-sm"} data-testid="public-form-card">
         {state === "done" ? (
           <div className="py-8 text-center" data-testid="public-form-success">
             <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
@@ -47,7 +50,7 @@ export default function PublicForm() {
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600 text-white"><PhoneCall className="h-5 w-5" /></span>
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600 text-white" style={color ? { background: color } : undefined}><PhoneCall className="h-5 w-5" /></span>
               <div>
                 <h2 className="text-xl font-bold text-slate-900" style={{ fontFamily: "Outfit" }}>Te llamamos ahora</h2>
                 <p className="text-sm text-slate-500" data-testid="public-form-business">{agent?.business_name || "…"}</p>
@@ -62,6 +65,7 @@ export default function PublicForm() {
             </label>
             {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700" data-testid="public-form-error">{error}</p>}
             <button type="submit" disabled={state === "sending"} data-testid="public-form-submit-button"
+              style={color ? { background: color } : undefined}
               className="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 py-3.5 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60">
               {state === "sending" && <Loader2 className="h-4 w-4 animate-spin" />} Quiero que me llamen
             </button>

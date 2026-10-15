@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
+import { Activity, Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Euro, Hash, LifeBuoy, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Radio, Shield } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -13,6 +13,7 @@ const NAV = [
   { to: "/app/agenda", label: "Agenda y citas", icon: CalendarDays, id: "agenda" },
   { to: "/app/asistencia", label: "Asistencia técnica", icon: LifeBuoy, id: "support" },
   { to: "/app/numero", label: "Mi número", icon: Hash, id: "mynumber" },
+  { to: "/app/boton-web", label: "Botón para tu web", icon: MousePointerClick, id: "webwidget" },
   { to: "/app/no-llamar", label: "No llamar", icon: PhoneOff, id: "donotcall" },
   { to: "/app/api", label: "API desarrolladores", icon: Code2, id: "api" },
   { to: "/app/plan", label: "Mi plan", icon: CreditCard, id: "plan" },
@@ -48,6 +49,17 @@ const HumanAlert = ({ n }) => (
     <BellRing className="h-4 w-4 animate-pulse" /> {n === 1 ? "Un cliente quiere hablar con una persona" : `${n} clientes quieren hablar con una persona`}. Llámales cuanto antes →
   </Link>
 );
+
+function ProvisioningBar() {
+  const [st, setSt] = useState(null);
+  useEffect(() => { api.get("/my-number").then((r) => setSt(r.data.status)).catch(() => {}); }, []);
+  if (!["pendiente", "comprando", "error"].includes(st)) return null;
+  return (
+    <Link to="/app/numero" className="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100" data-testid="provisioning-bar">
+      <Loader2 className="h-4 w-4 animate-spin" /> Aprovisionando línea · Recibirás un email cuando tu línea esté lista para operar
+    </Link>
+  );
+}
 
 function ImpersonationBar() {
   const stop = async () => { await api.post("/auth/stop-impersonation"); window.location.href = "/app/admin"; };
@@ -94,6 +106,7 @@ export default function DashboardLayout() {
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         {user?.impersonating && <ImpersonationBar />}
         {tickets.human > 0 && <HumanAlert n={tickets.human} />}
+        {user?.role !== "admin" && <ProvisioningBar />}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-5 py-3 backdrop-blur-xl md:px-10">
           <div className="flex items-center gap-3 md:hidden"><Logo /></div>
           {user?.role === "admin" ? <Link to="/app/telefonia" data-testid="telephony-status-badge"

@@ -1,0 +1,27 @@
+{
+  "summary": "Iter-20 security hardening verified. Backend pytest 13/13 passed (test_vozlead_iter20.py): (1) /api/vapi/webhook ?token= -> 401, no header -> 401, wrong x-vapi-secret -> 401, correct header -> 200; (2) security headers X-Content-Type-Options:nosniff, Referrer-Policy:strict-origin-when-cross-origin, X-Frame-Options:DENY present on API responses; (3) CORS: request with Origin https://evil.com to /api/auth/me does NOT return Access-Control-Allow-Credentials:true (CORS_ORIGINS='*' -> allow_credentials=False); (4) Daily cap: seeded 20 info_requests with call_status 'llamando' created_at now; new POST /api/public/info-request with fresh +34611999888 returned {ok:true, calling:false, repeated:false}; inserted doc had call_status='limite_diario'; monitor_alerts 'demo_cap' notification raised; seeded docs + new request deleted after test (preview NOT blocked); (5) client_ip spoof: changing first X-Forwarded-For hop keeps 429 per-IP cap on /api/public/info-request (last hop + cf-connecting-ip + x-real-ip precedence respected); (6) Auth regression: admin login + /auth/me 200 + /auth/refresh 200 + /auth/logout + register new business user all pass; (7) Public embed /api/public/agents/{id} returns 200 with name/business_name/country/phone_example. Direct localhost:8001 curl /api/auth/login confirms Set-Cookie SameSite=lax; Secure; HttpOnly for both access_token and refresh_token (preview ingress may rewrite to SameSite=None;Partitioned which is expected). Playwright Chrome: admin login succeeded, /app/leads /app/agents /app/monitor /app/admin all loaded with no CORS/JS errors (post-logout 401s on /auth/me are expected refresh retries). Reload after login keeps session (cookie present). Logout clears cookies (/auth/me -> 401). Embeddable /f/{agentId} renders form (status 200, 4 inputs, consent checkbox + submit).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter20.py",
+    "/app/test_reports/pytest/iter20_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py: CORS allow_credentials toggled by presence of '*' in ORIGINS. Correct for preview (same-origin frontend). For prod deploy with explicit origins, allow_credentials automatically becomes True — ensure the frontend origin is set in CORS_ORIGINS and does NOT include '*'.",
+    "landing.client_ip: using LAST hop of X-Forwarded-For is correct behind a single trusted proxy (ingress). If deployed behind multiple proxies, the number of trusted hops should be configurable (e.g. TRUSTED_PROXY_HOPS).",
+    "landing.daily_cap_reached: counts over last 24h with call_status NOT IN NO_CALL. 'llamando' and 'en_curso' are included — good. If a call stays stuck at 'llamando' indefinitely it would consume cap slots forever; consider also excluding entries older than X hours with no final status.",
+    "server.vapi_webhook: uses secrets.compare_digest and only header auth — good. Note the webhook URL is public; VAPI_WEBHOOK_SECRET is 48 hex chars, strong.",
+    "auth.set_access_cookie: Secure=True on cookies behind a proxy; preview rewrites SameSite to None;Partitioned (3rd-party context). This is fine for same-origin preview but main agent should verify that in prod the frontend is served from the SAME origin as the backend, or SameSite=Lax will drop cookies on cross-site navigation.",
+    "seed.seed: honors ADMIN_RESET_PASSWORD=1 gate — good. Startup never force-rotates admin password now.",
+    "server.security_headers: uses setdefault so routes may override; no HSTS added (fine — the ingress likely handles it). Consider adding Permissions-Policy for defense in depth."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (13/13)", "frontend": "100% of flows passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Daily-cap test seeds 20 info_requests docs with TEST_cap_<uuid> prefix in 'name' and cleans them up (including the new +34611999888 submission) in teardown. No real paid phone call placed because daily cap was already reached when the fresh number POST happened.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter-20 security hardening is live. Key env knobs: ADMIN_RESET_PASSWORD (unset = no reset on startup), VAPI_WEBHOOK_SECRET (header x-vapi-secret only), CORS_ORIGINS='*' -> credentials disabled (preview). Daily demo cap = 20 calls/24h at /api/public/info-request. Rate-limit = 3/10min per client IP; client IP comes from cf-connecting-ip > x-real-ip > LAST x-forwarded-for hop. SameSite=Lax on auth cookies (preview ingress may rewrite to None;Partitioned — expected). Pytest suite /app/backend/tests/test_vozlead_iter20.py cleans up all seeded data in teardown. Do NOT POST /api/public/info-request with a fresh ES/CL number unless daily cap is already reached.",
+  "rca of the issue": "N/A — all requested changes work as designed."
+}

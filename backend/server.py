@@ -29,6 +29,8 @@ import landing  # noqa: E402
 import phone_numbers  # noqa: E402
 import monitor  # noqa: E402
 import sector_demo  # noqa: E402
+import widget  # noqa: E402
+import onboarding  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
@@ -55,7 +57,7 @@ def oid(v: str) -> ObjectId:
 def user_out(u: dict) -> dict:
     return {"id": str(u.get("id") or u.get("_id")), "email": u["email"], "name": u.get("name", ""),
             "business_name": u.get("business_name", ""), "role": u.get("role", "business"),
-            "country": u.get("country", "ES")}
+            "country": u.get("country", "ES"), "billing_status": u.get("billing_status")}
 
 
 def ago(minutes: int) -> str:
@@ -63,12 +65,25 @@ def ago(minutes: int) -> str:
 
 
 # ---------- Auth ----------
+class AddressIn(BaseModel):
+    line: str = Field(min_length=3, max_length=200)
+    city: str = Field(min_length=2, max_length=80)
+    postal_code: str = Field("", max_length=12)
+    region: str = Field("", max_length=80)
+
+
 class RegisterIn(BaseModel):
-    name: str = Field(min_length=1, max_length=80)
+    name: str = Field("", max_length=80)
+    first_name: str = Field("", max_length=60)
+    last_name: str = Field("", max_length=80)
     business_name: str = Field(min_length=1, max_length=120)
     email: str = Field(min_length=3, max_length=200)
     password: str = Field(min_length=8, max_length=128)
     country: Literal["ES", "CL"] = "ES"
+    website: str = Field("", max_length=200)
+    doc_type: str = Field("", max_length=12)
+    doc_number: str = Field("", max_length=20)
+    billing_address: AddressIn | None = None
 
 
 class LoginIn(BaseModel):
@@ -83,9 +98,21 @@ async def register(body: RegisterIn, response: Response):
         raise HTTPException(422, "Email no válido")
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Ya existe una cuenta con ese email")
-    doc = {"email": email, "password_hash": A.hash_password(body.password), "name": body.name.strip(),
+    name = body.name.strip() or f"{body.first_name.strip()} {body.last_name.strip()}".strip()
+    if not name:
+        raise HTTPException(422, "Indica tu nombre")
+    doc = {"email": email, "password_hash": A.hash_password(body.password), "name": name,
            "business_name": body.business_name.strip(), "role": "business", "country": body.country,
            "created_at": now_iso()}
+    if body.doc_number:
+        try:
+            doc["doc_number"] = onboarding.valid_doc(body.country, body.doc_type, body.doc_number)
+        except ValueError as e:
+            raise HTTPException(422, str(e))
+        web = body.website.strip()
+        doc.update({"first_name": body.first_name.strip(), "last_name": body.last_name.strip(), "doc_type": body.doc_type,
+                    "website": web if not web or web.startswith("http") else f"https://{web}",
+                    "billing_address": body.billing_address.model_dump() if body.billing_address else None})
     res = await db.users.insert_one(doc)
     uid = str(res.inserted_id)
     await S.get_availability(uid)
@@ -472,6 +499,8 @@ app.include_router(landing.router)
 app.include_router(phone_numbers.router)
 app.include_router(monitor.router)
 app.include_router(sector_demo.router)
+app.include_router(widget.router)
+app.include_router(onboarding.router)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,

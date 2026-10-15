@@ -15,7 +15,7 @@ const PlanCard = ({ p, currency, featured, number }) => (
       <li className="flex items-center gap-2 font-semibold text-blue-700" data-testid={`pricing-plan-number-${p.id}`}><Check className="h-4 w-4 text-blue-600" />{number}</li>
       {(p.features || []).map((f) => <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-blue-600" />{f}</li>)}
     </ul>
-    <Link to="/registro" data-testid={`pricing-plan-cta-${p.id}`} className={`mt-8 rounded-md px-5 py-2.5 text-center text-sm font-semibold ${featured ? "bg-slate-900 text-white hover:bg-slate-800" : "border border-slate-300 text-slate-800 hover:bg-slate-100"}`}>Empezar</Link>
+    <Link to={`/registro?plan=${p.id}`} data-testid={`pricing-plan-cta-${p.id}`} className={`mt-8 rounded-md px-5 py-2.5 text-center text-sm font-semibold ${featured ? "bg-slate-900 text-white hover:bg-slate-800" : "border border-slate-300 text-slate-800 hover:bg-slate-100"}`}>Empezar</Link>
   </div>
 );
 

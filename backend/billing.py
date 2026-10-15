@@ -89,6 +89,7 @@ async def stripe_disconnect(user=Depends(require_admin)):
 class CheckoutIn(BaseModel):
     plan_id: str
     origin_url: str = Field(pattern=r"^https?://")
+    signup: bool = False
 
 
 def amount_for(plan: dict, currency: str) -> int:
@@ -135,7 +136,7 @@ async def checkout(body: CheckoutIn, user=CurrentUser):
         "line_items": [{"quantity": 1, "price_data": {
             "currency": currency, "unit_amount": amount, "recurring": {"interval": "month"},
             "product_data": {"name": f"VozLeads · Plan {plan['name']}"}}}],
-        "success_url": f"{body.origin_url.rstrip('/')}/app/plan?session_id={{CHECKOUT_SESSION_ID}}",
+        "success_url": f"{body.origin_url.rstrip('/')}/app/{'bienvenida' if body.signup else 'plan'}?session_id={{CHECKOUT_SESSION_ID}}",
         "cancel_url": f"{body.origin_url.rstrip('/')}/app/plan?cancelado=1",
         "metadata": meta, "subscription_data": {"metadata": meta}, "client_reference_id": user["id"],
     }
