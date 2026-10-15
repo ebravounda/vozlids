@@ -281,7 +281,7 @@ def test_telephony_configured(admin):
 
 # ---------- Vapi webhook ----------
 def test_webhook_unauthorized():
-    r = requests.post(f"{BASE}/api/vapi/webhook?token=wrong",
+    r = requests.post(f"{BASE}/api/vapi/webhook", headers={"x-vapi-secret": "wrong"},
                       json={"message": {"type": "status-update"}})
     assert r.status_code == 401
 
@@ -313,7 +313,7 @@ def test_webhook_tool_calls_and_eocr(admin, created_agent):
                             "toolCallList": [{"id": "tc1",
                                               "function": {"name": "check_availability",
                                                            "arguments": {}}}]}}
-    r = requests.post(f"{BASE}/api/vapi/webhook?token={WEBHOOK_SECRET}", json=payload)
+    r = requests.post(f"{BASE}/api/vapi/webhook", headers={"x-vapi-secret": WEBHOOK_SECRET}, json=payload)
     assert r.status_code == 200
     out = r.json()
     assert "results" in out
@@ -334,7 +334,7 @@ def test_webhook_tool_calls_and_eocr(admin, created_agent):
                                                    "function": {"name": "book_appointment",
                                                                 "arguments": {"date": date_str,
                                                                               "time": time_str}}}]}}
-    r = requests.post(f"{BASE}/api/vapi/webhook?token={WEBHOOK_SECRET}", json=book_payload)
+    r = requests.post(f"{BASE}/api/vapi/webhook", headers={"x-vapi-secret": WEBHOOK_SECRET}, json=book_payload)
     assert r.status_code == 200
     import json as _j
     res1 = _j.loads(r.json()["results"][0]["result"])
@@ -349,7 +349,7 @@ def test_webhook_tool_calls_and_eocr(admin, created_agent):
     lead2 = next(l for l in leads2 if l["phone"] == "+34612000666")
     book_payload["message"]["call"]["metadata"]["lead_id"] = lead2["id"]
     book_payload["message"]["toolCallList"][0]["id"] = "tc3"
-    r = requests.post(f"{BASE}/api/vapi/webhook?token={WEBHOOK_SECRET}", json=book_payload)
+    r = requests.post(f"{BASE}/api/vapi/webhook", headers={"x-vapi-secret": WEBHOOK_SECRET}, json=book_payload)
     res2 = _j.loads(r.json()["results"][0]["result"])
     print("book2:", res2)
     if res1.get("ok"):
@@ -361,7 +361,7 @@ def test_webhook_tool_calls_and_eocr(admin, created_agent):
                                 "toolCallList": [{"id": "tc4",
                                                   "function": {"name": "mark_do_not_call",
                                                                "arguments": {}}}]}}
-    r = requests.post(f"{BASE}/api/vapi/webhook?token={WEBHOOK_SECRET}", json=dnc_payload)
+    r = requests.post(f"{BASE}/api/vapi/webhook", headers={"x-vapi-secret": WEBHOOK_SECRET}, json=dnc_payload)
     assert r.status_code == 200
     # check lead has no_llamar
     time.sleep(0.3)
@@ -382,7 +382,7 @@ def test_webhook_tool_calls_and_eocr(admin, created_agent):
                                      "structuredData": {"outcome": "calificado",
                                                         "interest_score": 72,
                                                         "answers": "quiere info"}}}}
-    r = requests.post(f"{BASE}/api/vapi/webhook?token={WEBHOOK_SECRET}", json=eocr)
+    r = requests.post(f"{BASE}/api/vapi/webhook", headers={"x-vapi-secret": WEBHOOK_SECRET}, json=eocr)
     assert r.status_code == 200
     time.sleep(0.3)
     ld2 = s.get(f"{BASE}/api/leads/{lead2['id']}").json()

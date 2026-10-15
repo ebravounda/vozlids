@@ -33,20 +33,20 @@ def create_refresh_token(user_id: str) -> str:
 
 
 def set_access_cookie(response: Response, token: str):
-    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="none", max_age=900, path="/")
+    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="lax", max_age=900, path="/")
 
 
 def set_auth_cookies(response: Response, user_id: str, email: str) -> str:
     access = create_access_token(user_id, email)
     set_access_cookie(response, access)
     response.set_cookie("refresh_token", create_refresh_token(user_id), httponly=True, secure=True,
-                        samesite="none", max_age=604800, path="/")
+                        samesite="lax", max_age=604800, path="/")
     return access
 
 
 def clear_auth_cookies(response: Response):
     for k in ("access_token", "refresh_token"):
-        response.delete_cookie(k, path="/", secure=True, samesite="none")
+        response.delete_cookie(k, path="/", secure=True, samesite="lax")
 
 
 def decode(token: str, expected_type: str) -> dict:

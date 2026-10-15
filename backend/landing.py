@@ -15,6 +15,8 @@ router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.landing")
 MAX_SECONDS = 15
 INTL_DAILY_CAP = 40
+DAILY_CALL_CAP = 20
+NO_CALL = ["", "sin_agente", "fallida", "repetida", "limite_internacional", "limite_diario"]
 PURPOSE = ("MUESTRA de 10 a 15 segundos como máximo: {name} pidió escuchar un ejemplo en la web de VozLeads. Ya has dicho el "
            "saludo con todo lo necesario. Si responde algo, contesta en UNA frase muy corta, despídete con \"¡hasta luego!\" y "
            "termina la llamada con endCall de inmediato. No hagas preguntas ni des precios.")
@@ -64,6 +66,18 @@ async def _notify(cfg: dict, req: dict) -> None:
         ("Página", req["page"]), ("Llamada IA", "Sí, en curso" if req["call_status"] not in ("", "sin_agente", "fallida") else "No")])
 
 
+def client_ip(request: Request) -> str:
+    h = request.headers
+    xff = [x.strip() for x in h.get("x-forwarded-for", "").split(",") if x.strip()]
+    return (h.get("cf-connecting-ip") or h.get("x-real-ip") or (xff[-1] if xff else "")
+            or (request.client.host if request.client else "")).strip()
+
+
+async def daily_cap_reached() -> bool:
+    n = await db.info_requests.count_documents({"created_at": {"$gt": _ago(24 * 60)}, "call_status": {"$nin": NO_CALL}})
+    return n >= DAILY_CALL_CAP
+
+
 @router.get("/public/geo")
 async def geo(request: Request):
     return {"country": (request.headers.get("cf-ipcountry") or "").upper()[:2]}
@@ -79,7 +93,7 @@ async def info_request(body: InfoIn, request: Request):
         phone = norm_demo_phone(body.phone, body.country)
     except ValueError as e:
         raise HTTPException(422, str(e))
-    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
+    ip = client_ip(request)
     if ip and await db.info_requests.count_documents({"ip": ip, "created_at": {"$gt": _ago(10)}}) >= 3:
         raise HTTPException(429, "Ya hemos recibido tus datos. Inténtalo de nuevo en unos minutos.")
     name = " ".join(body.name.split())
@@ -92,6 +106,12 @@ async def info_request(body: InfoIn, request: Request):
     intl = market != body.country
     if repeated:
         req["call_status"] = "repetida"
+    elif await daily_cap_reached():
+        req["call_status"] = "limite_diario"
+        import monitor
+        await monitor.notify("demo_cap", f"Tope diario de {DAILY_CALL_CAP} llamadas de prueba alcanzado",
+                             [("Qué pasa", "Las nuevas solicitudes de la web se guardan pero no se llama"),
+                              ("Se reanuda", "Automáticamente cuando pasen 24 h desde las primeras llamadas")], every_hours=24)
     elif intl and await db.info_requests.count_documents({"intl": True, "created_at": {"$gt": _ago(24 * 60)}}) >= INTL_DAILY_CAP:
         req["call_status"] = "limite_internacional"
     elif agent and agent.get("active") and agent.get("country", "ES") == market:

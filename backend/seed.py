@@ -105,7 +105,7 @@ async def seed():
         tid = str(res.inserted_id)
     else:
         tid = str(user["_id"])
-        if not A.verify_password(password, user["password_hash"]):
+        if os.environ.get("ADMIN_RESET_PASSWORD") == "1" and not A.verify_password(password, user["password_hash"]):
             await db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": A.hash_password(password)}})
     await S.get_availability(tid)
     if await db.agents.count_documents({"tenant_id": tid}):

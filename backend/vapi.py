@@ -119,7 +119,7 @@ async def delete(path: str) -> None:
 
 def server_cfg() -> dict:
     secret = os.environ["VAPI_WEBHOOK_SECRET"]
-    return {"url": f"{webhook_url()}?token={secret}", "headers": {"x-vapi-secret": secret}}
+    return {"url": webhook_url(), "headers": {"x-vapi-secret": secret}}
 
 
 async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:

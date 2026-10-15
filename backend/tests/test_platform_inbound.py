@@ -94,7 +94,7 @@ def _webhook(anon_session: requests.Session, phone_id: str, customer: dict | Non
         call["customer"] = customer
     body = {"message": {"type": "assistant-request", "call": call}}
     r = anon_session.post(
-        f"{BASE_URL}/api/vapi/webhook?token={VAPI_SECRET}",
+        f"{BASE_URL}/api/vapi/webhook", headers={"x-vapi-secret": VAPI_SECRET},
         json=body,
         headers={"x-vapi-secret": VAPI_SECRET},
     )

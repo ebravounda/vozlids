@@ -263,7 +263,7 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
     if email and not EMAIL_RE.match(email):
         raise HTTPException(422, "Email no válido")
     phone = norm_phone(body.phone, agent.get("country", "ES"))
-    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
+    ip = landing.client_ip(request)
     if ip and await db.leads.count_documents({"source_ip": ip, "created_at": {"$gt": ago(60)}}) >= 10:
         raise HTTPException(429, "Demasiadas solicitudes. Inténtalo más tarde.")
     tid = agent["tenant_id"]
@@ -436,10 +436,10 @@ async def ambience_wav(preset: str, volume: int):
 
 
 @api.post("/vapi/webhook")
-async def vapi_webhook(request: Request, token: str = ""):
+async def vapi_webhook(request: Request):
     secret = os.environ["VAPI_WEBHOOK_SECRET"]
     header = request.headers.get("x-vapi-secret", "")
-    if not (secrets.compare_digest(header, secret) or secrets.compare_digest(token, secret)):
+    if not secrets.compare_digest(header, secret):
         raise HTTPException(401, "Webhook no autorizado")
     msg = (await request.json()).get("message") or {}
     typ = msg.get("type")
@@ -472,13 +472,23 @@ app.include_router(landing.router)
 app.include_router(phone_numbers.router)
 app.include_router(monitor.router)
 app.include_router(sector_demo.router)
+ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ["CORS_ORIGINS"].split(","),
+    allow_credentials="*" not in ORIGINS,
+    allow_origins=ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    res = await call_next(request)
+    res.headers.setdefault("X-Content-Type-Options", "nosniff")
+    res.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    res.headers.setdefault("X-Frame-Options", "DENY")
+    return res
 
 
 @app.on_event("startup")

@@ -155,7 +155,7 @@ export function CustomVoices() {
   );
 }
 
-const ST = { llamando: "Llamando", en_curso: "En curso", completada: "Llamado", fallida: "Llamada fallida", sin_agente: "Sin agente", repetida: "Repetida (24 h)", no_llamar: "No llamar" };
+const ST = { llamando: "Llamando", en_curso: "En curso", completada: "Llamado", fallida: "Llamada fallida", sin_agente: "Sin agente", repetida: "Repetida (24 h)", limite_diario: "Tope diario (sin llamada)", limite_internacional: "Tope internacional", no_llamar: "No llamar" };
 
 export function LandingSettings() {
   const [cfg, setCfg] = useState(null);
