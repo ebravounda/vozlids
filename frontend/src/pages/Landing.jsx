@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { Pricing } from "@/components/Pricing";
 import { Seo, pageByPath } from "@/components/Seo";
+import { GeoProvider, useMarket } from "@/lib/geo";
 import { Footer, MobileCta, Nav } from "@/components/landing/Chrome";
-import { ApiBlock, Compatible, Countries, Faq, FinalCta, Hero, Steps, TopicSections, TrustBar, Uses, WhyNow } from "@/components/landing/Sections";
+import { ApiBlock, Compatible, Faq, FinalCta, Hero, Steps, TopicSections, TrustBar, Uses, WhyNow } from "@/components/landing/Sections";
 
-const CUR = { ES: "EUR", CL: "CLP" };
 
 function useReveal(path) {
   useEffect(() => {
@@ -14,8 +14,16 @@ function useReveal(path) {
   }, [path]);
 }
 
-export default function Landing({ path = "/" }) {
+export default function Landing(props) {
+  return <GeoProvider><LandingPage {...props} /></GeoProvider>;
+}
+
+const MARKET_PAGE = { ES: "/es", CL: "/cl" };
+
+function LandingPage({ path = "/" }) {
   const page = pageByPath(path);
+  const m = useMarket(page.country);
+  const view = path === "/" && MARKET_PAGE[m.market] ? { ...pageByPath(MARKET_PAGE[m.market]), path: "/" } : page;
   useReveal(path);
   const topic = page.type === "topic";
   return (
@@ -23,20 +31,19 @@ export default function Landing({ path = "/" }) {
       <Seo page={page} />
       <Nav />
       <main>
-        <Hero page={page} />
-        <TrustBar />
-        {topic && <TopicSections sections={page.sections} />}
+        <Hero page={view} m={m} />
+        <TrustBar m={m} />
+        {page.sections?.length > 0 && <TopicSections sections={page.sections} />}
         <WhyNow />
-        <Uses />
-        {!topic && <Compatible />}
-        <Steps />
-        {page.type !== "country" && <Countries />}
+        <Uses m={m} />
+        {!topic && <Compatible m={m} />}
+        <Steps m={m} />
         {!topic && <ApiBlock />}
-        <Pricing initial={CUR[page.country]} />
-        <Faq items={page.faq} />
-        <FinalCta page={page} />
+        <Pricing m={m} />
+        <Faq items={view.faq} />
+        <FinalCta page={view} m={m} />
       </main>
-      <Footer />
+      <Footer m={m} />
       <MobileCta />
     </div>
   );

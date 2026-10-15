@@ -380,6 +380,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         "backgroundSound": background_sound(agent),
         "silenceTimeoutSeconds": 30,
         "maxDurationSeconds": lead.get("max_seconds") or 900,
+        **({"endCallPhrases": ["hasta luego"]} if (lead.get("max_seconds") or 900) <= 20 else {}),
         "serverMessages": ["status-update", "end-of-call-report", "tool-calls"],
         "server": server,
         "analysisPlan": analysis_plan(),

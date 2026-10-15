@@ -1,17 +1,19 @@
-const HREFLANG = [["es-ES", "/es"], ["es-CL", "/cl"], ["es", "/"], ["x-default", "/"]];
+const LATAM = ["mx", "ar", "co", "pe", "ec", "uy", "ve", "pa", "cr", "gt", "hn", "sv", "ni", "do", "bo", "py"];
+const HREFLANG = [["es-ES", "/es"], ["es-CL", "/cl"], ...LATAM.map((c) => [`es-${c.toUpperCase()}`, `/${c}`]), ["es", "/"], ["x-default", "/"]];
+const NAMES = { ES: "España", CL: "Chile", MX: "México", AR: "Argentina", CO: "Colombia", PE: "Perú", EC: "Ecuador", UY: "Uruguay", VE: "Venezuela", PA: "Panamá", CR: "Costa Rica", GT: "Guatemala", HN: "Honduras", SV: "El Salvador", NI: "Nicaragua", DO: "República Dominicana", BO: "Bolivia", PY: "Paraguay" };
 
 export function headFor(cfg, page) {
   const url = cfg.site + (page.path === "/" ? "/" : page.path);
   const org = { "@type": "Organization", "@id": `${cfg.site}/#org`, name: cfg.brand, url: cfg.site, logo: `${cfg.site}/logo.png`,
     parentOrganization: { "@type": "Organization", name: cfg.owner, url: `https://${cfg.owner.toLowerCase()}` },
-    areaServed: [{ "@type": "Country", name: "España" }, { "@type": "Country", name: "Chile" }] };
+    areaServed: Object.values(NAMES).map((name) => ({ "@type": "Country", name })) };
   const graph = [org,
     { "@type": "WebSite", "@id": `${cfg.site}/#web`, url: cfg.site, name: cfg.brand, inLanguage: "es", publisher: { "@id": `${cfg.site}/#org` } },
     { "@type": "SoftwareApplication", name: `${cfg.brand} · Agente de voz con IA`, applicationCategory: "BusinessApplication",
       operatingSystem: "Web", url, description: page.description, publisher: { "@id": `${cfg.site}/#org` },
       offers: [{ "@type": "Offer", priceCurrency: "EUR", areaServed: "ES", url: `${cfg.site}/es#precios` },
         { "@type": "Offer", priceCurrency: "CLP", areaServed: "CL", url: `${cfg.site}/cl#precios` }] },
-    { "@type": "WebPage", "@id": `${url}#page`, url, name: page.title, description: page.description, inLanguage: page.country === "CL" ? "es-CL" : page.country === "ES" ? "es-ES" : "es" }];
+    { "@type": "WebPage", "@id": `${url}#page`, url, name: page.title, description: page.description, inLanguage: NAMES[page.country] ? `es-${page.country}` : "es" }];
   if (page.faq?.length) {
     graph.push({ "@type": "FAQPage", mainEntity: page.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) });
   }
@@ -23,7 +25,7 @@ export function headFor(cfg, page) {
   return {
     title: page.title, description: page.description, keywords: page.keywords, url,
     alternates: ["home", "country"].includes(page.type) ? HREFLANG.map(([l, p]) => [l, cfg.site + p]) : [],
-    locale: page.country === "CL" ? "es_CL" : "es_ES",
+    locale: NAMES[page.country] ? `es_${page.country}` : "es_ES",
     jsonld: JSON.stringify({ "@context": "https://schema.org", "@graph": graph }),
   };
 }

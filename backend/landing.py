@@ -7,19 +7,19 @@ from pydantic import BaseModel, Field
 import emailer
 import extra_routes as X
 import services as S
-from countries import COUNTRIES, norm_phone
+from countries import COUNTRIES, DEMO_DIALS, norm_demo_phone
 from db import db
 from models import Lead, now_iso
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.landing")
-MAX_SECONDS = 45
-PURPOSE = ("Llamada de bienvenida MUY BREVE, de unos 40 segundos como máximo, porque {name} acaba de pedir información en la "
-           "web de VozLeads. 1) Confirma en una frase que llamas de VozLeads, agentes de voz con inteligencia artificial que "
-           "llaman a los clientes de una empresa en segundos, y que esta misma llamada es un ejemplo. 2) Pregunta qué tipo de "
-           "negocio tiene. 3) Dile que un asesor le contactará muy pronto para enseñarle una demo y despídete con amabilidad. "
-           "No des precios ni explicaciones largas: si pregunta algo, responde en una sola frase. Termina la llamada con endCall.")
-GREETING = "Hola {nombre}, te llamo de VozLeads porque acabas de pedir información en nuestra web. ¿Tienes un momento?"
+MAX_SECONDS = 15
+INTL_DAILY_CAP = 40
+PURPOSE = ("MUESTRA de 10 a 15 segundos como máximo: {name} pidió escuchar un ejemplo en la web de VozLeads. Ya has dicho el "
+           "saludo con todo lo necesario. Si responde algo, contesta en UNA frase muy corta, despídete con \"¡hasta luego!\" y "
+           "termina la llamada con endCall de inmediato. No hagas preguntas ni des precios.")
+GREETING = ("Hola {nombre}, soy {agente}, de VozLeads. Esta es tu muestra: así de rápido llamaríamos a tus clientes. "
+            "Un asesor te escribirá muy pronto. ¡Hasta luego!")
 
 
 def _ago(minutes: int) -> str:
@@ -40,7 +40,7 @@ async def _agent(agent_id: str):
 class InfoIn(BaseModel):
     name: str = Field(min_length=2, max_length=80)
     phone: str = Field(min_length=8, max_length=20)
-    country: str = Field(pattern="^(ES|CL)$")
+    country: str = Field(min_length=2, max_length=2)
     consent: bool
     page: str = Field("/", max_length=120)
 
@@ -60,26 +60,41 @@ async def _call(agent: dict, name: str, phone: str) -> str:
 async def _notify(cfg: dict, req: dict) -> None:
     to = cfg.get("notify_email") or ((await db.users.find_one({"role": "admin"}, {"email": 1})) or {}).get("email", "")
     await emailer.send(to, f"Nueva solicitud de información: {req['name']}", "Alguien ha pedido información en la web", [
-        ("Nombre", req["name"]), ("Teléfono", req["phone"]), ("País", COUNTRIES[req["country"]]["name"]),
+        ("Nombre", req["name"]), ("Teléfono", req["phone"]), ("País", (COUNTRIES.get(req["country"]) or {}).get("name", req["country"])),
         ("Página", req["page"]), ("Llamada IA", "Sí, en curso" if req["call_status"] not in ("", "sin_agente", "fallida") else "No")])
+
+
+@router.get("/public/geo")
+async def geo(request: Request):
+    return {"country": (request.headers.get("cf-ipcountry") or "").upper()[:2]}
 
 
 @router.post("/public/info-request")
 async def info_request(body: InfoIn, request: Request):
     if not body.consent:
         raise HTTPException(400, "Debes aceptar que te llamemos para continuar.")
-    phone = norm_phone(body.phone, body.country)
+    if body.country not in DEMO_DIALS:
+        raise HTTPException(422, "Por ahora solo hacemos llamadas de muestra a España y a países de Latinoamérica.")
+    try:
+        phone = norm_demo_phone(body.phone, body.country)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
     ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
     if ip and await db.info_requests.count_documents({"ip": ip, "created_at": {"$gt": _ago(10)}}) >= 3:
         raise HTTPException(429, "Ya hemos recibido tus datos. Inténtalo de nuevo en unos minutos.")
     name = " ".join(body.name.split())
-    req = {"name": name, "phone": phone, "country": body.country, "page": body.page, "ip": ip, "created_at": now_iso(), "call_status": ""}
+    req = {"name": name, "phone": phone, "country": body.country, "page": body.page, "ip": ip, "created_at": now_iso(), "call_status": "",
+           "intl": body.country not in COUNTRIES}
     repeated = await db.info_requests.find_one({"phone": phone, "created_at": {"$gt": _ago(24 * 60)}})
     cfg = await settings()
-    agent = await _agent(cfg.get(f"agent_{body.country.lower()}", ""))
+    market = body.country if body.country in COUNTRIES else "ES"
+    agent = await _agent(cfg.get(f"agent_{market.lower()}", ""))
+    intl = market != body.country
     if repeated:
         req["call_status"] = "repetida"
-    elif agent and agent.get("active") and agent.get("country", "ES") == body.country:
+    elif intl and await db.info_requests.count_documents({"intl": True, "created_at": {"$gt": _ago(24 * 60)}}) >= INTL_DAILY_CAP:
+        req["call_status"] = "limite_internacional"
+    elif agent and agent.get("active") and agent.get("country", "ES") == market:
         try:
             req["call_status"] = await _call(agent, name, phone)
         except Exception as e:  # noqa: BLE001

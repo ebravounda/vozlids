@@ -28,27 +28,30 @@ export const Nav = () => (
 export const MobileCta = () => (
   <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur md:hidden">
     <a href="#solicitar" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 font-semibold text-white" data-testid="mobile-info-cta">
-      <PhoneCall className="h-4 w-4" /> Solicita información ahora
+      <PhoneCall className="h-4 w-4" /> Recibe una muestra gratis
     </a>
   </div>
 );
 
-export const Footer = () => (
+export const Footer = ({ m }) => (
   <footer className="border-t border-slate-200 bg-slate-50 pb-24 md:pb-0">
     <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-[1.2fr_2fr]">
       <div>
         <Brand />
-        <p className="mt-4 max-w-xs text-sm text-slate-600">Agentes de voz con inteligencia artificial que llaman a tus leads en segundos. España y Chile.</p>
+        <p className="mt-4 max-w-xs text-sm text-slate-600">Agentes de voz con inteligencia artificial que llaman a tus leads en segundos, en español.</p>
         <p className="mt-4 text-sm text-slate-500" data-testid="footer-owner">VozLeads.com by <a href="https://goroky.com" rel="noopener" className="font-semibold text-slate-700 hover:underline">GoRoky.com</a></p>
       </div>
-      <nav aria-label="Páginas" className="grid gap-2 text-sm sm:grid-cols-2">
-        {SEO_PAGES.filter((p) => p.path !== "/").map((p) => (
-          <Link key={p.path} to={p.path} className="text-slate-600 hover:text-slate-900" data-testid={`footer-link-${p.path.slice(1)}`}>{p.h1}</Link>
+      <div className="grid gap-8 text-sm sm:grid-cols-3">
+        {[["Soluciones", SEO_PAGES.filter((p) => p.type === "topic" && (m?.market === "INT" || [m?.market, "AUTO"].includes(p.country)))], ["Países", m?.market === "INT" ? SEO_PAGES.filter((p) => p.type === "country") : []]].filter(([, l]) => l.length).map(([t, list]) => (
+          <nav key={t} aria-label={t} className={t === "Países" ? "sm:col-span-2" : ""}>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{t}</p>
+            <ul className={`grid gap-2 ${t === "Países" ? "grid-cols-2" : ""}`}>
+              {list.map((p) => <li key={p.path}><Link to={p.path} className="text-slate-600 hover:text-slate-900" data-testid={`footer-link-${p.path.slice(1)}`}>{t === "Países" ? p.h1.replace(/^.* (en|de|para empresas de|para empresas en) /, "") : p.h1}</Link></li>)}
+            </ul>
+          </nav>
         ))}
-        <Link to="/privacidad" className="text-slate-600 hover:text-slate-900" data-testid="footer-link-privacidad">Política de privacidad</Link>
-        <Link to="/registro" className="text-slate-600 hover:text-slate-900">Crear cuenta</Link>
-      </nav>
+      </div>
     </div>
-    <div className="border-t border-slate-200 py-5 text-center text-xs text-slate-500">© {new Date().getFullYear()} VozLeads.com by GoRoky.com · España · Chile</div>
+    <div className="border-t border-slate-200 py-5 text-center text-xs text-slate-500">© {new Date().getFullYear()} VozLeads.com by GoRoky.com · <Link to="/privacidad" className="hover:underline" data-testid="footer-link-privacidad">Privacidad</Link> · <Link to="/registro" className="hover:underline">Crear cuenta</Link></div>
   </footer>
 );

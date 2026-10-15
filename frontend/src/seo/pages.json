@@ -1,158 +1,934 @@
 {
-  "site": "https://vozleads.com",
-  "brand": "VozLeads",
-  "owner": "GoRoky.com",
-  "pages": [
-    {
-      "path": "/",
-      "type": "home",
-      "country": "AUTO",
-      "title": "VozLeads | Agente de voz con IA que llama a tus leads · España y Chile",
-      "description": "Agente telefónico con inteligencia artificial que llama a tus leads en menos de 30 segundos, los califica y agenda citas. Incluye número de España o Chile gratis.",
-      "eyebrow": "Líneas operativas en España (+34) y Chile (+56)",
-      "h1": "Tu agente telefónico con IA llama a cada lead en menos de 30 segundos",
-      "intro": "VozLeads llama al instante a quien rellena tu formulario, lo califica, agenda la cita y te avisa si quiere hablar con una persona. Incluye gratis un número de España (+34) o de Chile (+56): no necesitas contratar telefonía IP ni cuenta SIP.",
-      "keywords": "agente de voz IA, llamadas automáticas IA, telefonía IP con IA, centralita virtual IA, central IP Chile, oficina virtual",
-      "faq": [
-        ["¿Qué es VozLeads?", "Un agente de voz con inteligencia artificial que llama por teléfono a tus clientes potenciales en segundos, mantiene una conversación natural en español, los califica, agenda citas y registra grabación, transcripción y resultado de cada llamada."],
-        ["¿Necesito contratar un número o una telefonía IP?", "No. Todos los planes incluyen gratis un número de España (+34) o de Chile (+56) ya configurado, con su línea. Si tienes centralita, central IP u oficina virtual, sigue funcionando igual."],
-        ["¿En qué países funciona?", "En España (números +34, precios en euros) y en Chile (números +56, precios en pesos chilenos), con voces, horarios y formatos adaptados a cada país."],
-        ["¿El cliente sabe que habla con una IA?", "Sí. El agente se presenta como asistente virtual y avisa de la grabación, como exigen el RGPD en España y la Ley 19.628 en Chile."],
-        ["¿Qué pasa si el cliente quiere hablar con una persona?", "El agente toma nota del motivo y del mejor momento para llamar, se lo promete al cliente y tu equipo recibe al instante un email y un aviso en el panel."],
-        ["¿Cómo se paga?", "Con un plan mensual de minutos, sin permanencia y con un número de España o Chile incluido gratis. Pagas con tarjeta y puedes cambiar o cancelar el plan cuando quieras."]
-      ]
-    },
-    {
-      "path": "/es",
-      "type": "country",
-      "country": "ES",
-      "title": "Agente telefónico con IA en España | Llamadas automáticas · VozLeads",
-      "description": "Agente de voz con IA para empresas en España: llama a tus leads en segundos con voz natural, agenda citas y se integra con tu centralita virtual o telefonía IP. Precios en euros.",
-      "eyebrow": "España · número +34 gratis · precios en euros",
-      "h1": "Agente telefónico con IA para empresas en España",
-      "intro": "Llama a tus leads con un número español incluido gratis en menos de 30 segundos, con una voz natural que agenda citas, recuerda pagos y hace seguimiento. Se integra con tu centralita virtual o telefonía IP y cumple el RGPD.",
-      "keywords": "agente telefónico IA España, llamadas automáticas España, centralita virtual IA, telefonía IP empresas España",
-      "faq": [
-        ["¿Llamáis con número español?", "Sí. Tu plan incluye gratis un número español +34 ya configurado: no tienes que contratar nada más."],
-        ["¿Cumple el RGPD?", "El agente se identifica como asistente virtual, avisa de la grabación, solo llama a quien dio su consentimiento y respeta la lista de no llamar."],
-        ["¿En qué horario llama?", "En el horario que tú configures, con la hora peninsular de España."]
-      ]
-    },
-    {
-      "path": "/cl",
-      "type": "country",
-      "country": "CL",
-      "title": "Agente telefónico con IA en Chile | Llamadas automáticas · VozLeads",
-      "description": "Agente de voz con IA para empresas en Chile: llama a tus clientes en segundos con acento latino, agenda citas y funciona con tu central IP. Precios en pesos chilenos (CLP).",
-      "eyebrow": "Chile · número +56 gratis · precios en pesos",
-      "h1": "Agente telefónico con IA para empresas en Chile",
-      "intro": "Llama a tus clientes potenciales con un número chileno incluido gratis en menos de 30 segundos, con voz latina natural que agenda citas, gestiona cobranza y hace seguimiento. Funciona con tu central IP y cumple la Ley 19.628.",
-      "keywords": "agente telefónico IA Chile, llamadas automáticas Chile, central IP Chile, telefonía IP empresas Chile, cobranza telefónica IA",
-      "faq": [
-        ["¿Llaman con número chileno?", "Sí. Tu plan incluye gratis un número chileno +56 ya configurado: no tienes que contratar nada más."],
-        ["¿Sirve para cobranza?", "Sí. El agente recuerda montos y vencimientos con amabilidad y nunca pide datos de tarjeta por teléfono."],
-        ["¿En qué moneda se paga?", "En pesos chilenos (CLP), con un plan mensual sin permanencia."]
-      ]
-    },
-    {
-      "path": "/telefonia-ip-con-inteligencia-artificial",
-      "type": "topic",
-      "country": "AUTO",
-      "title": "Telefonía IP con inteligencia artificial para empresas | VozLeads",
-      "description": "Añade un agente de voz con IA a tu telefonía IP: llama a tus leads en segundos, agenda citas y registra cada llamada. Incluye número de España o Chile gratis.",
-      "eyebrow": "Telefonía IP con agente de voz",
-      "h1": "Telefonía IP con inteligencia artificial: tus líneas ahora llaman solas",
-      "intro": "Telefonía IP y agente de voz en un solo plan: te damos gratis un número de España o Chile y un agente con IA que llama a cada nuevo lead en segundos y te deja el resultado por escrito.",
-      "keywords": "telefonía IP, telefonía IP con IA, telefonía IP empresas, VoIP inteligencia artificial, SIP IA",
-      "sections": [
-        ["Qué aporta la IA a tu telefonía IP", "La telefonía IP te da líneas baratas y flexibles; la IA les da conversación. Con VozLeads tu número +34 o +56, incluido gratis, llama automáticamente a los leads de tu web, hacen preguntas de calificación, agendan citas y dejan grabación, transcripción y resumen de cada llamada."],
-        ["Número y línea incluidos", "No tienes que contratar operador, número ni cuenta SIP: te entregamos un número de España o Chile ya configurado y listo para llamar desde el primer día."],
-        ["Coste por minuto claro", "Ves el coste real de cada llamada en el panel. Pagas un plan mensual de minutos en euros o pesos chilenos, sin permanencia."]
-      ],
-      "faq": [
-        ["¿Necesito una telefonía IP para usar VozLeads?", "No. Tu plan incluye gratis el número de España o Chile y la línea para llamar."],
-        ["¿VozLeads sustituye a mi operador de telefonía IP?", "No hace falta: VozLeads ya incluye el número y la línea para las llamadas del agente. Puedes mantener tu operador para el resto de llamadas de tu empresa."]
-      ]
-    },
-    {
-      "path": "/centralita-virtual-con-ia",
-      "type": "topic",
-      "country": "ES",
-      "title": "Centralita virtual con IA: agente que llama a tus clientes | VozLeads",
-      "description": "Complementa tu centralita virtual con un agente de voz con IA que llama a tus leads en segundos, agenda citas y avisa a tu equipo. Para empresas en España, sin cambiar de centralita.",
-      "eyebrow": "Centralita virtual · España",
-      "h1": "Centralita virtual con IA: un agente que llama por ti",
-      "intro": "Tu centralita virtual reparte las llamadas; VozLeads las hace. Un agente con IA llama a cada nuevo cliente potencial en segundos, lo califica y le da cita, mientras tu equipo atiende solo a quien está listo para comprar.",
-      "keywords": "centralita virtual, centralita virtual IA, centralita IP, centralita en la nube, centralita para empresas",
-      "sections": [
-        ["Tu centralita, ahora con agente de voz", "VozLeads funciona junto a tu centralita virtual o centralita IP en la nube. El agente llama desde un número español incluido gratis en tu plan, así que no tienes que tocar la configuración de tu centralita."],
-        ["Del formulario a la cita en un minuto", "Cuando alguien deja sus datos en tu web, el agente le llama al momento, resuelve sus dudas básicas, consulta tu agenda y confirma la cita por email al cliente y a tu equipo."],
-        ["Cuando hace falta una persona", "Si el cliente pide hablar con alguien, el agente se lo promete y tu equipo recibe el aviso al instante con nombre, teléfono y motivo."]
-      ],
-      "faq": [
-        ["¿Tengo que cambiar mi centralita virtual?", "No. VozLeads trabaja a su lado con su propio número incluido gratis; tu centralita sigue recibiendo y repartiendo llamadas."],
-        ["¿El agente atiende llamadas entrantes?", "Hoy VozLeads está especializado en llamadas salientes: llama a tus leads, recuerda citas, gestiona cobros y hace encuestas."]
-      ]
-    },
-    {
-      "path": "/central-ip-con-inteligencia-artificial",
-      "type": "topic",
-      "country": "CL",
-      "title": "Central IP con inteligencia artificial en Chile | VozLeads",
-      "description": "Suma un agente de voz con IA a tu central IP o central telefónica virtual en Chile: llama a tus clientes en segundos, agenda, hace cobranza y seguimiento. Precios en pesos.",
-      "eyebrow": "Central IP · Chile",
-      "h1": "Central IP con inteligencia artificial para empresas en Chile",
-      "intro": "Tu central IP ya conecta a tu equipo. VozLeads le suma un agente con IA y voz latina que llama a cada cliente potencial en segundos, agenda reuniones, recuerda pagos y te deja todo registrado.",
-      "keywords": "central IP, central IP Chile, central telefónica IP, central telefónica virtual, PBX IP Chile",
-      "sections": [
-        ["Central telefónica IP + agente de voz", "VozLeads incluye gratis un número chileno +56 con su línea, así que funciona junto a tu central telefónica IP o PBX en la nube sin configurarla. Tus clientes hablan con un agente que suena natural."],
-        ["Cobranza y seguimiento sin esfuerzo", "Programa llamadas de cobranza, recordatorios de citas y encuestas de satisfacción. El agente adapta el mensaje a cada cliente y nunca pide datos de tarjeta."],
-        ["Precios en pesos chilenos", "Planes mensuales de minutos en CLP, sin permanencia, con el coste de cada llamada visible en tu panel."]
-      ],
-      "faq": [
-        ["¿Funciona con mi central telefónica IP actual?", "Sí. VozLeads trabaja a su lado con un número chileno incluido gratis, sin tocar tu central."],
-        ["¿El acento suena chileno?", "Usamos voces latinas naturales y puedes elegir voces ultra naturales con acento chileno nativo."]
-      ]
-    },
-    {
-      "path": "/oficina-virtual-con-asistente-telefonico-ia",
-      "type": "topic",
-      "country": "AUTO",
-      "title": "Oficina virtual con asistente telefónico IA | VozLeads",
-      "description": "Para negocios con oficina virtual: un asistente telefónico con IA que llama a tus leads, agenda citas y avisa a tu equipo, desde cualquier lugar. España y Chile.",
-      "eyebrow": "Oficina virtual · asistente telefónico",
-      "h1": "Oficina virtual con asistente telefónico con IA",
-      "intro": "Trabajas en remoto o con oficina virtual y no siempre puedes coger el teléfono. Tu asistente telefónico con IA llama a cada nuevo cliente al momento, le da cita y te deja el resumen en el panel o en tu email.",
-      "keywords": "oficina virtual, asistente virtual telefónico, secretaria virtual IA, asistente telefónico IA",
-      "sections": [
-        ["Tu secretaria virtual que llama", "El asistente de VozLeads hace las llamadas que tu oficina virtual no puede: contacta a los leads en segundos, responde las preguntas frecuentes y agenda en tu calendario."],
-        ["Todo por escrito", "Cada llamada queda con grabación, transcripción, resumen y nivel de interés, para que decidas desde el móvil a quién llamar tú."],
-        ["Sin equipo ni horarios", "Funciona 24/7 dentro del horario que elijas, en España y en Chile, sin contratar personal ni montar un call center."]
-      ],
-      "faq": [
-        ["¿Sustituye a mi oficina virtual?", "No. Tu oficina virtual te da dirección y servicios; VozLeads añade un asistente con IA que hace llamadas por ti."],
-        ["¿Puedo escuchar las llamadas?", "Sí, todas quedan grabadas y transcritas en tu panel."]
-      ]
-    },
-    {
-      "path": "/llamadas-automaticas-con-ia",
-      "type": "topic",
-      "country": "AUTO",
-      "title": "Llamadas automáticas con IA para empresas | VozLeads",
-      "description": "Llamadas automáticas con inteligencia artificial que suenan humanas: captación de leads, citas, cobranza y encuestas. Con grabación, transcripción y coste por llamada. España y Chile.",
-      "eyebrow": "Llamadas automáticas con IA",
-      "h1": "Llamadas automáticas con IA que suenan humanas",
-      "intro": "Olvídate de los robots con menús. VozLeads hace llamadas automáticas con una voz natural que escucha, responde y se adapta a cada cliente, y te entrega el resultado de cada conversación.",
-      "keywords": "llamadas automáticas, llamadas automáticas IA, robot de llamadas, marcador automático IA, call center IA",
-      "sections": [
-        ["Más que un marcador automático", "Un marcador solo marca números. El agente de VozLeads conversa: entiende interrupciones, responde dudas, califica el interés y agenda la cita sin intervención humana."],
-        ["Campañas programadas o por API", "Programa llamadas con plantillas de cobranza, recordatorios o encuestas, o lánzalas desde tu CRM con nuestra API."],
-        ["Respetuoso y legal", "Solo llama a contactos con consentimiento, se identifica como asistente virtual y añade a la lista de no llamar a quien lo pida."]
-      ],
-      "faq": [
-        ["¿Las llamadas automáticas suenan a robot?", "No. Usamos voces de última generación con entonación natural, pausas y ambiente de oficina real de fondo."],
-        ["¿Puedo ver lo que dijo cada cliente?", "Sí: grabación, transcripción, resumen e interés de cada llamada en tu panel."]
-      ]
-    }
-  ]
+ "site": "https://vozleads.com",
+ "brand": "VozLeads",
+ "owner": "GoRoky.com",
+ "pages": [
+  {
+   "path": "/",
+   "type": "home",
+   "country": "AUTO",
+   "title": "Call center con IA y agente telefónico de voz en español | VozLeads",
+   "description": "Call center con inteligencia artificial: un agente de voz en español llama a tus leads en menos de 30 segundos, agenda citas, cobra y atiende tu central telefónica 24/7. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz en español",
+   "h1": "Tu call center con IA llama a cada lead en menos de 30 segundos",
+   "intro": "Un agente telefónico con inteligencia artificial que habla como una persona: llama a quien rellena tu formulario, agenda citas, recuerda pagos y contesta tu teléfono. Para empresas de habla hispana, sin contratar operadores.",
+   "keywords": "call center con IA, central telefónica con IA, teléfono IA, agente telefónico IA, llamadas automáticas con inteligencia artificial, contact center IA, asistente telefónico virtual",
+   "faq": [
+    [
+     "¿Qué es VozLeads?",
+     "Un agente de voz con inteligencia artificial que llama por teléfono a tus clientes potenciales en segundos, mantiene una conversación natural en español, los califica, agenda citas y registra grabación, transcripción y resultado de cada llamada."
+    ],
+    [
+     "¿Necesito contratar un número o una telefonía IP?",
+     "No. Todos los planes incluyen gratis un número de España (+34) o de Chile (+56) ya configurado, con su línea. Si tienes centralita, central IP u oficina virtual, sigue funcionando igual."
+    ],
+    [
+     "¿En qué países funciona?",
+     "En España (números +34, precios en euros) y en Chile (números +56, precios en pesos chilenos), con voces, horarios y formatos adaptados a cada país."
+    ],
+    [
+     "¿El cliente sabe que habla con una IA?",
+     "Sí. El agente se presenta como asistente virtual y avisa de la grabación, como exigen el RGPD en España y la Ley 19.628 en Chile."
+    ],
+    [
+     "¿Qué pasa si el cliente quiere hablar con una persona?",
+     "El agente toma nota del motivo y del mejor momento para llamar, se lo promete al cliente y tu equipo recibe al instante un email y un aviso en el panel."
+    ],
+    [
+     "¿Cómo se paga?",
+     "Con un plan mensual de minutos, sin permanencia y con un número de España o Chile incluido gratis. Pagas con tarjeta y puedes cambiar o cancelar el plan cuando quieras."
+    ]
+   ]
+  },
+  {
+   "path": "/es",
+   "type": "country",
+   "country": "ES",
+   "title": "Agente telefónico con IA en España | Llamadas automáticas · VozLeads",
+   "description": "Agente de voz con IA para empresas en España: llama a tus leads en segundos con voz natural, agenda citas y se integra con tu centralita virtual o telefonía IP. Precios en euros.",
+   "eyebrow": "España · número +34 gratis · precios en euros",
+   "h1": "Agente telefónico con IA para empresas en España",
+   "intro": "Llama a tus leads con un número español incluido gratis en menos de 30 segundos, con una voz natural que agenda citas, recuerda pagos y hace seguimiento. Se integra con tu centralita virtual o telefonía IP y cumple el RGPD.",
+   "keywords": "agente telefónico IA España, llamadas automáticas España, centralita virtual IA, telefonía IP empresas España",
+   "faq": [
+    [
+     "¿Llamáis con número español?",
+     "Sí. Tu plan incluye gratis un número español +34 ya configurado: no tienes que contratar nada más."
+    ],
+    [
+     "¿Cumple el RGPD?",
+     "El agente se identifica como asistente virtual, avisa de la grabación, solo llama a quien dio su consentimiento y respeta la lista de no llamar."
+    ],
+    [
+     "¿En qué horario llama?",
+     "En el horario que tú configures, con la hora peninsular de España."
+    ]
+   ]
+  },
+  {
+   "path": "/cl",
+   "type": "country",
+   "country": "CL",
+   "title": "Agente telefónico con IA en Chile | Llamadas automáticas · VozLeads",
+   "description": "Agente de voz con IA para empresas en Chile: llama a tus clientes en segundos con acento latino, agenda citas y funciona con tu central IP. Precios en pesos chilenos (CLP).",
+   "eyebrow": "Chile · número +56 gratis · precios en pesos",
+   "h1": "Agente telefónico con IA para empresas en Chile",
+   "intro": "Llama a tus clientes potenciales con un número chileno incluido gratis en menos de 30 segundos, con voz latina natural que agenda citas, gestiona cobranza y hace seguimiento. Funciona con tu central IP y cumple la Ley 19.628.",
+   "keywords": "agente telefónico IA Chile, llamadas automáticas Chile, central IP Chile, telefonía IP empresas Chile, cobranza telefónica IA",
+   "faq": [
+    [
+     "¿Llaman con número chileno?",
+     "Sí. Tu plan incluye gratis un número chileno +56 ya configurado: no tienes que contratar nada más."
+    ],
+    [
+     "¿Sirve para cobranza?",
+     "Sí. El agente recuerda montos y vencimientos con amabilidad y nunca pide datos de tarjeta por teléfono."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "En pesos chilenos (CLP), con un plan mensual sin permanencia."
+    ]
+   ]
+  },
+  {
+   "path": "/telefonia-ip-con-inteligencia-artificial",
+   "type": "topic",
+   "country": "AUTO",
+   "title": "Telefonía IP con inteligencia artificial para empresas | VozLeads",
+   "description": "Añade un agente de voz con IA a tu telefonía IP: llama a tus leads en segundos, agenda citas y registra cada llamada. Incluye número de España o Chile gratis.",
+   "eyebrow": "Telefonía IP con agente de voz",
+   "h1": "Telefonía IP con inteligencia artificial: tus líneas ahora llaman solas",
+   "intro": "Telefonía IP y agente de voz en un solo plan: te damos gratis un número de España o Chile y un agente con IA que llama a cada nuevo lead en segundos y te deja el resultado por escrito.",
+   "keywords": "telefonía IP, telefonía IP con IA, telefonía IP empresas, VoIP inteligencia artificial, SIP IA",
+   "sections": [
+    [
+     "Qué aporta la IA a tu telefonía IP",
+     "La telefonía IP te da líneas baratas y flexibles; la IA les da conversación. Con VozLeads tu número +34 o +56, incluido gratis, llama automáticamente a los leads de tu web, hacen preguntas de calificación, agendan citas y dejan grabación, transcripción y resumen de cada llamada."
+    ],
+    [
+     "Número y línea incluidos",
+     "No tienes que contratar operador, número ni cuenta SIP: te entregamos un número de España o Chile ya configurado y listo para llamar desde el primer día."
+    ],
+    [
+     "Coste por minuto claro",
+     "Ves el coste real de cada llamada en el panel. Pagas un plan mensual de minutos en euros o pesos chilenos, sin permanencia."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Necesito una telefonía IP para usar VozLeads?",
+     "No. Tu plan incluye gratis el número de España o Chile y la línea para llamar."
+    ],
+    [
+     "¿VozLeads sustituye a mi operador de telefonía IP?",
+     "No hace falta: VozLeads ya incluye el número y la línea para las llamadas del agente. Puedes mantener tu operador para el resto de llamadas de tu empresa."
+    ]
+   ]
+  },
+  {
+   "path": "/centralita-virtual-con-ia",
+   "type": "topic",
+   "country": "ES",
+   "title": "Centralita virtual con IA: agente que llama a tus clientes | VozLeads",
+   "description": "Complementa tu centralita virtual con un agente de voz con IA que llama a tus leads en segundos, agenda citas y avisa a tu equipo. Para empresas en España, sin cambiar de centralita.",
+   "eyebrow": "Centralita virtual · España",
+   "h1": "Centralita virtual con IA: un agente que llama por ti",
+   "intro": "Tu centralita virtual reparte las llamadas; VozLeads las hace. Un agente con IA llama a cada nuevo cliente potencial en segundos, lo califica y le da cita, mientras tu equipo atiende solo a quien está listo para comprar.",
+   "keywords": "centralita virtual, centralita virtual IA, centralita IP, centralita en la nube, centralita para empresas",
+   "sections": [
+    [
+     "Tu centralita, ahora con agente de voz",
+     "VozLeads funciona junto a tu centralita virtual o centralita IP en la nube. El agente llama desde un número español incluido gratis en tu plan, así que no tienes que tocar la configuración de tu centralita."
+    ],
+    [
+     "Del formulario a la cita en un minuto",
+     "Cuando alguien deja sus datos en tu web, el agente le llama al momento, resuelve sus dudas básicas, consulta tu agenda y confirma la cita por email al cliente y a tu equipo."
+    ],
+    [
+     "Cuando hace falta una persona",
+     "Si el cliente pide hablar con alguien, el agente se lo promete y tu equipo recibe el aviso al instante con nombre, teléfono y motivo."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Tengo que cambiar mi centralita virtual?",
+     "No. VozLeads trabaja a su lado con su propio número incluido gratis; tu centralita sigue recibiendo y repartiendo llamadas."
+    ],
+    [
+     "¿El agente atiende llamadas entrantes?",
+     "Hoy VozLeads está especializado en llamadas salientes: llama a tus leads, recuerda citas, gestiona cobros y hace encuestas."
+    ]
+   ]
+  },
+  {
+   "path": "/central-ip-con-inteligencia-artificial",
+   "type": "topic",
+   "country": "CL",
+   "title": "Central IP con inteligencia artificial en Chile | VozLeads",
+   "description": "Suma un agente de voz con IA a tu central IP o central telefónica virtual en Chile: llama a tus clientes en segundos, agenda, hace cobranza y seguimiento. Precios en pesos.",
+   "eyebrow": "Central IP · Chile",
+   "h1": "Central IP con inteligencia artificial para empresas en Chile",
+   "intro": "Tu central IP ya conecta a tu equipo. VozLeads le suma un agente con IA y voz latina que llama a cada cliente potencial en segundos, agenda reuniones, recuerda pagos y te deja todo registrado.",
+   "keywords": "central IP, central IP Chile, central telefónica IP, central telefónica virtual, PBX IP Chile",
+   "sections": [
+    [
+     "Central telefónica IP + agente de voz",
+     "VozLeads incluye gratis un número chileno +56 con su línea, así que funciona junto a tu central telefónica IP o PBX en la nube sin configurarla. Tus clientes hablan con un agente que suena natural."
+    ],
+    [
+     "Cobranza y seguimiento sin esfuerzo",
+     "Programa llamadas de cobranza, recordatorios de citas y encuestas de satisfacción. El agente adapta el mensaje a cada cliente y nunca pide datos de tarjeta."
+    ],
+    [
+     "Precios en pesos chilenos",
+     "Planes mensuales de minutos en CLP, sin permanencia, con el coste de cada llamada visible en tu panel."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona con mi central telefónica IP actual?",
+     "Sí. VozLeads trabaja a su lado con un número chileno incluido gratis, sin tocar tu central."
+    ],
+    [
+     "¿El acento suena chileno?",
+     "Usamos voces latinas naturales y puedes elegir voces ultra naturales con acento chileno nativo."
+    ]
+   ]
+  },
+  {
+   "path": "/oficina-virtual-con-asistente-telefonico-ia",
+   "type": "topic",
+   "country": "AUTO",
+   "title": "Oficina virtual con asistente telefónico IA | VozLeads",
+   "description": "Para negocios con oficina virtual: un asistente telefónico con IA que llama a tus leads, agenda citas y avisa a tu equipo, desde cualquier lugar. España y Chile.",
+   "eyebrow": "Oficina virtual · asistente telefónico",
+   "h1": "Oficina virtual con asistente telefónico con IA",
+   "intro": "Trabajas en remoto o con oficina virtual y no siempre puedes coger el teléfono. Tu asistente telefónico con IA llama a cada nuevo cliente al momento, le da cita y te deja el resumen en el panel o en tu email.",
+   "keywords": "oficina virtual, asistente virtual telefónico, secretaria virtual IA, asistente telefónico IA",
+   "sections": [
+    [
+     "Tu secretaria virtual que llama",
+     "El asistente de VozLeads hace las llamadas que tu oficina virtual no puede: contacta a los leads en segundos, responde las preguntas frecuentes y agenda en tu calendario."
+    ],
+    [
+     "Todo por escrito",
+     "Cada llamada queda con grabación, transcripción, resumen y nivel de interés, para que decidas desde el móvil a quién llamar tú."
+    ],
+    [
+     "Sin equipo ni horarios",
+     "Funciona 24/7 dentro del horario que elijas, en España y en Chile, sin contratar personal ni montar un call center."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Sustituye a mi oficina virtual?",
+     "No. Tu oficina virtual te da dirección y servicios; VozLeads añade un asistente con IA que hace llamadas por ti."
+    ],
+    [
+     "¿Puedo escuchar las llamadas?",
+     "Sí, todas quedan grabadas y transcritas en tu panel."
+    ]
+   ]
+  },
+  {
+   "path": "/llamadas-automaticas-con-ia",
+   "type": "topic",
+   "country": "AUTO",
+   "title": "Llamadas automáticas con IA para empresas | VozLeads",
+   "description": "Llamadas automáticas con inteligencia artificial que suenan humanas: captación de leads, citas, cobranza y encuestas. Con grabación, transcripción y coste por llamada. España y Chile.",
+   "eyebrow": "Llamadas automáticas con IA",
+   "h1": "Llamadas automáticas con IA que suenan humanas",
+   "intro": "Olvídate de los robots con menús. VozLeads hace llamadas automáticas con una voz natural que escucha, responde y se adapta a cada cliente, y te entrega el resultado de cada conversación.",
+   "keywords": "llamadas automáticas, llamadas automáticas IA, robot de llamadas, marcador automático IA, call center IA",
+   "sections": [
+    [
+     "Más que un marcador automático",
+     "Un marcador solo marca números. El agente de VozLeads conversa: entiende interrupciones, responde dudas, califica el interés y agenda la cita sin intervención humana."
+    ],
+    [
+     "Campañas programadas o por API",
+     "Programa llamadas con plantillas de cobranza, recordatorios o encuestas, o lánzalas desde tu CRM con nuestra API."
+    ],
+    [
+     "Respetuoso y legal",
+     "Solo llama a contactos con consentimiento, se identifica como asistente virtual y añade a la lista de no llamar a quien lo pida."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Las llamadas automáticas suenan a robot?",
+     "No. Usamos voces de última generación con entonación natural, pausas y ambiente de oficina real de fondo."
+    ],
+    [
+     "¿Puedo ver lo que dijo cada cliente?",
+     "Sí: grabación, transcripción, resumen e interés de cada llamada en tu panel."
+    ]
+   ]
+  },
+  {
+   "path": "/mx",
+   "type": "country",
+   "country": "MX",
+   "title": "Call center con IA en México | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de México: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu conmutador virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para México",
+   "h1": "Call center con IA para empresas de México",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de México en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Ciudad de México, Monterrey y Guadalajara.",
+   "keywords": "call center con IA México, central telefónica con IA México, conmutador virtual con IA, teléfono IA México, agente telefónico IA México, llamadas automáticas México",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en México",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de México y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu conmutador virtual",
+     "No necesitas cambiar tu conmutador virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de México?",
+     "Sí. Tus leads de México (+52) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a pesos mexicanos automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la LFPDPPP."
+    ]
+   ]
+  },
+  {
+   "path": "/ar",
+   "type": "country",
+   "country": "AR",
+   "title": "Call center con IA en Argentina | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Argentina: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Argentina",
+   "h1": "Call center con IA para empresas de Argentina",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Argentina en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Buenos Aires, Córdoba y Rosario.",
+   "keywords": "call center con IA Argentina, central telefónica con IA Argentina, central telefónica virtual con IA, teléfono IA Argentina, agente telefónico IA Argentina, llamadas automáticas Argentina",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Argentina",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Argentina y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Argentina?",
+     "Sí. Tus leads de Argentina (+54) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a pesos argentinos automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 25.326."
+    ]
+   ]
+  },
+  {
+   "path": "/co",
+   "type": "country",
+   "country": "CO",
+   "title": "Call center con IA en Colombia | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Colombia: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu conmutador o PBX virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Colombia",
+   "h1": "Call center con IA para empresas de Colombia",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Colombia en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Bogotá, Medellín y Cali.",
+   "keywords": "call center con IA Colombia, central telefónica con IA Colombia, conmutador o PBX virtual con IA, teléfono IA Colombia, agente telefónico IA Colombia, llamadas automáticas Colombia",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Colombia",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Colombia y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu conmutador o PBX virtual",
+     "No necesitas cambiar tu conmutador o PBX virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Colombia?",
+     "Sí. Tus leads de Colombia (+57) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a pesos colombianos automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 1581 de Habeas Data."
+    ]
+   ]
+  },
+  {
+   "path": "/pe",
+   "type": "country",
+   "country": "PE",
+   "title": "Call center con IA en Perú | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Perú: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Perú",
+   "h1": "Call center con IA para empresas de Perú",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Perú en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Lima, Arequipa y Trujillo.",
+   "keywords": "call center con IA Perú, central telefónica con IA Perú, central telefónica virtual con IA, teléfono IA Perú, agente telefónico IA Perú, llamadas automáticas Perú",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Perú",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Perú y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Perú?",
+     "Sí. Tus leads de Perú (+51) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a soles automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 29733."
+    ]
+   ]
+  },
+  {
+   "path": "/ec",
+   "type": "country",
+   "country": "EC",
+   "title": "Call center con IA en Ecuador | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Ecuador: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica IP. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Ecuador",
+   "h1": "Call center con IA para empresas de Ecuador",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Ecuador en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Quito, Guayaquil y Cuenca.",
+   "keywords": "call center con IA Ecuador, central telefónica con IA Ecuador, central telefónica IP con IA, teléfono IA Ecuador, agente telefónico IA Ecuador, llamadas automáticas Ecuador",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Ecuador",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Ecuador y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica IP",
+     "No necesitas cambiar tu central telefónica IP ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Ecuador?",
+     "Sí. Tus leads de Ecuador (+593) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a dólares automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la LOPDP."
+    ]
+   ]
+  },
+  {
+   "path": "/uy",
+   "type": "country",
+   "country": "UY",
+   "title": "Call center con IA en Uruguay | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Uruguay: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Uruguay",
+   "h1": "Call center con IA para empresas de Uruguay",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Uruguay en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Montevideo, Punta del Este y Salto.",
+   "keywords": "call center con IA Uruguay, central telefónica con IA Uruguay, central telefónica virtual con IA, teléfono IA Uruguay, agente telefónico IA Uruguay, llamadas automáticas Uruguay",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Uruguay",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Uruguay y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Uruguay?",
+     "Sí. Tus leads de Uruguay (+598) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a pesos uruguayos automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 18.331."
+    ]
+   ]
+  },
+  {
+   "path": "/ve",
+   "type": "country",
+   "country": "VE",
+   "title": "Call center con IA en Venezuela | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Venezuela: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica IP. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Venezuela",
+   "h1": "Call center con IA para empresas de Venezuela",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Venezuela en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Caracas, Maracaibo y Valencia.",
+   "keywords": "call center con IA Venezuela, central telefónica con IA Venezuela, central telefónica IP con IA, teléfono IA Venezuela, agente telefónico IA Venezuela, llamadas automáticas Venezuela",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Venezuela",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Venezuela y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica IP",
+     "No necesitas cambiar tu central telefónica IP ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Venezuela?",
+     "Sí. Tus leads de Venezuela (+58) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a bolívares automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+    ]
+   ]
+  },
+  {
+   "path": "/pa",
+   "type": "country",
+   "country": "PA",
+   "title": "Call center con IA en Panamá | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Panamá: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Panamá",
+   "h1": "Call center con IA para empresas de Panamá",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Panamá en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Ciudad de Panamá, Colón y David.",
+   "keywords": "call center con IA Panamá, central telefónica con IA Panamá, central telefónica virtual con IA, teléfono IA Panamá, agente telefónico IA Panamá, llamadas automáticas Panamá",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Panamá",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Panamá y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Panamá?",
+     "Sí. Tus leads de Panamá (+507) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a balboas automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 81 de protección de datos."
+    ]
+   ]
+  },
+  {
+   "path": "/cr",
+   "type": "country",
+   "country": "CR",
+   "title": "Call center con IA en Costa Rica | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Costa Rica: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Costa Rica",
+   "h1": "Call center con IA para empresas de Costa Rica",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Costa Rica en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en San José, Alajuela y Heredia.",
+   "keywords": "call center con IA Costa Rica, central telefónica con IA Costa Rica, central telefónica virtual con IA, teléfono IA Costa Rica, agente telefónico IA Costa Rica, llamadas automáticas Costa Rica",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Costa Rica",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Costa Rica y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Costa Rica?",
+     "Sí. Tus leads de Costa Rica (+506) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a colones automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 8968."
+    ]
+   ]
+  },
+  {
+   "path": "/gt",
+   "type": "country",
+   "country": "GT",
+   "title": "Call center con IA en Guatemala | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Guatemala: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu PBX virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Guatemala",
+   "h1": "Call center con IA para empresas de Guatemala",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Guatemala en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Ciudad de Guatemala, Quetzaltenango y Antigua.",
+   "keywords": "call center con IA Guatemala, central telefónica con IA Guatemala, PBX virtual con IA, teléfono IA Guatemala, agente telefónico IA Guatemala, llamadas automáticas Guatemala",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Guatemala",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Guatemala y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu PBX virtual",
+     "No necesitas cambiar tu PBX virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Guatemala?",
+     "Sí. Tus leads de Guatemala (+502) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a quetzales automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+    ]
+   ]
+  },
+  {
+   "path": "/hn",
+   "type": "country",
+   "country": "HN",
+   "title": "Call center con IA en Honduras | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Honduras: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Honduras",
+   "h1": "Call center con IA para empresas de Honduras",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Honduras en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Tegucigalpa, San Pedro Sula y La Ceiba.",
+   "keywords": "call center con IA Honduras, central telefónica con IA Honduras, central telefónica virtual con IA, teléfono IA Honduras, agente telefónico IA Honduras, llamadas automáticas Honduras",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Honduras",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Honduras y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Honduras?",
+     "Sí. Tus leads de Honduras (+504) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a lempiras automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+    ]
+   ]
+  },
+  {
+   "path": "/sv",
+   "type": "country",
+   "country": "SV",
+   "title": "Call center con IA en El Salvador | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de El Salvador: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica IP. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para El Salvador",
+   "h1": "Call center con IA para empresas de El Salvador",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de El Salvador en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en San Salvador, Santa Ana y San Miguel.",
+   "keywords": "call center con IA El Salvador, central telefónica con IA El Salvador, central telefónica IP con IA, teléfono IA El Salvador, agente telefónico IA El Salvador, llamadas automáticas El Salvador",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en El Salvador",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de El Salvador y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica IP",
+     "No necesitas cambiar tu central telefónica IP ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de El Salvador?",
+     "Sí. Tus leads de El Salvador (+503) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a dólares automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+    ]
+   ]
+  },
+  {
+   "path": "/ni",
+   "type": "country",
+   "country": "NI",
+   "title": "Call center con IA en Nicaragua | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Nicaragua: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Nicaragua",
+   "h1": "Call center con IA para empresas de Nicaragua",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Nicaragua en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Managua, León y Granada.",
+   "keywords": "call center con IA Nicaragua, central telefónica con IA Nicaragua, central telefónica virtual con IA, teléfono IA Nicaragua, agente telefónico IA Nicaragua, llamadas automáticas Nicaragua",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Nicaragua",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Nicaragua y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Nicaragua?",
+     "Sí. Tus leads de Nicaragua (+505) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a córdobas automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 787."
+    ]
+   ]
+  },
+  {
+   "path": "/do",
+   "type": "country",
+   "country": "DO",
+   "title": "Call center con IA en República Dominicana | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de República Dominicana: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para República Dominicana",
+   "h1": "Call center con IA para empresas de República Dominicana",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de República Dominicana en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Santo Domingo, Santiago y Punta Cana.",
+   "keywords": "call center con IA República Dominicana, central telefónica con IA República Dominicana, central telefónica virtual con IA, teléfono IA República Dominicana, agente telefónico IA República Dominicana, llamadas automáticas República Dominicana",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en República Dominicana",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de República Dominicana y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de República Dominicana?",
+     "Sí. Tus leads de República Dominicana (+1) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a pesos dominicanos automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 172-13."
+    ]
+   ]
+  },
+  {
+   "path": "/bo",
+   "type": "country",
+   "country": "BO",
+   "title": "Call center con IA en Bolivia | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Bolivia: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica IP. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Bolivia",
+   "h1": "Call center con IA para empresas de Bolivia",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Bolivia en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Santa Cruz, La Paz y Cochabamba.",
+   "keywords": "call center con IA Bolivia, central telefónica con IA Bolivia, central telefónica IP con IA, teléfono IA Bolivia, agente telefónico IA Bolivia, llamadas automáticas Bolivia",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Bolivia",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Bolivia y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica IP",
+     "No necesitas cambiar tu central telefónica IP ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Bolivia?",
+     "Sí. Tus leads de Bolivia (+591) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a bolivianos automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la normativa local de protección de datos."
+    ]
+   ]
+  },
+  {
+   "path": "/py",
+   "type": "country",
+   "country": "PY",
+   "title": "Call center con IA en Paraguay | Agente telefónico de voz · VozLeads",
+   "description": "Agente telefónico con IA para empresas de Paraguay: llama a tus leads en segundos con voz natural en español, agenda citas y trabaja junto a tu central telefónica virtual. Prueba una muestra gratis.",
+   "eyebrow": "Agente de voz con IA para Paraguay",
+   "h1": "Call center con IA para empresas de Paraguay",
+   "intro": "Tu agente telefónico con inteligencia artificial llama a cada lead de Paraguay en menos de 30 segundos, con voz natural en español. Agenda citas, recuerda pagos y responde dudas mientras tu equipo se ocupa de cerrar ventas en Asunción, Ciudad del Este y Encarnación.",
+   "keywords": "call center con IA Paraguay, central telefónica con IA Paraguay, central telefónica virtual con IA, teléfono IA Paraguay, agente telefónico IA Paraguay, llamadas automáticas Paraguay",
+   "sections": [
+    [
+     "Llamadas automáticas con IA en Paraguay",
+     "Cada formulario de tu web o de tus campañas se convierte en una llamada en segundos. El agente habla en español neutro, entiende acentos de Paraguay y deja todo grabado y transcrito."
+    ],
+    [
+     "Compatible con tu central telefónica virtual",
+     "No necesitas cambiar tu central telefónica virtual ni tu operador: VozLeads trabaja a su lado y te avisa cuando un cliente quiere hablar con una persona."
+    ]
+   ],
+   "faq": [
+    [
+     "¿Funciona para empresas de Paraguay?",
+     "Sí. Tus leads de Paraguay (+595) reciben la llamada en segundos y el agente habla en español natural."
+    ],
+    [
+     "¿En qué moneda se paga?",
+     "Los planes se pagan en euros con tarjeta. Tu banco hace la conversión a guaraníes automáticamente."
+    ],
+    [
+     "¿Cumple la normativa de privacidad?",
+     "El agente se identifica como asistente virtual, avisa de la grabación y solo llama a quien dio su consentimiento, en línea con la Ley 6534."
+    ]
+   ]
+  },
+  {
+   "path": "/call-center-con-ia",
+   "type": "topic",
+   "country": "AUTO",
+   "title": "Call center con IA | Agentes de voz que llaman y contestan · VozLeads",
+   "description": "Monta tu call center con inteligencia artificial: agentes de voz en español que llaman a tus leads en segundos, contestan llamadas entrantes y agendan citas 24/7.",
+   "eyebrow": "Call center con IA",
+   "h1": "Call center con IA",
+   "intro": "Monta tu call center con inteligencia artificial: agentes de voz en español que llaman a tus leads en segundos, contestan llamadas entrantes y agendan citas 24/7.",
+   "keywords": "call center con IA, call center inteligencia artificial, contact center IA, agentes de voz IA, callcenter automático",
+   "sections": [
+    [
+     "Llama y contesta por ti",
+     "Llama a cada lead en menos de 30 segundos y contesta las llamadas entrantes como recepcionista, en el horario que elijas."
+    ],
+    [
+     "Todo medido",
+     "Cada llamada queda grabada, transcrita y clasificada: interesado, cita agendada, venta o no interesado."
+    ],
+    [
+     "Sin operadores ni centralitas nuevas",
+     "Funciona con tu web, tu CRM y tu centralita actual. El número viene incluido."
+    ]
+   ],
+   "faq": [
+    [
+     "¿La voz suena natural?",
+     "Sí. Usa voces ultra naturales en español con pausas, entonación y ambiente de oficina real."
+    ],
+    [
+     "¿Puedo probarlo?",
+     "Sí: deja tu teléfono en el formulario y recibirás una muestra de 15 segundos al instante."
+    ]
+   ]
+  },
+  {
+   "path": "/central-telefonica-con-ia",
+   "type": "topic",
+   "country": "AUTO",
+   "title": "Central telefónica con IA | Recepcionista virtual 24/7 · VozLeads",
+   "description": "Tu central telefónica con inteligencia artificial contesta cada llamada, resuelve dudas, agenda citas y te avisa cuando alguien quiere hablar con una persona.",
+   "eyebrow": "Central telefónica con IA",
+   "h1": "Central telefónica con IA",
+   "intro": "Tu central telefónica con inteligencia artificial contesta cada llamada, resuelve dudas, agenda citas y te avisa cuando alguien quiere hablar con una persona.",
+   "keywords": "central telefónica con IA, central telefónica inteligente, recepcionista virtual IA, PBX con IA, conmutador con IA",
+   "sections": [
+    [
+     "Llama y contesta por ti",
+     "Llama a cada lead en menos de 30 segundos y contesta las llamadas entrantes como recepcionista, en el horario que elijas."
+    ],
+    [
+     "Todo medido",
+     "Cada llamada queda grabada, transcrita y clasificada: interesado, cita agendada, venta o no interesado."
+    ],
+    [
+     "Sin operadores ni centralitas nuevas",
+     "Funciona con tu web, tu CRM y tu centralita actual. El número viene incluido."
+    ]
+   ],
+   "faq": [
+    [
+     "¿La voz suena natural?",
+     "Sí. Usa voces ultra naturales en español con pausas, entonación y ambiente de oficina real."
+    ],
+    [
+     "¿Puedo probarlo?",
+     "Sí: deja tu teléfono en el formulario y recibirás una muestra de 15 segundos al instante."
+    ]
+   ]
+  },
+  {
+   "path": "/telefono-con-ia",
+   "type": "topic",
+   "country": "AUTO",
+   "title": "Teléfono IA para empresas | Asistente telefónico con voz natural · VozLeads",
+   "description": "Un teléfono con IA que llama y contesta por tu empresa: voz natural en español, número incluido, transcripciones y resultados de cada llamada.",
+   "eyebrow": "Teléfono con IA para empresas",
+   "h1": "Teléfono con IA para empresas",
+   "intro": "Un teléfono con IA que llama y contesta por tu empresa: voz natural en español, número incluido, transcripciones y resultados de cada llamada.",
+   "keywords": "teléfono IA, teléfono con inteligencia artificial, asistente telefónico IA, llamadas con IA, IA que llama por teléfono",
+   "sections": [
+    [
+     "Llama y contesta por ti",
+     "Llama a cada lead en menos de 30 segundos y contesta las llamadas entrantes como recepcionista, en el horario que elijas."
+    ],
+    [
+     "Todo medido",
+     "Cada llamada queda grabada, transcrita y clasificada: interesado, cita agendada, venta o no interesado."
+    ],
+    [
+     "Sin operadores ni centralitas nuevas",
+     "Funciona con tu web, tu CRM y tu centralita actual. El número viene incluido."
+    ]
+   ],
+   "faq": [
+    [
+     "¿La voz suena natural?",
+     "Sí. Usa voces ultra naturales en español con pausas, entonación y ambiente de oficina real."
+    ],
+    [
+     "¿Puedo probarlo?",
+     "Sí: deja tu teléfono en el formulario y recibirás una muestra de 15 segundos al instante."
+    ]
+   ]
+  }
+ ]
 }

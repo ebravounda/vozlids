@@ -39,3 +39,23 @@ def norm_any_phone(p: str) -> str:
         except HTTPException:
             continue
     raise HTTPException(422, "Teléfono no válido: usa +34 (España) o +56 (Chile).")
+
+
+DEMO_DIALS = {"ES": "34", "CL": "56", "AR": "54", "BO": "591", "CO": "57", "CR": "506", "DO": "1", "EC": "593", "SV": "503",
+              "GT": "502", "HN": "504", "MX": "52", "NI": "505", "PA": "507", "PY": "595", "PE": "51", "UY": "598", "VE": "58"}
+
+
+def norm_demo_phone(p: str, country: str) -> str:
+    if country in COUNTRIES:
+        return norm_phone(p, country)
+    cc = DEMO_DIALS[country]
+    p = re.sub(r"[\s\-\.\(\)]", "", p or "")
+    if p.startswith("00"):
+        p = "+" + p[2:]
+    if not p.startswith("+"):
+        p = f"+{cc}{p.lstrip('0')}"
+    if not p.startswith(f"+{cc}") or not re.fullmatch(r"\+\d{8,15}", p) or len(p) - len(cc) - 1 < 7:
+        raise ValueError(f"El teléfono no parece un número válido de este país (debe empezar por +{cc}).")
+    if country == "DO" and p[2:5] not in ("809", "829", "849"):
+        raise ValueError("El teléfono de República Dominicana debe empezar por 809, 829 u 849.")
+    return p
