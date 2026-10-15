@@ -1,0 +1,31 @@
+{
+  "summary": "Iter-19: Sector additions (inmobiliarias/talleres-mecanicos/gimnasios/academias), InfoForm 24h repeat note, footer legal + 4 legal pages. Backend pytest 19/19 passed (test_vozlead_iter19.py): marks + mp3 for all 4 new slugs x ES/CL (audio generated and persisted; audio/mpeg + 7 marks + duration>0), /api/public/info-request returns repeated:true when phone exists within 24h window (seeded +34611222333 via Mongo), consent/country validation preserved. Frontend Playwright: /es and /cl show all 11 sector-card-<slug> + sector-card-other; /es/inmobiliarias renders sector-hero + sector-player; /cl/inmobiliarias h1 contains 'corredoras de propiedades'; /es/academias play fires GET /api/public/sector-demo/es/academias.mp3 200 audio/mpeg. Repeat UI: seeded phone +34611222333 then UI submission showed data-testid solicitar-repeat-note 'Ya hemos llamado a este número hoy. Puedes volver a solicitar otra prueba en 24 horas.', API returned repeated:true calling:false, form stayed (no info-form-success). Footer on landing + legal: footer-company 'VozLeads es parte del Grupo GoRoky · GoRoky LLC · Estados Unidos, España, Chile', footer-address 'Raimundo Fernández Villaverde 39, Madrid, España · soporte@goroky.com', footer-email mailto:soporte@goroky.com; 4 legal routes /terminos /privacidad /cookies /aviso-legal each render legal-page-<slug> with h1, 3 legal-nav-* cross links, document.title '<Title> | VozLeads'. No cookie consent banner (only fixed-position scan returned []; the only cookie-matching element is footer-link-cookies <a>). Mobile 390px /es: scrollWidth==clientWidth (overflow=0).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter19.py",
+    "/app/test_reports/pytest/iter19_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "landing.info_request: when repeated=True the request is still inserted with call_status='repetida' and no email notification is sent (good: avoids spamming admin). Verified by second doc appearing with repetida status after repeat POST.",
+    "Legal.jsx exports COMPANY which Chrome.jsx imports — tight coupling via @/pages/Legal; acceptable for current size but if legal pages grow, consider a dedicated /src/content/company.js module to keep Chrome independent of pages.",
+    "Chrome.jsx Footer renders Sectors list from SEO_PAGES filtered by market; with 11 sectors the single sm:grid-cols-3 column renders a 11-item list — long but functional. Consider column-count or two-column list for readability.",
+    "InfoForm.jsx: repeat note is a sibling of the <button>, not inside an aria-live region — screen-reader users won't be announced the repeat state. Consider aria-live='polite' on the <p data-testid='*-repeat-note'>.",
+    "sector_demo.build is still called inline during first HTTP request for new slugs; the 4 new slugs x 2 countries generated audio on first test request (took ~15–20s each, now cached). Pre-warming at startup for all slugs would avoid user-facing cold latency.",
+    "Legal.jsx uses document.title directly in useEffect — Seo component isn't invoked for legal pages. OK since legal pages don't need JSON-LD/OG, but the hard-coded 'octubre de 2026' date should be data-driven or current.",
+    "Footer paddingBottom pb-24 md:pb-0 is to offset MobileCta on landing pages — on legal pages (no MobileCta) the extra 96px bottom padding still applies on mobile. Minor cosmetic."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_iter19.py",
+    "/app/test_reports/pytest/iter19_results.xml",
+    "/app/test_reports/iteration_19.json"
+  ],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "100% of assertions passed"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (loaded from /app/memory/test_credentials.md but not required for public endpoints under test).",
+  "seed_data_creation": "Seeded then cleaned +34611222333 info_request doc via Mongo for the repeat-flag test. Backend generated and persisted audio docs for ES/CL × inmobiliarias/talleres-mecanicos/gimnasios/academias in db.sector_demos (8 new rows cached). No admin DELETE performed per prior-iteration note.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "11 sector slugs now live: clinicas-dentales, clinicas-esteticas, psicologos, barberias, restaurantes, cafeterias, abogados, inmobiliarias, talleres-mecanicos, gimnasios, academias (ES+CL). All audio cached in Mongo. Legal routes: /terminos /privacidad /cookies /aviso-legal (data-testid legal-page-<slug>). Repeat flag API: POST /api/public/info-request returns {ok, calling, repeated}; UI shows data-testid solicitar-repeat-note under submit when repeated=true. Rate limit per IP: 3 requests / 10 min at /api/public/info-request. Do NOT POST to info-request with real phones.",
+  "rca of the issue": "N/A — all requested changes work as designed."
+}

@@ -137,3 +137,9 @@
 - Audio: sector_demo.py genera bajo demanda (voz nativa custom del pais -> fallback e_sarah/e_chris -> OpenAI), linea telefonica en cliente + ambiente oficina_real 30, mp3 guardado en Mongo sector_demos. DELETE /api/admin/sector-demos para regenerar
 - SEO: hreflang ES/CL por sector, JSON-LD Service + AudioObject + Breadcrumb 3 niveles, og:image por sector, sitemap 42 urls
 - Tested iteration_18: 100%
+
+## 2026-06 Sectores extra + aviso repetida + legales
+- +4 sectores (inmobiliarias [CL: corredoras de propiedades], talleres-mecanicos, gimnasios, academias) x ES/CL = 22 paginas de sector
+- Formulario: limite 1 llamada/24h por numero se mantiene; si repetida -> nota pequena bajo el boton (solicitar-repeat-note), backend devuelve repeated:true
+- Paginas legales /terminos /privacidad /cookies /aviso-legal (pages/Legal.jsx, COMPANY). Footer: VozLeads es parte del Grupo GoRoky, GoRoky LLC (EEUU, Espana, Chile), Raimundo Fernandez Villaverde 39 Madrid, soporte@goroky.com. Sin banner de cookies (solo tecnicas). Sitemap 53 urls
+- Tested iteration_19: 100%
