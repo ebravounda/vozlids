@@ -216,3 +216,8 @@
 - billing.py: POST /billing/change-plan/preview, POST /billing/change-plan (subir: subscriptions.update proration always_invoice + error_if_incomplete, plan al instante; bajar: proration none, pending_plan_id/at aplicado en invoice.paid subscription_cycle o worker apply_pending_downgrades), DELETE /billing/change-plan (anular bajada). Proxy Stripe compartido no soporta subscriptions -> 409 con mensaje
 - Frontend: components/ChangePlan.jsx (ChangePlanDialog, useNextPlan); UsageBanner abre diálogo con el siguiente plan; Mi plan: Subir/Bajar a este plan + aviso de cambio programado
 - Probado con cliente Stripe simulado (python) + captura UI; flujo real con Stripe NO probado en preview
+
+## 2026-06 Editar datos de negocio (super admin)
+- saas.py GET/PUT /admin/users/{uid}/profile (business_name, name, email único, contact_phone normalizado, sector, website, business_hours); actualiza Stripe customer (name/email/phone) si hay stripe_customer_id y clave propia
+- components/AdminBusinessEdit.jsx: botón Editar en cada cuenta de Super admin
+- billing: aviso uses_shared_test_key en Super Admin Stripe + mensaje claro si la clave compartida devuelve 403 en servidor propio

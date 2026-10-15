@@ -244,6 +244,62 @@ async def admin_update_user(uid: str, body: UserUpdate, user=Depends(require_adm
     return {"ok": True}
 
 
+class ProfileIn(BaseModel):
+    business_name: str = Field(min_length=1, max_length=120)
+    name: str = Field(min_length=1, max_length=80)
+    email: str = Field(min_length=3, max_length=200)
+    contact_phone: str = Field("", max_length=25)
+    sector: str = Field("", max_length=80)
+    website: str = Field("", max_length=200)
+    business_hours: str = Field("", max_length=200)
+
+
+def profile_out(u: dict) -> dict:
+    return {k: u.get(k) or "" for k in ProfileIn.model_fields}
+
+
+@router.get("/admin/users/{uid}/profile")
+async def admin_get_profile(uid: str, user=Depends(require_admin)):
+    u = await db.users.find_one({"_id": oid(uid)})
+    if not u:
+        raise HTTPException(404, "Cuenta no encontrada")
+    return profile_out(u)
+
+
+@router.put("/admin/users/{uid}/profile")
+async def admin_put_profile(uid: str, body: ProfileIn, user=Depends(require_admin)):
+    import re
+    u = await db.users.find_one({"_id": oid(uid)})
+    if not u:
+        raise HTTPException(404, "Cuenta no encontrada")
+    email = body.email.strip().lower()
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        raise HTTPException(422, "Email no válido")
+    if email != u["email"] and await db.users.find_one({"email": email}):
+        raise HTTPException(409, "Ya existe otra cuenta con ese email")
+    phone = norm_phone(body.contact_phone, u.get("country", "ES")) if body.contact_phone.strip() else ""
+    web = body.website.strip()
+    upd = {"business_name": body.business_name.strip(), "name": body.name.strip(), "email": email, "contact_phone": phone,
+           "sector": body.sector.strip(), "website": web if not web or web.startswith("http") else f"https://{web}",
+           "business_hours": body.business_hours.strip(), "updated_at": now_iso()}
+    await db.users.update_one({"_id": u["_id"]}, {"$set": upd})
+    stripe_ok = None
+    if u.get("stripe_customer_id"):
+        import billing
+        try:
+            c, _, proxy = await billing.client(u.get("stripe_mode", "live"))
+            if not proxy:
+                await asyncio.to_thread(c.v1.customers.update, u["stripe_customer_id"], {
+                    "name": upd["business_name"], "email": email, **({"phone": phone} if phone else {}),
+                    "metadata": {"contacto": upd["name"]}})
+                stripe_ok = True
+        except Exception as e:  # noqa: BLE001
+            stripe_ok = False
+            import logging
+            logging.getLogger("vozlead.saas").warning("Stripe customer update failed: %s", str(e)[:200])
+    return {**profile_out({**u, **upd}), "stripe_updated": stripe_ok}
+
+
 @router.delete("/admin/users/{uid}")
 async def admin_delete_user(uid: str, user=Depends(require_admin)):
     if uid == user["id"]:

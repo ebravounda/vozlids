@@ -11,6 +11,7 @@ import { PageHeader, Panel } from "@/components/Common";
 import { CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
 import { AdminOnboarding } from "@/components/AdminOnboarding";
+import { EditBusinessButton } from "@/components/AdminBusinessEdit";
 import { api, errMsg } from "@/lib/api";
 
 const LIM = { max_agents: 0, max_concurrent: 0, recording_days: 0, outbound: true, api: true, widget: true, agenda_pro: true, premium_voices: true, ambience: true };
@@ -144,6 +145,7 @@ function UserRow({ u, plans, reload }) {
       <td className="p-3"><Switch checked={u.allow_overage} onCheckedChange={(v) => save({ allow_overage: v })} data-testid={`admin-user-overage-${u.id}`} /></td>
       <td className="p-3"><Switch checked={u.suspended} onCheckedChange={(v) => save({ suspended: v })} data-testid={`admin-user-suspend-${u.id}`} /></td>
       <td className="p-3">{u.role !== "admin" && <button onClick={impersonate} className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-emerald-500" data-testid={`admin-user-impersonate-${u.id}`}><LogIn className="h-3.5 w-3.5" /> Entrar</button>}
+        <EditBusinessButton u={u} onSaved={reload} />
         {u.role !== "admin" && <button onClick={remove} className="ml-2 text-slate-500 hover:text-rose-300" data-testid={`admin-user-delete-${u.id}`}><Trash2 className="inline h-4 w-4" /></button>}</td>
     </tr>
   );
