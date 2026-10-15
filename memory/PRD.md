@@ -100,3 +100,11 @@
 - Not verifiable here (no Docker in preview): import script + install env-fill logic tested locally.
 - frontend/yarn.lock is NOT pushed to GitHub by platform; Docker build uses frontend/yarn-lock.txt copy. After any yarn add: cp frontend/yarn.lock frontend/yarn-lock.txt
 - Fix: pre-hydration flash (black screen + text) — prerendered markup now .seo-static (visually hidden), html.mk white bg on marketing paths until React mounts. (iteration_12)
+
+## Update — Redesign light & pro (session 2)
+- Light theme for whole app (index.css :root vars light, blue primary #2563EB, fonts Plus Jakarta Sans + DM Sans). Legacy dark Tailwind classes remapped under `.app-light` (DashboardLayout root). vl-* animations (wave, pulse, float, reveal, type).
+- Landing hero redesigned: live-status eyebrow, CallStudio animated card (waveform + rotating transcript), scroll reveals; emerald→blue in landing components.
+- Login/registro split-screen (tabs, dark showcase with waveform).
+- Logo from user: /frontend/public/brand/vozleads-logo.png (+ -white). Logo component uses it.
+- Provider names removed from public site + client panel (voice tier "Ultra natural HD"); only Super admin/Telefonía/Costes show providers. Generic VapiError/voice error texts.
+- New tenant page /app/numero (Mi número).  (iteration_13 PASS)

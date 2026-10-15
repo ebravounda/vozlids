@@ -28,7 +28,7 @@ function UsageBadge() {
   useEffect(() => { api.get("/account/usage").then((r) => setU(r.data)).catch(() => {}); }, []);
   if (!u?.plan) return <span />;
   const over = u.minutes_used >= u.plan.minutes;
-  return <span data-testid="usage-badge" className={`rounded-full border px-3 py-1 text-xs font-semibold ${over ? "border-rose-500/40 text-rose-300" : "border-slate-200 bg-white text-slate-600"}`}>Plan {u.plan.name} ({formatPrice(u.plan.price, u.plan.currency)}/mes): {u.minutes_used} / {u.plan.minutes} min{over && !u.allow_overage ? " · llamadas en pausa" : ""}</span>;
+  return <span data-testid="usage-badge" className={`hidden rounded-full border sm:inline px-3 py-1 text-xs font-semibold ${over ? "border-rose-500/40 text-rose-300" : "border-slate-200 bg-white text-slate-600"}`}>Plan {u.plan.name} ({formatPrice(u.plan.price, u.plan.currency)}/mes): {u.minutes_used} / {u.plan.minutes} min{over && !u.allow_overage ? " · llamadas en pausa" : ""}</span>;
 }
 
 function useOpenTickets(path) {
@@ -96,12 +96,12 @@ export default function DashboardLayout() {
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-5 py-3 backdrop-blur-xl md:px-10">
           <div className="flex items-center gap-3 md:hidden"><Logo /></div>
           {user?.role === "admin" ? <Link to="/app/telefonia" data-testid="telephony-status-badge"
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${tel?.configured ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}>
+            className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold sm:inline-flex ${tel?.configured ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}>
             <span className={`h-2 w-2 rounded-full ${tel?.configured ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
             {tel?.configured ? "Telefonía conectada" : "Telefonía sin configurar"}
           </Link> : <UsageBadge />}
           <Link to="/app/agentes/nuevo" data-testid="header-create-agent-button" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[transform,background-color,box-shadow] hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
-            <Plus className="h-4 w-4" /> Crear agente
+            <Plus className="h-4 w-4" /> <span className="whitespace-nowrap">Crear agente</span>
           </Link>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-slate-800 px-3 py-2 md:hidden">

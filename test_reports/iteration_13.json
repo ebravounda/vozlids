@@ -1,0 +1,30 @@
+{
+  "summary": "Iter-13 (frontend-only): Verified VozLeads redesign across landing, auth, and dashboard (admin + non-admin). Landing /: light theme OK; hero eyebrow is a pulsing-dot badge 'Líneas operativas en España (+34) y Chile (+56)' (not the generic 'Agentes de voz con IA...' phrasing); H1 is 'Tu agente telefónico con IA llama a cada lead en menos de 30 segundos'; data-testid='hero-call-studio' present + visible on desktop 1920px and correctly hidden on mobile 390px; .vl-reveal elements get .is-in on scroll (0->2 of 4 after wheel). No horizontal overflow on 390px. Provider-name audit (ElevenLabs/Zadarma/Vapi/Cartesia/Deepgram) clean on /, /cl, /es, /privacidad, /centralita-virtual-con-ia and on all non-admin tenant pages (/app, /app/agentes, /app/agentes/nuevo, /app/llamadas, /app/numero, /app/plan, /app/api, /app/asistencia, /app/agenda, /app/no-llamar). Admin-only pages correctly expose providers: /app/admin [ElevenLabs,Zadarma,Vapi], /app/telefonia [Zadarma,Vapi], /app/costes [ElevenLabs,Zadarma,Vapi] — allowed by spec. InfoForm (solicitar-*): POST /api/public/info-request -> 200, success card '¡Gracias, Test! Hemos recibido tus datos...' renders. Auth: /login and /registro split-screen, all testids present (auth-tab-login/register, auth-email-input, auth-password-input, auth-submit-button, auth-name-input, auth-business-input, auth-showcase); showcase readable (white/light text, slate-900 bg, pulsing dot, waveform, transcript). Login admin@vozlead.es / VozLead2026! -> redirects to /app. Registration of new tenant returns 200 and auto-logs in. Dashboard light theme: sidebar white, blue active pill, logo mark visible, cards white. No unreadable (low-contrast) text detected on any of 12 scanned pages (heuristic: luminance diff <40 across visible text nodes). Non-admin sidebar correctly hides 'Super admin', 'Telefonía', 'Costes' and exposes 'Mi número' (data-testid='sidebar-nav-mynumber' present). /app/numero shows [data-testid='my-number-panel'] for both admin and non-admin. Voice tiers on /app/agentes/nuevo (tab 2 'Voz y ambiente') render as 'ULTRA NATURAL HD · LAS MÁS HUMANAS', 'PREMIUM', and (seen below the fold) 'ESTÁNDAR' — text-transform uppercase in CSS; raw text matches spec case-insensitively. No provider names leaked in voice tab.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/login auth-showcase outer wrapper", "issues": ["Outer <section data-testid='auth-showcase'> has computed color rgb(15,23,41) (dark slate) on bg rgb(15,23,42) — individual children override to white/slate-200 so it is visually fine, but any new direct text child added later would be invisible. Suggest changing the default color on auth-showcase to a light slate (e.g. text-slate-200)."]}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_13.json"],
+  "action_items": [
+    "Optional: set default foreground color on [data-testid='auth-showcase'] to slate-200 so future children inherit a readable color on the dark background (currently inherits near-dark slate from body).",
+    "Optional: verify 'pricing currency switch' control is actually rendered on landing — no button with innerText matching ^(CLP|USD|EUR|€|\\$)$ was found in the Pricing section on /. If spec requires it on /, it may be missing or implemented as a different widget (e.g. toggle without text)."
+  ],
+  "critical_code_review_comments": [
+    "src/index.js setTimeout(1000) to drop 'mk' class is still time-based (noted in iter-12); low risk but could be moved into root.render callback.",
+    "Non-admin sidebar correctly conditions Admin/Telefonía/Costes links on role — verified empirically. Good.",
+    "Landing eyebrow uses pulsing green dot (bg-emerald + animate-pulse) — meets 'live-status badge' requirement.",
+    "scan for provider leaks is defensive (case-insensitive) and clean on all 10 non-admin + 5 marketing pages."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not tested per request)", "frontend": "100% of required checks pass; 1 minor design nit"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (admin); dynamically-registered test<ts>@example.com / TestPass2026! (non-admin tenant). Register endpoint POST /api/auth/register returns 200 and sets session.",
+  "seed_data_creation": "Created 1 non-admin tenant via /registro to validate role-gated UI. Created 1 InfoForm submission via /api/public/info-request (200).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "To re-verify role-gated provider masking, register a fresh account via /registro (fields: auth-name-input, auth-business-input, auth-email-input, auth-password-input; submit = auth-submit-button) then visit /app/agentes/nuevo and click the tab containing 'Voz y ambiente' — tier headings render UPPERCASE via text-transform, so use case-insensitive matching (e.g. inner_text includes 'ULTRA NATURAL HD'). Admin pages at /app/admin, /app/telefonia, /app/costes are intentionally allowed to show provider names per spec.",
+  "rca of the issue": "No bug reproduced. Previous iter-12 FOUC/black-flash fix remains intact (not re-verified here as this iteration focused on redesign/content checks). Only observation worth noting: default inherited text color on auth-showcase section is near-black; cosmetic only because all current children override it."
+}

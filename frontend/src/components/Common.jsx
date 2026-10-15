@@ -10,17 +10,9 @@ export const StatusBadge = ({ status, testid = "lead-status-badge" }) => {
   );
 };
 
-export const Logo = ({ className = "" }) => (
-  <span className={`inline-flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-slate-900 ${className}`} data-testid="brand-logo">
-    <span className="relative grid h-8 w-8 place-items-center rounded-[10px]" style={{ background: "#0F172A" }}>
-      <span className="flex h-3.5 items-center gap-[2px]">
-        {[0, 1, 2, 3].map((i) => (
-          <span key={i} className="vl-wave w-[2.5px] rounded-full" style={{ height: 14, background: i % 2 ? "#60A5FA" : "#fff", animationDelay: `${i * 0.15}s` }} />
-        ))}
-      </span>
-    </span>
-    Voz<span className="-ml-2 text-blue-600">Leads</span>
-  </span>
+export const Logo = ({ className = "", white = false, size = "h-9" }) => (
+  <img src={white ? "/brand/vozleads-logo-white.png" : "/brand/vozleads-logo.png"} alt="VozLeads by GoRoky" width="140" height="33"
+    className={`${size} w-auto select-none ${className}`} draggable="false" data-testid="brand-logo" />
 );
 
 export const PageHeader = ({ eyebrow, title, desc, children }) => (
