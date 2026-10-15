@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, CircleDashed, Copy, Loader2, Plug, Volume2 } from "lucide-react";
+import { CheckCircle2, CircleDashed, Copy, Loader2, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
+import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { COUNTRIES } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
 
@@ -64,18 +65,8 @@ const NUM = {
 };
 
 function VoicePreview({ agent }) {
-  const [busy, setBusy] = useState(false);
-  const play = async () => {
-    setBusy(true);
-    try {
-      const text = agent.greeting || `Hola, gracias por llamar a ${agent.business_name}. Soy ${agent.name}, ¿en qué te puedo ayudar?`;
-      const r = await api.get("/voice-preview", { params: { voice: agent.voice, text, ambience_id: agent.ambience || "none", volume: agent.ambience_volume ?? 35 }, responseType: "blob" });
-      const a = new Audio(URL.createObjectURL(r.data));
-      a.onended = () => setBusy(false);
-      await a.play();
-    } catch (e) { toast.error("No se pudo reproducir la voz"); setBusy(false); }
-  };
-  return <Button type="button" variant="outline" size="sm" onClick={play} disabled={busy} className="rounded-full" data-testid="my-number-voice-preview">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}Escuchar cómo contesta</Button>;
+  const text = agent.greeting || `Hola, gracias por llamar a ${agent.business_name}. Soy ${agent.name}, ¿en qué te puedo ayudar?`;
+  return <AmbiencePreview voice={agent.voice} text={text} ambience={agent.ambience || "none"} volume={agent.ambience_volume ?? 35} label="Escuchar cómo contesta" testid="my-number-voice-preview" className="!px-4 !py-2" />;
 }
 
 export function MyNumber() {
