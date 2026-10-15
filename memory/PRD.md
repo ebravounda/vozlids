@@ -117,3 +117,4 @@
 - Fix inbound IVR (platform number): vapi.enable_inbound (Zadarma inbound IP gateways numeric + netmask, phone-number server URL), /api/admin/platform-inbound GET/PUT/DELETE, Telefonía panel "Contestar llamadas entrantes". Manual Zadarma step: route number to <number>@sip.vapi.ai (auto if Zadarma API key). NOTE: Vapi account shared preview/prod — whichever env presses "Activar" last receives inbound webhooks. (iteration_15)
 - Agent no longer says "asistente virtual" (prompt rule + seed.migrate_ai_label).
 - WARNING: never call PUT /api/admin/platform-inbound from preview (shared Vapi number; re-points inbound webhooks to preview). Inbound SIP URI now <number>@<credentialId>.sip.vapi.ai
+- Inbound now via free Vapi SIP number sip:vozleads-34919932652@sip.vapi.ai (id dc43e89e…) — Zadarma must forward to vozleads-34919932652@sip.vapi.ai. (iteration_16)
