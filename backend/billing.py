@@ -58,7 +58,8 @@ async def stripe_status(user=Depends(require_admin)):
     return {"connected": bool(key), "mode": mode_of(key) if key else "test", "key_last4": key[-4:] if key else None,
             "account_name": s.get("account_name"), "webhook": bool(s.get("webhook_secret")), "updated_at": s.get("updated_at"),
             "test_connected": bool(tkey), "test_key_last4": tkey[-4:] if tkey else None, "test_account_name": s.get("test_account_name"),
-            "test_scope": s.get("test_scope", "off"), "test_emails": s.get("test_emails", [])}
+            "test_scope": s.get("test_scope", "off"), "test_emails": s.get("test_emails", []),
+            "uses_shared_test_key": not (tkey if s.get("test_scope", "off") != "off" else key)}
 
 
 async def connect_key(key: str, prefix: str) -> dict:
@@ -218,6 +219,10 @@ async def checkout(body: CheckoutIn, user=CurrentUser):
     try:
         session = await asyncio.to_thread(c.v1.checkout.sessions.create, params)
     except stripe.error.StripeError as e:
+        if proxy:
+            log.warning("shared Stripe test key rejected: %s", str(e)[:200])
+            raise HTTPException(400, "Los pagos no están configurados en este servidor: conecta tu cuenta de Stripe en Super Admin → Stripe "
+                                     "(clave sk_test_… para el modo de prueba o sk_live_… para cobros reales).")
         raise HTTPException(400, f"No se pudo iniciar el pago: {e.user_message or str(e)[:200]}")
     await db.payment_transactions.insert_one({
         "session_id": session.id, "user_id": user["id"], "plan_id": body.plan_id, "amount": float(amount),

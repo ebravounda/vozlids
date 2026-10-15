@@ -24,6 +24,9 @@ export function StripeSettings() {
   return (
     <Panel className="space-y-4" data-testid="stripe-settings-panel">
       <div className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">Cobros con Stripe</h3></div>
+      {s.uses_shared_test_key && <p className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-200" data-testid="stripe-shared-key-warning">
+        {s.test_scope !== "off" ? "El modo de prueba está activado pero falta tu clave de prueba (sk_test_…). " : "No hay clave de Stripe conectada. "}
+        Ahora se usa una clave de prueba compartida que <b>solo funciona en la vista previa</b>: en tu servidor el pago falla con «403 Forbidden». Pega tu clave abajo.</p>}
       {s.connected ? (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="stripe-status-connected">
           Conectado a <b>{s.account_name}</b> · {s.mode === "live" ? "modo real (cobros de verdad)" : "modo pruebas"} · clave …{s.key_last4}{s.webhook ? " · avisos automáticos activos" : ""}
