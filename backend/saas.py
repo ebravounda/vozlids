@@ -202,6 +202,8 @@ async def create_plan(body: PlanIn, user=Depends(require_admin)):
 
 @router.put("/admin/plans/{pid}")
 async def update_plan(pid: str, body: PlanIn, user=Depends(require_admin)):
+    if not await db.plans.find_one({"_id": oid(pid)}, {"_id": 1}):
+        raise HTTPException(404, "Plan no encontrado")
     await _one_recommended(body, oid(pid))
     await db.plans.update_one({"_id": oid(pid)}, {"$set": body.model_dump()})
     return {**body.model_dump(), "id": pid}

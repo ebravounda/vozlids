@@ -21,12 +21,12 @@ const FEATS = [["outbound", "Llamadas salientes"], ["api", "API para desarrollad
 const NUM_LIMITS = [["max_agents", "Máx. agentes", "0 = sin límite"], ["max_concurrent", "Llamadas a la vez", "0 = sin límite"], ["recording_days", "Días que se guardan grabaciones", "0 = sin límite"]];
 
 const Field = ({ label, hint, children }) => (
-  <div className="space-y-1"><p className="text-xs font-medium text-slate-400">{label}{hint && <span className="ml-1 font-normal text-slate-600">· {hint}</span>}</p>{children}</div>
+  <div className="space-y-1"><p className="text-xs font-medium text-slate-400">{label}{hint && <span className="ml-1 font-normal text-slate-500">· {hint}</span>}</p>{children}</div>
 );
 
 function limitsSummary(l = LIM) {
   const off = FEATS.filter(([k]) => l[k] === false).map(([, n]) => n);
-  return [l.max_agents ? `${l.max_agents} agentes` : "agentes ilimitados", l.max_concurrent ? `${l.max_concurrent} a la vez` : null,
+  return [l.max_agents ? `${l.max_agents} ${l.max_agents == 1 ? "agente" : "agentes"}` : "agentes ilimitados", l.max_concurrent ? `${l.max_concurrent} a la vez` : null,
     l.recording_days ? `grabaciones ${l.recording_days} días` : null, off.length ? `sin: ${off.join(", ")}` : "todas las funciones"].filter(Boolean).join(" · ");
 }
 
@@ -88,7 +88,7 @@ function Plans({ plans, reload }) {
         </div>
         <div className="rounded-xl border border-slate-800 p-4" data-testid="plan-limits-box">
           <p className="mb-3 text-sm font-semibold text-slate-200">Qué incluye y límites</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 xl:grid-cols-3">
             {NUM_LIMITS.map(([k, label, hint]) => <Field key={k} label={label} hint={hint}><Input type="number" min="0" value={f.limits[k]} onChange={(e) => setLim(k, e.target.value)} className="bg-slate-950/60" data-testid={`plan-limit-${k}`} /></Field>)}
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">

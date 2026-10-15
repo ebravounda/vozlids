@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api, errMsg } from "@/lib/api";
 import { DEFAULT_GREETING, DEFAULT_VOICE } from "@/lib/constants";
+import { useFeature } from "@/components/PlanGate";
 import { GeneralTab, ScriptTab, VoiceTab } from "@/pages/dashboard/AgentTabs";
 import { TestPublishTab } from "@/pages/dashboard/TestPublishTab";
 
@@ -25,6 +26,16 @@ export default function AgentBuilder() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState(agentId ? null : blank(user?.business_name, user?.country || "ES"));
   const [saving, setSaving] = useState(false);
+  const hd = useFeature("premium_voices");
+  const ambOk = useFeature("ambience");
+  useEffect(() => {
+    if (agentId) return;
+    setAgent((a) => a && {
+      ...a,
+      voice: !hd && a.voice === DEFAULT_VOICE[a.country] ? (a.country === "CL" ? "l_fernanda" : "p_marta") : a.voice,
+      ambience: !ambOk && a.ambience !== "none" ? "none" : a.ambience,
+    });
+  }, [hd, ambOk, agentId]);
   const [tab, setTab] = useState("general");
 
   useEffect(() => {

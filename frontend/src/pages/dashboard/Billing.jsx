@@ -34,7 +34,7 @@ const PlanCard = ({ p, cur, current, onBuy, busy }) => (
   <Panel className={`relative flex flex-col p-6 ${current ? "border-emerald-500/60" : promoPrice(p, cur) ? "border-rose-500/70" : p.recommended ? "border-blue-500/70" : ""}`} data-testid={`billing-plan-${p.id}`}>
     {!current && <PlanBadge p={p} currency={cur} />}
     <p className="font-semibold text-white">{p.name}</p>
-    <div className="mt-3" data-testid={`billing-plan-price-${p.id}`}><PlanPrice p={p} currency={cur} dark className="font-display text-3xl font-bold text-white" /></div>
+    <div className="mt-3" data-testid={`billing-plan-price-${p.id}`}><PlanPrice p={p} currency={cur} className="font-display text-3xl font-bold text-white" /></div>
     <p className="mt-1 text-xs text-slate-400">{p.minutes} min incluidos · minuto extra {formatPrice(planOverage(p, cur), cur, 2)}</p>
     <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-300"><li className="flex gap-2 font-semibold text-emerald-300" data-testid={`billing-plan-number-${p.id}`}><Check className="h-4 w-4 text-emerald-400" />Número de {cur === "CLP" ? "Chile (+56)" : "España (+34)"} gratis</li>{[...limitLines(p), ...(p.features || [])].map((f) => <li key={f} className="flex gap-2"><Check className="h-4 w-4 text-emerald-400" />{f}</li>)}</ul>
     {current ? <p className="mt-5 text-center text-sm font-semibold text-emerald-300" data-testid={`billing-plan-current-${p.id}`}>Tu plan actual</p>

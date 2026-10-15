@@ -1,0 +1,42 @@
+{
+  "summary": "Iter28: tested plan recommended/promo, per-plan limits and how they are enforced (backend + UI), the usage meter/banner/email alerts, and the Super admin consolidation. Backend: 17/17 pytest pass. Covered: the PUT/POST /admin/plans promo and limits validators (Spanish 422s), only one plan can be recommended, /public/plans fields, promo checkout_url (proxy), and 403s with a restricted non-admin plan on agents max/premium voice/ambience/update, /developer/keys, /v1 X-API-Key (plan_feature_missing), PUT /widget, POST /google/connect, PUT /reminders (enabled=403, disabled=200), POST /scheduled-calls. Also /privacy/settings plan_cap=90 with choices [30,90], PUT /privacy/retention 180 or 0 -> 422, 30 -> 200, and /account/usage. saas.usage_alerts with monkeypatched emailer: one email at 80%, no repeat, one email at 100%, no repeat. Frontend: landing promo badge, struck-through old price, terms text and 'Aprovechar promoción' CTA all OK. 'Más elegido' badge shows when the recommended plan has no promo. Super admin sidebar has a single item and admin-tabs navigate across the 4 pages. Plan form labels, limits box (3 inputs + 6 switches), promo box, Recomendar toggle and save all work, and an invalid promo is rejected. Client UI: usage meter shows 85% and '85 de 100 min'. Amber banner at 85%, rose banner at 101%. Sidebar padlocks on outbound/webwidget/api. Locked cards on /app/api, /app/boton-web, /app/llamadas and the Agenda 'Recordatorios y Google' tab. Mejorar plan goes to /app/plan. Voice tab shows plan-lock-premium_voices and plan-lock-ambience with only 'Sin ambiente'. Agents page shows '0/1 de 1 agente de tu plan' and the upgrade button when full.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/admin/plans/{id}", "issue": "Returns 200 for a non-existent plan id: update_one result is not checked, so there is no 404."},
+      {"endpoint": "GET /api/privacy/retention", "issue": "This endpoint does not exist (the review request mentions it). plan_cap and choices come from GET /api/privacy/settings, which works."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AgentBuilder new agent defaults", "issue": "New agents default to voice 'e_sarah' (ElevenLabs HD, DEFAULT_VOICE in lib/constants.js) and ambience 'oficina_real'. Plans with premium_voices=false or ambience=false lock both. The voice tab hides both options, so nothing looks selected, but a client who clicks Guardar without picking a voice and choosing 'Sin ambiente' gets a 403 from POST /api/agents. Confirmed in code and the backend 403. Not clicked through in the UI.", "selector": "AgentBuilder.jsx line 18", "priority": "HIGH"},
+      {"component": "DashboardLayout header 'Crear agente' button", "issue": "Still shown when the agent limit is reached (Agents page correctly swaps to agents-limit-upgrade). It leads to the builder, where saving returns 403.", "selector": "DashboardLayout.jsx line ~117", "priority": "LOW"},
+      {"component": "SuperAdmin limitsSummary", "issue": "Plural bug: shows '1 agentes'.", "selector": "plan-limits-{id}", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Mi plan (/app/plan) Billing cards", "issues": ["PlanPrice is rendered with dark=true on a light page. The promo price (!text-rose-300) and terms (text-rose-300/80) are very pale pink on white, so contrast is low. Remove the dark prop in Billing.jsx line 37 or use the light variant."]},
+      {"screen": "Landing pricing / Billing", "issues": ["When a plan is both recommended and on promo, PlanBadge shows only the promo badge, so 'Más elegido' is hidden. Consider showing both.", "Seed plan feature text duplicates the generated limit lines: Inicio shows 'Agentes IA ilimitados' and '1 agente IA'; Empresa shows 'API y webhooks' and 'API', and 'Voces ultra naturales HD' and 'Voces premium'. Set real limits on the seed plans or drop the duplicated free-text features."]},
+      {"screen": "Super admin plan form", "issues": ["The narrow right column squeezes the 3-col limits grid, so labels wrap onto 3-4 lines.", "Field hint uses text-slate-600 next to a slate-400 label. This is low contrast if the panel is dark-themed."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter28_plan_limits.py", "/app/backend/tests/iter28_ui_setup.py", "/app/backend/tests/iter28_usage_alerts_check.py", "/app/test_reports/pytest/iter28.xml"],
+  "action_items": [
+    "AgentBuilder: when premium_voices/ambience are locked, default new agents to an allowed voice (e.g. p_marta / l_fernanda for CL) and ambience 'none'. Also auto-switch if an existing agent's value is locked.",
+    "Billing.jsx: drop the `dark` prop on PlanPrice (pale promo price on white).",
+    "Hide or disable the header 'Crear agente' button when agents >= max_agents.",
+    "Fix the '1 agentes' plural in limitsSummary.",
+    "Optional: show the 'Más elegido' badge together with the promo badge. Return 404 on PUT /admin/plans for an unknown id."
+  ],
+  "critical_code_review_comments": [
+    "plan_limits.for_tenant hits the DB twice (users + plans) on every gated call and on every /v1 request. Fine now; consider caching.",
+    "PlanIn._promo: a promo price for a country whose normal price is 0 is silently accepted; promo_for ignores it later. OK, but it could be validated.",
+    "concurrency_error only counts leads updated in the last 30 min with status llamando/en_curso. Calls stuck in that state for more than 30 min free up the slot (acceptable safety)."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter28_plan_limits.py", "/app/backend/tests/iter28_ui_setup.py", "/app/backend/tests/iter28_usage_alerts_check.py"],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "~92% (all requested flows work; 1 HIGH default-voice issue, contrast issue on Billing)"},
+  "seed_data_creation": "Temporary: test_iter28_* users, TEST_* plans and a lead flagged test_iter28 (duration_seconds 85/101 min). All removed. Plans restored: Profesional recommended=true + BLACK FRIDAY 149 € 3 months. The 3 seed plans now carry an explicit all-allowed 'limits' object (written by the restore step), which behaves the same as having no limits.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use tests/iter28_ui_setup.py setup|teardown to create a restricted client (test_iter28_ui@example.com / TestPass123!, plan limits max_agents=1, recording_days=90, all features off) with 85 min used out of 100. Seeded leads need agent_id or /api/leads returns 500 (Lead model requires it). The developer keys endpoint is /api/developer/keys. pytest.ini uses xdist, so module fixtures run per worker."
+}

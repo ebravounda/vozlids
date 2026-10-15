@@ -25,7 +25,12 @@ export function PlanPrice({ p, currency, className = "", dark = false }) {
 export function PlanBadge({ p, currency }) {
   if (promoPrice(p, currency)) {
     const pct = Math.round(100 - (100 * promoPrice(p, currency)) / planPrice(p, currency));
-    return <span className="absolute -top-3 left-6 rounded-full bg-rose-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md" data-testid={`plan-badge-promo-${p.id}`}>{p.promo_label || "PROMOCIÓN"} · −{pct}%</span>;
+    return (
+      <span className="absolute -top-3 left-6 flex gap-1.5">
+        <span className="rounded-full bg-rose-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md" data-testid={`plan-badge-promo-${p.id}`}>{p.promo_label || "PROMOCIÓN"} · −{pct}%</span>
+        {p.recommended && <span className="rounded-full bg-blue-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md" data-testid={`plan-badge-recommended-${p.id}`}>Más elegido</span>}
+      </span>
+    );
   }
   if (p.recommended) return <span className="absolute -top-3 left-6 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md" data-testid={`plan-badge-recommended-${p.id}`}>Más elegido</span>;
   return null;

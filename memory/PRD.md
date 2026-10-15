@@ -203,3 +203,11 @@
 - monitor.py: provider_issues() (ElevenLabs <20%, Zadarma < sip_min, Vapi saldo anotado - gasto real < ai_min_usd, concurrencia) -> GET /admin/monitor/provider-alerts; banner ProviderAlerts en Super Admin y Monitor
 - Vapi sin API de saldo: PUT /admin/monitor/vapi-credit {amount}; resta coste de llamadas Vapi desde set_at; email 1/día
 - GET /admin/monitor/voice-usage: caracteres dichos por el agente por cliente este mes, % y por minuto (panel VoiceUsage)
+
+## 2026-06 Planes: recomendado, promociones y límites
+- PlanIn: recommended (único), promo_active/label/price_eur/price_clp/months (Stripe coupon repeating; en proxy test se cobra unit_amount rebajado), limits {max_agents,max_concurrent,recording_days,outbound,api,widget,agenda_pro,premium_voices,ambience}
+- plan_limits.py: for_tenant/require/has/concurrency_error/check_agent/effective_agent (degrada voz HD y ambiente en llamada si el plan ya no lo incluye); admin = sin límites; planes sin limits = todo permitido
+- Enforcement: agents, /keys + /v1 (403 plan_feature_missing), widget, gcal/reminders, scheduled-calls (espera si concurrencia llena), privacy retention cap, quota_error incluye concurrencia
+- usage_alerts: email 80% y 100% una vez al mes; /account/usage devuelve limits/agents/is_admin
+- Frontend: PlanGate.jsx (Gate, LockedCard, UsageMeter sidebar, UsageBanner, AdminTabs), PlanPrice.jsx (precio tachado, badges, limitLines). Sidebar admin: un solo item Super admin + pestañas
+- Probado iteration_28 (backend 17/17); arreglos posteriores: voz por defecto según plan, botón Crear agente al límite, plural, contraste Mi plan, doble badge, 404 plan

@@ -4,7 +4,7 @@ import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditC
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature } from "@/components/PlanGate";
+import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature, usePlan } from "@/components/PlanGate";
 
 const NAV = [
   { to: "/app", label: "Leads y llamadas", icon: PhoneCall, id: "leads", end: true },
@@ -21,6 +21,17 @@ const NAV = [
 ];
 const ADMIN_NAV = [{ to: "/app/admin", label: "Super admin", icon: Shield, id: "superadmin", admin: true }];
 const LOCK = { outbound: "outbound", webwidget: "widget", api: "api" };
+
+function CreateAgentButton() {
+  const { u } = usePlan();
+  const full = u && !u.is_admin && u.limits?.max_agents > 0 && u.agents >= u.limits.max_agents;
+  return (
+    <Link to={full ? "/app/plan" : "/app/agentes/nuevo"} data-testid="header-create-agent-button" title={full ? "Has llegado al máximo de agentes de tu plan" : undefined}
+      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition-[transform,background-color,box-shadow] hover:-translate-y-0.5 hover:shadow-md ${full ? "border border-slate-300 bg-white text-slate-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
+      {full ? <><Lock className="h-4 w-4" /> <span className="whitespace-nowrap">Mejorar plan</span></> : <><Plus className="h-4 w-4" /> <span className="whitespace-nowrap">Crear agente</span></>}
+    </Link>
+  );
+}
 
 function NavItem({ n, tickets, path }) {
   const ok = useFeature(LOCK[n.id] || "outbound");
@@ -113,9 +124,7 @@ export default function DashboardLayout() {
             <span className={`h-2 w-2 rounded-full ${tel?.configured ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
             {tel?.configured ? "Telefonía conectada" : "Telefonía sin configurar"}
           </Link> : <span />}
-          <Link to="/app/agentes/nuevo" data-testid="header-create-agent-button" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[transform,background-color,box-shadow] hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
-            <Plus className="h-4 w-4" /> <span className="whitespace-nowrap">Crear agente</span>
-          </Link>
+          <CreateAgentButton />
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-slate-800 px-3 py-2 md:hidden">
           {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => (
