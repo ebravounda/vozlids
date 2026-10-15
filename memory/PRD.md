@@ -160,3 +160,9 @@
 - billing.client(mode), mode_for(email); tx/user guardan stripe_mode; webhook verifica con ambos secretos; altas de prueba billing_test=True -> badge PRUEBA, no cuentan como ingreso
 - UI en Super admin > Cobros con Stripe > Modo prueba
 - Tested iteration_22 OK
+
+## 2026-06 Emails + API v1 profesional (Fase 1)
+- Emails: nuevo _wrap con logo (APP_PUBLIC_URL/brand/vozleads-logo.png), barra degradada, filas, CTA azul, pie legal GoRoky; send(..., intro, cta_label). Muestras enviadas a ed0.2580@gmail.com
+- API v1: sub-app apiv1.py montada en /api/v1 (OpenAPI 3.1 /api/v1/docs), api_core.py. Claves vl_live_/vl_test_ (sha256), scopes, caducidad, IPs, ultimo uso, rotar (gracia 24h), desactivar. Rate limit Mongo por clave/min, llamadas/min, concurrencia y diario (solo live) con lock por tenant (1 proceso). Idempotency-Key (api_idem TTL 24h). POST /calls 202 asincrono, estados estandar + status_detail, programadas ISO8601 con zona, cancelar, listado paginado. Horario legal por pais (commercial/contractual). legal_basis + evidencia + finalidad. DNC por API. Webhooks HMAC (VozLeads-Signature t=,v1=) con reintentos backoff x8, SSRF, sandbox. Errores RFC 9457 con code/request_id; 402 mantenido. Worker cada 5s (programadas API, entregas webhooks, saas.dispatch_due).
+- Portal /app/api (Developers.jsx + DevParts.jsx). Tested iteration_23 37/37
+- Fase 2 pendiente: historial de peticiones por clave, export/supresion RGPD, retencion transcripciones, call.analysis.completed, lock distribuido si se escala a varios procesos, UI horario por pais

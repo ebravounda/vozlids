@@ -1,0 +1,43 @@
+{
+  "summary": "Iter-23 VozLeads REST API v1 Phase 1. Backend pytest 37/37 PASS (test_vozlead_iter23.py). Verified: /api/v1 sub-app with OpenAPI 3.1 (12 paths) and Swagger /api/v1/docs; application/problem+json errors with request_id + X-Request-Id header (echoed from caller); auth matrix (invalid=401 invalid_api_key, expired=401 api_key_expired via Mongo expires_at past, disabled=401, allowed_ips mismatch=403 ip_not_allowed); scopes (missing calls:write -> 403 missing_scope; legacy POST /api/api-keys without scopes[] field still works with all 6 scopes); POST /v1/calls sandbox lifecycle (202 queued -> completed within ~10s with sandbox summary); legal_basis_required 422; consent:true alone accepted (basis=consent); consent:false -> 400; extra field forbidden; context >10 keys or nested -> 422; invalid phone -> 422 (minor: wrong error code 'error' instead of 'invalid_phone' when norm_phone raises HTTPException); premium +34905 -> 422 destination_not_allowed; DNC blocks with 409 do_not_call; body >16KB -> 413 payload_too_large; Idempotency replay returns header 'Idempotent-Replayed: true' + same body hash; mismatch -> 422 idempotency_mismatch; calling-hours: commercial 'info' on Sunday -> 409 outside_calling_hours with next_allowed_at, reminder on Sunday -> 202 scheduled; scheduled_at past/>90d -> 422; naive 'YYYY-MM-DDTHH:MM' accepted; cancel scheduled sandbox call -> 200 cancelled then 409 not_cancellable; GET /v1/calls pagination with starting_after returns disjoint pages; tenant isolation across admin and a freshly registered TEST_apiv1_* business user (404 on cross-tenant agent/call/webhook); per-key rate limit set to 3 rpm on t2 via api_limits -> 4th call 429 rate_limited with Retry-After; /v1/account/{profile,usage,limits} shapes verified; webhooks: valid https accepted (whsec_ shown once, list omits secret, DELETE 204); SSRF guard: https://127.0.0.1 and http:// -> 422 invalid_webhook_url; /api/developer/webhooks/{id}/test returns delivered boolean; dashboard key create/rotate/disable/delete flow verified (rotated key starts with vl_test_, old key expires_at <= now+25h). Frontend /app/api (route path) renders developers-page with limits (120/30/5/300), create key form (name+env test/live+scopes buttons+expires+ips+Generar clave), 2 sandbox keys listed with toggle/Rotar/revoke, Webhooks panel + examples (cURL/JS/Python/Verificar webhook) tabs clickable, docs link href=/api/v1/docs. Create sandbox key via UI returns vl_test_<token> shown in secret-once-value; add webhook returns whsec_* once; test-button triggers delivery. Minor cleanup bug: norm_phone raises HTTPException(422, 'Teléfono no válido...') directly for ES short numbers, bypassing the ValueError catch in apiv1._create -> code falls back to generic 'error' instead of 'invalid_phone'. Spec says invalid_phone.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/v1/calls", "issue": "Invalid phone returns code='error' instead of 'invalid_phone' because countries.norm_phone() raises HTTPException(422,...) directly instead of ValueError, bypassing the ValueError->invalid_phone mapping in apiv1._create(). Status is still 422 and detail is Spanish-localized but the stable 'code' field documented in /developers/errors is wrong."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vozlead_iter23.py",
+    "/app/test_reports/pytest/iter23_results.xml"
+  ],
+  "action_items": [
+    "Fix invalid_phone error code mapping: in apiv1._create catch BOTH ValueError and HTTPException from norm_phone and re-raise with {code:'invalid_phone'}, OR change countries.norm_phone to raise ValueError consistently so the existing except block maps to the right code."
+  ],
+  "critical_code_review_comments": [
+    "apiv1._create: `except ValueError:` around norm_phone misses HTTPException(422,...) raised inside countries.norm_phone (lines 31, 41) -> stable error code leaks as 'error'. Fix by catching (ValueError, HTTPException) or normalizing norm_phone to raise ValueError.",
+    "apiv1.oid(): returns 404 code='not_found' for any invalid ObjectId used in /dnc path params or elsewhere - DELETE /v1/dnc/{phone} does string-level match so OK, but /webhooks/{id} and /calls/{id}/cancel will give 'not_found' for invalid ids rather than 422. Acceptable but inconsistent with other 422 validation errors.",
+    "api_core.hit() uses a fixed-window counter; burst at window boundary can allow 2x limit briefly. Documented as 'per minute' so acceptable, but note for Phase 2.",
+    "api_core.emit() skips subs whose sandbox flag doesn't match the lead's sandbox flag - good tenant/env isolation.",
+    "apiv1.create_hook() limit of 10 webhooks per tenant hard-coded - consider configurable per plan.",
+    "api_core.worker() runs find_one_and_update loops without session; two workers would race but there's only one background task - fine.",
+    "apiv1.rotate_key(): old key grace period `min(filter(None, [...]))` works but if old expires_at is None and grace is 24h away, min returns grace correctly. OK.",
+    "Legacy POST /api/api-keys (saas.py) creates keys with no `env` and no `scopes` field; apiv1.principal() falls back to env='live' and ALL scopes via `doc.get('scopes') or list(C.SCOPES)` - preserves backward compat as required.",
+    "DashHookIn extends WebhookIn (Strict/extra=forbid) and adds sandbox=False - correct way to extend. Note: downstream create_hook recreates WebhookIn from fields explicitly which drops sandbox from WebhookIn and passes sandbox separately - good.",
+    "/v1/calls POST body limit 16_384 bytes enforced via content-length header; a client omitting content-length and streaming could bypass. FastAPI/uvicorn adds content-length so practical risk is low."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vozlead_iter23.py (new)"
+  ],
+  "success_rate": {"backend": "100% (37/37)", "frontend": "100% (dev page functional; sandbox key + webhook UI flows verified via secret-once-value modal)"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (/app/memory/test_credentials.md)",
+  "seed_data_creation": "Pytest registers 1 TEST_apiv1_<uuid>@vozlead-test.es business user via POST /api/auth/register (country ES, no billing_address needed since doc_number not provided). Creates 3 API keys (admin sandbox+live readonly, t2 sandbox) + extras in rotation/webhook tests. Teardown revokes all api_keys and deletes TEST_apiv1_* users, their leads and webhooks. DNC entries added and deleted per-test. Admin's platform-settings and existing agents are not modified.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Public API v1 is mounted at /api/v1 with sub-app (apiv1.app). Dashboard routes are /api/developer/* and require session cookie or Bearer. Admin owns agent 6acfac3a346c4c1ebc71ff58 ('Marta', ES) and has 2 persistent sandbox keys ('tmp' and 'sandbox'). Frontend sidebar link is `/app/api` (routes to Developers.jsx with data-testid=developers-page). The Limits component renders only after /developer/overview resolves; add a `wait_for_timeout(1500)` or wait for `[data-testid=dev-limits]` *after* overview finishes before asserting counts. Run tests: cd /app/backend && REACT_APP_BACKEND_URL=https://ai-voice-caller-2.preview.emergentagent.com MONGO_URL=mongodb://localhost:27017 DB_NAME=test_database python -m pytest tests/test_vozlead_iter23.py -v --junitxml=/app/test_reports/pytest/iter23_results.xml",
+  "rca of the issue": "invalid_phone error code regression: countries.norm_phone (lines 31 and 41) raises HTTPException(422, '<string detail>') directly. apiv1._create wraps norm_phone in try/except ValueError only, so the HTTPException propagates to apiv1.http_err which extracts detail as string (not dict), code falls back to generic 'error'. Status 422 and Spanish detail are still returned so clients see a validation error - but automated SDKs keying off `code` can't distinguish invalid_phone from other validation errors. Fix option A: `except (ValueError, HTTPException): raise HTTPException(422, {'code':'invalid_phone', 'detail': ...})`. Fix option B: refactor countries.norm_phone to raise ValueError consistently and let the existing handler map to invalid_phone."
+}

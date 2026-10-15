@@ -221,7 +221,7 @@ async def _create(body: CallIn, p: Principal) -> tuple[int, dict]:
     country = agent.get("country", "ES")
     try:
         phone = norm_phone(body.phone, country)
-    except ValueError:
+    except (ValueError, HTTPException):
         raise HTTPException(422, {"code": "invalid_phone", "detail": f"Número no válido para {COUNTRIES[country]['name']}."})
     check_destination(phone, country)
     if await db.dnc.find_one({"tenant_id": p.tenant_id, "phone": phone}):
@@ -399,7 +399,7 @@ async def list_dnc(p: Principal = Depends(need("dnc:manage")), limit: int = Quer
 async def add_dnc(body: DncIn, p: Principal = Depends(need("dnc:manage"))):
     try:
         phone = norm_phone(body.phone, body.country)
-    except ValueError:
+    except (ValueError, HTTPException):
         raise HTTPException(422, {"code": "invalid_phone", "detail": "Número no válido."})
     await S.add_dnc(p.tenant_id, phone, body.reason or "Añadido por API")
     return {"phone": phone, "excluded": True}
