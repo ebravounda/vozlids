@@ -280,7 +280,7 @@ async def sync_call_cost(lead: dict) -> bool:
         return False
     if call.get("cost") is None:
         return False
-    upd = {"cost": call["cost"], "cost_breakdown": call.get("costBreakdown")}
+    upd = {"cost": call["cost"], "cost_breakdown": call.get("costBreakdown"), "started_at": call.get("startedAt")}
     if not lead.get("duration_seconds") and call.get("startedAt") and call.get("endedAt"):
         start = datetime.fromisoformat(call["startedAt"].replace("Z", "+00:00"))
         end = datetime.fromisoformat(call["endedAt"].replace("Z", "+00:00"))

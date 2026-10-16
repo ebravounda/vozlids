@@ -10,6 +10,7 @@ import ambience
 import auth as A
 import services as S
 import storage
+import costs_real as CR
 import vapi
 from db import db
 from models import now_iso
@@ -19,7 +20,11 @@ CurrentUser = Depends(A.get_current_user)
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 DEFAULT_PRICING = {"line_rate_usd_min": 0.025, "line_rate_cl_usd_min": 0.05, "usd_eur": 0.92, "usd_clp": 950,
                    "margin_pct": 150, "voice_11labs_usd_min": 0.036, "voice_cartesia_usd_min": 0.022,
-                   "voice_azure_usd_min": 0.011}
+                   "voice_azure_usd_min": 0.011, "eleven_plan_usd": 22.0, "eleven_plan_credits": 100000,
+                   "eleven_credits_per_char": 0.5, "number_es_usd_month": 3.0, "number_cl_usd_month": 8.0,
+                   "stripe_pct": 1.5, "stripe_fixed_eur": 0.25,
+                   "fixed_costs": [{"name": "Servidor (Plesk)", "usd": 0.0}, {"name": "Vapi (cuota mensual)", "usd": 0.0},
+                                   {"name": "Número principal Zadarma", "usd": 3.0}]}
 _custom_cache: "OrderedDict[str, object]" = OrderedDict()
 
 
@@ -154,6 +159,11 @@ async def lead_recording(lead_id: str, user=CurrentUser):
 
 
 # ---------- Admin: costs & pricing ----------
+class FixedCost(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    usd: float = Field(ge=0, le=100000)
+
+
 class PricingIn(BaseModel):
     line_rate_usd_min: float = Field(ge=0, le=2)
     line_rate_cl_usd_min: float = Field(ge=0, le=2)
@@ -163,6 +173,14 @@ class PricingIn(BaseModel):
     voice_11labs_usd_min: float = Field(0.036, ge=0, le=1)
     voice_cartesia_usd_min: float = Field(0.022, ge=0, le=1)
     voice_azure_usd_min: float = Field(0.011, ge=0, le=1)
+    eleven_plan_usd: float = Field(22.0, ge=0, le=5000)
+    eleven_plan_credits: int = Field(100000, ge=1, le=100_000_000)
+    eleven_credits_per_char: float = Field(0.5, ge=0, le=2)
+    number_es_usd_month: float = Field(3.0, ge=0, le=500)
+    number_cl_usd_month: float = Field(8.0, ge=0, le=500)
+    stripe_pct: float = Field(1.5, ge=0, le=20)
+    stripe_fixed_eur: float = Field(0.25, ge=0, le=5)
+    fixed_costs: list[FixedCost] = Field(default_factory=list, max_length=30)
 
 
 async def get_pricing() -> dict:
@@ -181,24 +199,30 @@ async def save_pricing(body: PricingIn, user=Depends(require_admin)):
     return body.model_dump()
 
 
-def _parts(lead: dict, rate: float) -> dict:
+def _parts(lead: dict, rate: float, pricing: dict) -> dict:
     b = lead.get("cost_breakdown") or {}
     a = b.get("analysisCostBreakdown") or {}
     minutes = (lead.get("duration_seconds") or 0) / 60
-    p = {"voz": b.get("tts", 0), "transcripcion": b.get("stt", 0), "ia": b.get("llm", 0), "vapi": b.get("vapi", 0),
+    voz = b.get("tts", 0) or 0
+    own_voice = 0.0
+    if not voz and lead.get("voice_provider") == "11labs" and b.get("ttsCharacters"):
+        own_voice = CR.eleven_cost(b["ttsCharacters"], pricing)
+    line_real = lead.get("line_cost_usd") is not None
+    p = {"voz": voz + own_voice, "transcripcion": b.get("stt", 0), "ia": b.get("llm", 0), "vapi": b.get("vapi", 0),
          "analisis": sum(a.get(k, 0) for k in ("summary", "structuredData", "successEvaluation")),
-         "linea": round(minutes * rate, 5)}
+         "linea": round(lead["line_cost_usd"] if line_real else minutes * rate, 5)}
     vapi_total = lead.get("cost")
     if vapi_total is None:
-        vapi_total = sum(v for k, v in p.items() if k != "linea")
-    p["otros"] = max(0.0, round(vapi_total - sum(v for k, v in p.items() if k != "linea"), 5))
-    p["total"] = round(vapi_total + p["linea"], 5)
-    return {"minutes": round(minutes, 2), **p}
+        vapi_total = sum(v for k, v in p.items() if k != "linea") - own_voice
+    p["otros"] = max(0.0, round(vapi_total - sum(v for k, v in p.items() if k != "linea") + own_voice, 5))
+    p["total"] = round(vapi_total + own_voice + p["linea"], 5)
+    return {"minutes": round(minutes, 2), "line_real": line_real, **p}
 
 
 @router.get("/admin/costs")
 async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_admin)):
     pricing = await get_pricing()
+    zsync = await CR.sync_zadarma(pricing)
     since = (datetime.now(timezone.utc) - timedelta(days=max(1, min(days, 365)))).isoformat()
     q = {"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}, **({"tenant_id": tenant_id} if tenant_id else {})}
     leads = await db.leads.find(q,
@@ -213,7 +237,7 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
     breakdown = dict.fromkeys(keys, 0.0)
     for ld in leads:
         country = agent_country.get(ld["agent_id"], "ES")
-        p = _parts(ld, rates[country])
+        p = _parts(ld, rates[country], pricing)
         bc = by_country[country]
         bc["calls"] += 1
         bc["minutes"] += p["minutes"]
@@ -244,8 +268,31 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
                           "country": country, "currency": currency, "phone": ld.get("phone"),
                           "tenant_id": ld["tenant_id"], "ended_reason": ld.get("ended_reason"), "error": ld.get("error"),
                           "direction": "entrante" if vapi.inbound(ld) else "saliente", **p})
-    for t in tenants.values():
+    scale = max(1, min(days, 365)) / 30
+    revenue, numbers = await CR.tenant_revenue(pricing), await CR.numbers_by_tenant()
+    for tid, r in revenue.items():
+        if tid not in tenants:
+            u = users.get(tid, {})
+            tenants[tid] = {"tenant_id": tid, "business": u.get("business_name") or "—", "calls": 0, "minutes": 0.0,
+                            "total": 0.0, "currency": "CLP" if u.get("country") == "CL" else "EUR"}
+    profit = {"revenue": 0.0, "variable": totals["total"], "per_client_fixed": 0.0}
+    for tid, t in tenants.items():
         t["cost_per_min"] = t["total"] / t["minutes"] if t["minutes"] else None
+        r = revenue.get(tid)
+        t["plan"] = r["plan"] if r else None
+        t["revenue"] = r["price_usd"] * scale if r else 0.0
+        num = numbers.get(tid)
+        t["number_fee"] = (pricing["number_cl_usd_month"] if num == "CL" else pricing["number_es_usd_month"]) * scale if num else 0.0
+        t["stripe_fee"] = (t["revenue"] * pricing["stripe_pct"] / 100 + pricing["stripe_fixed_eur"] / pricing["usd_eur"] * scale) if r else 0.0
+        t["profit"] = t["revenue"] - t["total"] - t["number_fee"] - t["stripe_fee"]
+        t["margin_pct"] = t["profit"] / t["revenue"] * 100 if t["revenue"] else None
+        profit["revenue"] += t["revenue"]
+        profit["per_client_fixed"] += t["number_fee"] + t["stripe_fee"]
+    fixed = [{**f, "period": f["usd"] * scale} for f in (pricing.get("fixed_costs") or [])]
+    profit["fixed"] = sum(f["period"] for f in fixed)
+    profit["net"] = profit["revenue"] - profit["variable"] - profit["per_client_fixed"] - profit["fixed"]
+    profit["margin_pct"] = profit["net"] / profit["revenue"] * 100 if profit["revenue"] else None
+    totals["line_real"] = sum(1 for c in calls if c["line_real"])
     for bc in by_country.values():
         bc["cost_per_min"] = bc["total"] / bc["minutes"] if bc["minutes"] else None
         bc["minutes_per_call"] = bc["minutes"] / bc["calls"] if bc["calls"] else None
@@ -257,7 +304,8 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
             "cost_per_min": totals["total"] / totals["minutes"] if totals["minutes"] else None,
             "cost_per_call": totals["total"] / totals["calls"] if totals["calls"] else None,
             "minutes_per_call": totals["minutes"] / totals["calls"] if totals["calls"] else None,
-            "tenants": sorted(tenants.values(), key=lambda t: -t["total"]), "calls": calls}
+            "tenants": sorted(tenants.values(), key=lambda t: -(t["revenue"] or t["total"])), "calls": calls,
+            "profit": profit, "fixed": fixed, "zadarma_sync": zsync, "eleven_usage": await CR.eleven_usage()}
 
 
 @router.post("/admin/costs/sync")
@@ -267,4 +315,5 @@ async def sync_costs(user=Depends(require_admin)):
     for ld in leads:
         if await S.sync_call_cost(ld):
             updated += 1
-    return {"updated": updated, "pending": len(leads) - updated}
+    z = await CR.sync_zadarma(await get_pricing(), force=True)
+    return {"updated": updated, "pending": len(leads) - updated, "line_matched": z.get("matched", 0), "line_error": z.get("error", "")}

@@ -21,6 +21,15 @@ PREMIUM = {
     "p_gonzalo": "58e531e3-b212-49df-adee-c335a19c2429",
     "p_luis": "b5aa8098-49ef-475d-89b0-c9262ecf33fd",
     "p_hector": "b042270c-d46f-4d4f-8fb0-7dd7c5fe5615",
+    "p_blanca": "538a8872-3799-4df5-b373-b78493b766c6",
+    "p_eva": "23da166b-9675-425a-a56f-10d92da2e35f",
+    "p_lara": "85b356c1-c638-404d-b986-f54a53d957d6",
+    "p_alicia": "5522c839-bbd9-4485-8d84-ba3d75cd3330",
+    "p_maite": "b738fa95-b787-4529-9170-34be41e95b95",
+    "p_lucia": "c0925108-d541-4dc4-bbae-39f4e57ba10c",
+    "p_octavio": "9aea78cb-ba89-4a82-aa15-31b55a89b75d",
+    "p_rafael": "cbb6fdf0-30dd-49f6-af7d-bbb1185c1fa5",
+    "p_dario": "35b2cfc1-e6fb-4d69-a598-c1780612be4a",
 }
 STANDARD_CL = {"cl_catalina": "es-CL-CatalinaNeural", "cl_lorenzo": "es-CL-LorenzoNeural"}
 PREMIUM_LATAM = {
@@ -30,6 +39,10 @@ PREMIUM_LATAM = {
     "l_eduardo": "3efb11f3-4c0e-43c2-bad5-85ab99e993e2",
     "l_mateo": "2fc4f1ec-bfd0-46f1-8e6d-d4279eaaf838",
     "l_andres": "d46e87a1-7c6d-4b18-9359-926f4a35ffdf",
+    "l_catalina": "162e0f37-8504-474c-bb33-c606c01890dc",
+    "l_veronica": "a0149de0-42cd-45b6-be89-5fb7baf6c6e7",
+    "l_rodrigo": "079e3a17-5545-4bc5-93e3-e11df6fe37b8",
+    "l_santiago": "bef24f4f-adc9-4cef-acbf-cc1ceb98224b",
 }
 ELEVEN = {
     "e_sarah": "EXAVITQu4vr4xnSDxMaL",
@@ -41,7 +54,8 @@ ELEVEN = {
     "e_roger": "CwhRBWXzGAHq8TQ4Fs17",
     "e_will": "bIHbv24MWmeRgasZH58o",
 }
-FEMALE = {"p_marta", "p_nuria", "p_isabel", "p_elena", "elvira", "ximena", "irene", "l_fernanda", "l_daniela", "l_regina",
+FEMALE = {"p_marta", "p_nuria", "p_isabel", "p_elena", "p_blanca", "p_eva", "p_lara", "p_alicia", "p_maite", "p_lucia",
+          "l_catalina", "l_veronica", "elvira", "ximena", "irene", "l_fernanda", "l_daniela", "l_regina",
           "cl_catalina", "e_sarah", "e_matilda", "e_jessica", "e_laura"}
 VOICES_BY_COUNTRY = {"ES": {**ELEVEN, **PREMIUM, **STANDARD}, "CL": {**ELEVEN, **PREMIUM_LATAM, **STANDARD_CL}}
 VOICES = {**STANDARD, **PREMIUM, **STANDARD_CL, **PREMIUM_LATAM, **ELEVEN}

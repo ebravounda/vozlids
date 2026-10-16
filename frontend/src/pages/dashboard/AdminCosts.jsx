@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader, Panel, StatusBadge } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
+import { FixedCostsEditor, ProfitSummary } from "@/components/costs/ProfitParts";
 
 const PARTS = [["voz", "Voz"], ["transcripcion", "Transcripción"], ["ia", "IA (GPT-4.1)"], ["vapi", "Vapi plataforma"], ["analisis", "Resumen/análisis"], ["linea", "Línea Zadarma"], ["otros", "Otros"]];
 const eur = (usd, fx, d = 3) => (usd == null ? "—" : `${(usd * fx).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} €`);
@@ -26,13 +27,17 @@ const Stat = ({ label, value, hint, testid }) => (
   </Panel>
 );
 
+const NUM_FIELDS = ["line_rate_usd_min", "line_rate_cl_usd_min", "usd_eur", "usd_clp", "margin_pct", "voice_11labs_usd_min", "voice_cartesia_usd_min",
+  "voice_azure_usd_min", "eleven_plan_usd", "eleven_plan_credits", "eleven_credits_per_char", "number_es_usd_month", "number_cl_usd_month", "stripe_pct", "stripe_fixed_eur"];
+
 function PricingForm({ pricing, onSaved }) {
   const [f, setF] = useState(pricing);
   const [busy, setBusy] = useState(false);
   useEffect(() => setF(pricing), [pricing]);
   const save = async () => {
     setBusy(true);
-    const body = Object.fromEntries(["line_rate_usd_min", "line_rate_cl_usd_min", "usd_eur", "usd_clp", "margin_pct", "voice_11labs_usd_min", "voice_cartesia_usd_min", "voice_azure_usd_min"].map((k) => [k, Number(f[k])]));
+    const body = Object.fromEntries(NUM_FIELDS.map((k) => [k, Number(f[k])]));
+    body.fixed_costs = (f.fixed_costs || []).filter((x) => x.name.trim()).map((x) => ({ name: x.name.trim(), usd: Number(x.usd) || 0 }));
     try { await api.put("/admin/pricing", body); toast.success("Parámetros guardados"); onSaved(); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
@@ -47,9 +52,14 @@ function PricingForm({ pricing, onSaved }) {
       {field("usd_eur", "Cambio 1 $ = … €", "0.01")}
       {field("usd_clp", "Cambio 1 $ = … CLP", "1")}
       {field("margin_pct", "Margen deseado (%)", "10")}
-      {field("voice_11labs_usd_min", "Voz ElevenLabs estimada ($/min)", "0.001")}
       {field("voice_cartesia_usd_min", "Voz Premium estimada ($/min)", "0.001")}
       {field("voice_azure_usd_min", "Voz Estándar estimada ($/min)", "0.001")}
+      <p className="pt-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Tu plan de ElevenLabs</p>
+      <div className="grid grid-cols-3 gap-2">{field("eleven_plan_usd", "Precio ($/mes)", "1")}{field("eleven_plan_credits", "Créditos", "1000")}{field("eleven_credits_per_char", "Créditos/letra", "0.1")}</div>
+      <p className="pt-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Por cliente</p>
+      <div className="grid grid-cols-2 gap-2">{field("number_es_usd_month", "Número España ($/mes)", "0.5")}{field("number_cl_usd_month", "Número Chile ($/mes)", "0.5")}</div>
+      <div className="grid grid-cols-2 gap-2">{field("stripe_pct", "Stripe (%)", "0.1")}{field("stripe_fixed_eur", "Stripe fijo (€)", "0.05")}</div>
+      <FixedCostsEditor items={f.fixed_costs || []} onChange={(fixed_costs) => setF({ ...f, fixed_costs })} />
       <Button onClick={save} disabled={busy} className="w-full rounded-full font-semibold" data-testid="pricing-save-button">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Guardar</Button>
     </Panel>
   );
@@ -118,7 +128,32 @@ function PriceAdvice({ d }) {
       <h3 className="text-lg font-semibold text-white">Cómo cobrar</h3>
       <CountryAdvice d={d} country="ES" />
       <CountryAdvice d={d} country="CL" />
-      <p className="text-xs text-slate-500">Precios sin IVA. Añade la cuota de Vapi (plan Core 29 $/mes si necesitas más de 4 llamadas simultáneas) y los números de Zadarma.</p>
+      <p className="text-xs text-slate-500">Precios sin IVA. Los costes fijos y los números de cada cliente se restan aparte en «Beneficio real».</p>
+    </Panel>
+  );
+}
+
+function TenantsTable({ d }) {
+  const m = (v, x) => money(v, d.pricing, x.currency, 2);
+  return (
+    <Panel className="mb-6 overflow-x-auto p-0">
+      <h3 className="p-5 pb-2 text-lg font-semibold text-white">Beneficio por cliente</h3>
+      <table className="w-full min-w-[980px] text-sm" data-testid="costs-tenants-table">
+        <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr>{["Negocio", "Plan", "Llamadas", "Minutos", "Ingresos", "Llamadas €", "Número", "Stripe", "Beneficio", "Margen"].map((h) => <th key={h} className="p-4 font-medium">{h}</th>)}</tr></thead>
+        <tbody>
+          {d.tenants.map((x) => (
+            <tr key={x.tenant_id} className="border-t border-slate-800" data-testid={`costs-tenant-${x.tenant_id}`}>
+              <td className="p-4 text-white">{x.business}</td><td className="p-4 text-xs text-slate-400">{x.plan || "Sin plan"}</td>
+              <td className="p-4">{x.calls}</td><td className="p-4 font-mono">{x.minutes.toFixed(1)}</td>
+              <td className="p-4 font-mono">{m(x.revenue, x)}</td><td className="p-4 font-mono">{m(x.total, x)}</td>
+              <td className="p-4 font-mono">{m(x.number_fee, x)}</td><td className="p-4 font-mono">{m(x.stripe_fee, x)}</td>
+              <td className={`p-4 font-mono font-semibold ${x.profit >= 0 ? "text-emerald-300" : "text-rose-300"}`} data-testid={`costs-tenant-profit-${x.tenant_id}`}>{m(x.profit, x)}</td>
+              <td className="p-4 font-mono">{x.margin_pct == null ? "—" : `${x.margin_pct.toFixed(0)} %`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!d.tenants.length && <p className="p-6 text-sm text-slate-500">Aún no hay clientes con llamadas o suscripción en este periodo.</p>}
     </Panel>
   );
 }
@@ -132,7 +167,7 @@ export default function AdminCosts() {
 
   const sync = async () => {
     setSyncing(true);
-    try { const { data } = await api.post("/admin/costs/sync"); toast.success(`${data.updated} llamadas actualizadas`); load(); }
+    try { const { data } = await api.post("/admin/costs/sync"); toast.success(`${data.updated} llamadas de Vapi y ${data.line_matched} de Zadarma actualizadas`); if (data.line_error) toast.warning(data.line_error); load(); }
     catch (e) { toast.error(errMsg(e)); } finally { setSyncing(false); }
   };
 
@@ -148,7 +183,7 @@ export default function AdminCosts() {
           <SelectContent>{[["7", "Últimos 7 días"], ["30", "Últimos 30 días"], ["90", "Últimos 90 días"], ["365", "Último año"]].map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
         </Select>
         <Button variant="outline" onClick={sync} disabled={syncing} className="rounded-full border-slate-700 bg-transparent" data-testid="costs-sync-button">
-          {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Actualizar desde Vapi
+          {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Actualizar costes reales
         </Button>
       </PageHeader>
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -158,13 +193,9 @@ export default function AdminCosts() {
         <Stat label="Coste por minuto" value={eur(d.cost_per_min, fx)} hint={d.cost_per_call != null ? `${eur(d.cost_per_call, fx)} por llamada` : ""} testid="costs-stat-per-min" />
       </div>
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
-        <PriceAdvice d={d} />
-        <PricingForm pricing={d.pricing} onSaved={load} />
-        <VoiceCompare d={d} />
-      </div>
-      <div className="mb-6 grid gap-6 lg:grid-cols-3">
+        <ProfitSummary d={d} days={days} />
         <Panel data-testid="costs-breakdown">
-          <h3 className="mb-4 text-lg font-semibold text-white">Desglose</h3>
+          <h3 className="mb-4 text-lg font-semibold text-white">Desglose de llamadas</h3>
           {PARTS.map(([k, l]) => {
             const pct = t.total ? (d.breakdown[k] / t.total) * 100 : 0;
             return (
@@ -175,19 +206,13 @@ export default function AdminCosts() {
             );
           })}
         </Panel>
-        <Panel className="overflow-x-auto p-0 lg:col-span-2">
-          <h3 className="p-5 pb-2 text-lg font-semibold text-white">Por negocio</h3>
-          <table className="w-full text-sm" data-testid="costs-tenants-table">
-            <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr><th className="p-4 font-medium">Negocio</th><th className="p-4 font-medium">Llamadas</th><th className="p-4 font-medium">Minutos</th><th className="p-4 font-medium">Coste</th><th className="p-4 font-medium">Por min</th></tr></thead>
-            <tbody>
-              {d.tenants.map((x) => (
-                <tr key={x.tenant_id} className="border-t border-slate-800"><td className="p-4 text-white">{x.business}</td><td className="p-4">{x.calls}</td><td className="p-4 font-mono">{x.minutes.toFixed(1)}</td><td className="p-4 font-mono">{money(x.total, d.pricing, x.currency, 2)}</td><td className="p-4 font-mono">{money(x.cost_per_min, d.pricing, x.currency)}</td></tr>
-              ))}
-            </tbody>
-          </table>
-          {!d.tenants.length && <p className="p-6 text-sm text-slate-500">Aún no hay llamadas reales en este periodo.</p>}
-        </Panel>
       </div>
+      <div className="mb-6 grid gap-6 lg:grid-cols-3">
+        <PriceAdvice d={d} />
+        <PricingForm pricing={d.pricing} onSaved={load} />
+        <VoiceCompare d={d} />
+      </div>
+      <TenantsTable d={d} />
       <Panel className="overflow-x-auto p-0">
         <h3 className="p-5 pb-2 text-lg font-semibold text-white">Cada llamada</h3>
         <table className="w-full min-w-[960px] text-sm" data-testid="costs-calls-table">
@@ -201,7 +226,7 @@ export default function AdminCosts() {
                 <td className="p-3"><p className="text-white">{c.business}</p><p className="text-xs text-slate-500">{c.lead}{c.is_test ? " · prueba" : ""} · {c.country === "CL" ? "Chile" : "España"}</p></td>
                 <td className="p-3"><StatusBadge status={c.status} testid={`costs-call-status-${c.id}`} /></td>
                 <td className="p-3 font-mono">{c.minutes.toFixed(2)}</td>
-                {PARTS.slice(0, 6).map(([k]) => <td key={k} className="p-3 font-mono text-xs text-slate-300">{money(c[k], d.pricing, c.currency, 4)}</td>)}
+                {PARTS.slice(0, 6).map(([k]) => <td key={k} className="p-3 font-mono text-xs text-slate-300">{money(c[k], d.pricing, c.currency, 4)}{k === "linea" && <span className={`ml-1 text-[10px] ${c.line_real ? "text-emerald-400" : "text-slate-500"}`}>{c.line_real ? "real" : "est."}</span>}</td>)}
                 <td className="p-3 font-mono font-semibold text-emerald-300">{money(c.total, d.pricing, c.currency, 3)}</td>
               </tr>
             ))}
