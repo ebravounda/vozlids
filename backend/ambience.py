@@ -16,7 +16,7 @@ PRESETS = {
                 "bursts": True, "distant": {"Ambient_classroom_mono": 1400}, "room": 0.004, "seed": 11},
     "teclados": {"layers": [("Computer_keyboard", 0.06), ("Laptop_keyboard", 0.045)], "bursts": True,
                  "burst_off": (2.5, 7.0), "room": 0.006, "seed": 23},
-    "call_center": {"layers": [("Call_center_real", 0.09), ("Computer_keyboard", 0.035)], "seed": 37},
+    "call_center": {"layers": [("Call_center_real", 0.09)], "drive": 1.2, "seed": 37},
     "oficina_real": {"layers": [("Oficina_aristeia", 0.055), ("Computer_keyboard", 0.07), ("Laptop_keyboard", 0.045)],
                      "bursts": True, "drive": 3.0, "seed": 5},
     "teclado_real": {"layers": [("Laptop_keyboard", 0.11)], "bursts": True, "burst_on": (1.5, 5.0), "burst_off": (2.5, 7.0),
@@ -64,12 +64,18 @@ def decode(data: bytes):
     return np.frombuffer(out.stdout, np.int16).astype(float) / 32768
 
 
+def seamless(x, secs: float = 2.0):
+    """Crossfade the tail into the head so the call's background loop has no audible seam or gap."""
+    k = int(secs * SR)
+    if len(x) <= 3 * k:
+        return x
+    ramp = np.sqrt(np.linspace(0, 1, k))
+    head = x[:k] * ramp + x[-k:] * ramp[::-1]
+    return np.concatenate([head, x[k:-k]])
+
+
 def to_wav(x, volume: int, gain: float = 0.7) -> bytes:
-    x = x.copy()
-    fade = int(0.08 * SR)
-    ramp = np.linspace(0, 1, fade)
-    x[:fade] *= ramp
-    x[-fade:] *= ramp[::-1]
+    x = seamless(x)
     pcm = (_norm(x) * gain * (volume / 100) * 32767).astype(np.int16).tobytes()
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:

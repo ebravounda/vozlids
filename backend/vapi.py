@@ -63,8 +63,8 @@ def voice_provider(voice: str) -> str:
 
 def eleven_voice(voice_id: str) -> dict:
     return {"provider": "11labs", "model": "eleven_turbo_v2_5", "language": "es", "voiceId": voice_id,
-            "stability": 0.38, "similarityBoost": 0.78, "style": 0.22, "useSpeakerBoost": True, "speed": 1.02,
-            "optimizeStreamingLatency": 3}
+            "stability": 0.32, "similarityBoost": 0.75, "style": 0.15, "useSpeakerBoost": True, "speed": 0.98,
+            "optimizeStreamingLatency": 3, "chunkPlan": {"enabled": True, "minCharacters": 40}}
 
 
 def voice_config(voice: str, country: str = "ES") -> dict:
@@ -237,7 +237,7 @@ def background_sound(agent: dict) -> str:
     vol = int(agent.get("ambience_volume", 35))
     if a.startswith("custom:"):
         return f"{public_url()}/api/ambience/custom/{a[7:]}/{vol}.wav"
-    return f"{public_url()}/api/ambience/{a}/{vol}.wav?v=5"
+    return f"{public_url()}/api/ambience/{a}/{vol}.wav?v=6"
 
 
 async def get_call(call_id: str) -> dict:
@@ -322,6 +322,8 @@ CÓMO HABLAS
 - Nunca leas listas ni uses formato. Di números y horas como se dicen en voz alta ("a las diez y media").
 - Si el lead te interrumpe, para y responde a lo que dice.
 - Habla como una persona real al teléfono: frases naturales y variadas, alguna pausa breve ("mmm...", "a ver..."), reacciona a lo que te dicen ("ah, genial", "claro, entiendo") y usa su nombre de vez en cuando. Nunca repitas la misma frase dos veces seguidas.
+- Habla como en una llamada de verdad, nunca como si leyeras un guion: expresiones coloquiales ("pues mira", "vale", "oye", "genial", "a ver"), alguna frase que se corrige a medias ("el martes... bueno, mejor el miércoles") y comas o puntos suspensivos donde una persona haría una pausa.
+- Evita palabras de folleto o de carta formal ("asimismo", "le informo", "cabe destacar", "estimado", "con el fin de").
 - Responde rápido y al grano: nada de párrafos largos ni explicaciones que nadie ha pedido.
 - No inventes precios, plazos ni datos que no estén arriba; si no lo sabes, di que lo consultará el equipo.
 
