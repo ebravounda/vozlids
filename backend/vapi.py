@@ -237,7 +237,7 @@ def background_sound(agent: dict) -> str:
     vol = int(agent.get("ambience_volume", 35))
     if a.startswith("custom:"):
         return f"{public_url()}/api/ambience/custom/{a[7:]}/{vol}.wav"
-    return f"{public_url()}/api/ambience/{a}/{vol}.wav?v=3"
+    return f"{public_url()}/api/ambience/{a}/{vol}.wav?v=4"
 
 
 async def get_call(call_id: str) -> dict:

@@ -15,9 +15,9 @@ DUR = 30
 PRESETS = {
     "oficina": {"voices": 4, "voice_gain": 0.35, "keys": 0.6, "room": 0.25, "seed": 11},
     "teclados": {"voices": 0, "voice_gain": 0.0, "keys": 1.0, "room": 0.18, "seed": 23},
-    "call_center": {"layers": [("Call_center_real", 0.09), ("Computer_keyboard", 0.035)], "seed": 37},
-    "oficina_real": {"layers": [("Oficina_aristeia", 0.055), ("Computer_keyboard", 0.075), ("Laptop_keyboard", 0.05)],
-                     "drive": 3.0, "seed": 5},
+    "call_center": {"layers": [("Call_center_real", 0.09), ("Computer_keyboard", 0.035)], "bursts": True, "seed": 37},
+    "oficina_real": {"layers": [("Oficina_aristeia", 0.055), ("Computer_keyboard", 0.07), ("Laptop_keyboard", 0.045)],
+                     "bursts": True, "drive": 3.0, "seed": 5},
     "teclado_real": {"layers": [("Laptop_keyboard", 0.12)], "seed": 7},
 }
 
@@ -128,6 +128,20 @@ def _level(x, rms):
     return x * (rms / r) if r > 0 else x
 
 
+def _bursts(rng, x, on=(1.2, 4.0), off=(4.0, 11.0)):
+    """Real typing comes in short bursts with pauses, not a non-stop stream of keys."""
+    n, env, t = len(x), np.zeros(len(x)), int(rng.uniform(*off) * SR / 2)
+    fade = int(0.06 * SR)
+    while t < n:
+        d = int(rng.uniform(*on) * SR)
+        seg = np.ones(d)
+        seg[:fade], seg[-fade:] = np.linspace(0, 1, fade), np.linspace(1, 0, fade)
+        env[t:t + d] = seg[:max(0, min(d, n - t))]
+        t += d + int(rng.uniform(*off) * SR)
+    start = int(rng.integers(0, max(1, n - SR)))
+    return np.roll(x, -start) * env
+
+
 def _presence(x):
     return x + 0.8 * _band(x, 1500, 3400)
 
@@ -139,8 +153,10 @@ def render(preset: str, volume: int) -> bytes:
     if "layers" in cfg:
         srcs = [(_real(f), g, "keyboard" in f.lower()) for f, g in cfg["layers"]]
         n = max(len(x) for x, _, _ in srcs)
-        mix = sum(_level(_presence(x) if k else x, g) if len(x) == n else _level(np.resize(_presence(x) if k else x, n), g)
-                  for x, g, k in srcs)
+        mix = 0
+        for x, g, k in srcs:
+            layer = _level(np.resize(_presence(x) if k else x, n), g)
+            mix = mix + (_bursts(rng, layer) if k and cfg.get("bursts") else layer)
         if cfg.get("voices"):
             mix = mix + _level(sum(_voice(rng, n) for _ in range(cfg["voices"])), cfg["voice_gain"])
         d = cfg.get("drive", 2.2)
