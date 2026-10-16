@@ -294,6 +294,9 @@ def greeting(agent: dict, lead: dict) -> str:
     text = lead.get("greeting") or agent["greeting"]
     for k, v in (("{nombre}", first_name(lead["name"])), ("{empresa}", agent["business_name"]), ("{agente}", agent["name"])):
         text = text.replace(k, v)
+    base = agent.get("base_name")
+    if base and base != agent["name"]:
+        text = re.sub(rf"\b{re.escape(base)}\b", agent["name"], text)
     return text.strip()
 
 

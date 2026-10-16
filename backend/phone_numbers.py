@@ -134,7 +134,8 @@ async def assistant_request(msg: dict) -> dict:
     if not agent or await saas.quota_error(r["tenant_id"]):
         return _short(UNAVAILABLE)
     phone = (call.get("customer") or {}).get("number") or "oculto"
-    lead = Lead(tenant_id=r["tenant_id"], agent_id=str(agent["_id"]), agent_name=agent["name"], name="Llamada entrante",
+    agent = await S.pick_executive(agent)
+    lead = Lead(executive=agent.get("executive", ""), tenant_id=r["tenant_id"], agent_id=str(agent["_id"]), agent_name=agent.get("base_name", agent["name"]), name="Llamada entrante",
                 phone=phone if phone.startswith("+") or phone == "oculto" else f"+{phone}", source="entrante",
                 direction="entrante", status="en_curso")
     doc = lead.to_mongo()

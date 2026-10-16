@@ -183,6 +183,11 @@ async def set_country(body: CountryIn, user=CurrentUser):
 
 
 # ---------- Agents ----------
+class Executive(BaseModel):
+    voice: str = Field(min_length=1, max_length=40)
+    name: str = Field(min_length=1, max_length=40)
+
+
 class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     business_name: str = Field(min_length=1, max_length=120)
@@ -195,6 +200,7 @@ class AgentIn(BaseModel):
     ambience_volume: int = Field(35, ge=0, le=100)
     greeting: str = Field(min_length=1, max_length=600)
     extra_instructions: str = Field("", max_length=2000)
+    executives: List[Executive] = Field(default=[], max_length=5)
     active: bool = True
 
 
@@ -212,8 +218,11 @@ async def list_agents(user=CurrentUser):
 
 
 async def check_ambience(user: dict, body: AgentIn):
-    if not vapi.voice_allowed(body.voice, body.country):
-        raise HTTPException(422, f"Esa voz no está disponible para {COUNTRIES[body.country]['name']}.")
+    for v in [body.voice] + [e.voice for e in body.executives]:
+        if not vapi.voice_allowed(v, body.country):
+            raise HTTPException(422, f"Esa voz no está disponible para {COUNTRIES[body.country]['name']}.")
+    if len({e.voice for e in body.executives}) < len(body.executives):
+        raise HTTPException(422, "Cada ejecutivo debe tener una voz distinta.")
     if body.ambience.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], body.ambience[7:]):
         raise HTTPException(422, "Esa grabación de ambiente no existe.")
 
@@ -222,6 +231,8 @@ async def check_ambience(user: dict, body: AgentIn):
 async def create_agent(body: AgentIn, user=CurrentUser):
     await check_ambience(user, body)
     await PL.check_agent(user["id"], body.voice, body.ambience, True)
+    for e in body.executives:
+        await PL.check_agent(user["id"], e.voice, "none", False)
     agent = Agent(tenant_id=user["id"], **body.model_dump())
     res = await db.agents.insert_one(agent.to_mongo())
     return Agent.from_mongo(await db.agents.find_one({"_id": res.inserted_id})).out()
@@ -237,6 +248,10 @@ async def update_agent(agent_id: str, body: AgentIn, user=CurrentUser):
     prev = await get_agent(user["id"], agent_id)
     await check_ambience(user, body)
     await PL.check_agent(user["id"], body.voice if body.voice != prev.get("voice") else "", body.ambience if body.ambience != prev.get("ambience") else "none", False)
+    old_voices = {e.get("voice") for e in prev.get("executives") or []}
+    for e in body.executives:
+        if e.voice not in old_voices:
+            await PL.check_agent(user["id"], e.voice, "none", False)
     await db.agents.update_one({"_id": oid(agent_id)}, {"$set": {**body.model_dump(), "updated_at": now_iso()}})
     return Agent.from_mongo(await get_agent(user["id"], agent_id)).out()
 

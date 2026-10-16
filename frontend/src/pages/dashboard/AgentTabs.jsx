@@ -12,6 +12,7 @@ import { Panel } from "@/components/Common";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { CustomAmbiences } from "@/components/CustomAmbiences";
 import { AMBIENCES, COUNTRIES, DEFAULT_VOICE, OBJECTIVES, TIER, VOICES } from "@/lib/constants";
+import { ExecutivesPanel } from "@/components/agent/Executives";
 
 const GROUPS = [
   ["eleven", "Ultra natural HD · las más humanas", "Recomendado · algo más caro por minuto", "text-emerald-300"],
@@ -79,8 +80,11 @@ export const VoiceTab = ({ agent, update }) => {
   useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map((v) => ({ ...v, eleven: true, tone: v.tone || "Voz ultra natural con acento nativo" })))).catch(() => {}); }, []);
   const country = agent.country || "ES";
   const list = [...custom, ...VOICES].filter((v) => v.country === country || v.country === "ALL");
+  const team = agent.executives || [];
+  const pickVoice = (id) => update(team.length ? { voice: id, name: list.find((v) => v.id === id)?.name || agent.name, executives: [{ voice: id, name: list.find((v) => v.id === id)?.name || team[0].name }, ...team.slice(1).filter((e) => e.voice !== id)] } : { voice: id });
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <ExecutivesPanel agent={agent} update={update} voices={list.filter((v) => hd || TIER(v) !== "eleven")} />
       <Panel className="space-y-5">
         <Label>Voz ({(agent.country || "ES") === "CL" ? "español latino y chileno" : "español de España"})</Label>
         {GROUPS.map(([tier, title, note, color]) => (
@@ -90,7 +94,7 @@ export const VoiceTab = ({ agent, update }) => {
               <p className="text-xs text-slate-500">{note}</p>
             </div>
             {tier === "eleven" && !hd ? <PlanLockNote f="premium_voices" /> : <div className="grid grid-cols-2 gap-3">
-              {list.filter((v) => TIER(v) === tier).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => update({ voice: v.id })} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
+              {list.filter((v) => TIER(v) === tier).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => pickVoice(v.id)} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
             </div>}
           </div>
         ))}

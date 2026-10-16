@@ -1,4 +1,5 @@
 import asyncio
+from pymongo import ReturnDocument
 import json
 import re
 import logging
@@ -142,6 +143,17 @@ TOOLS = {"check_availability": tool_check_availability, "book_appointment": tool
          "schedule_callback": tool_callback}
 
 
+async def pick_executive(agent: dict) -> dict:
+    """Rotate the agent's executives in turn (Marta, Pablo, Lucía, Marta…): each call gets the next voice and name."""
+    team = [e for e in agent.get("executives") or [] if e.get("voice") and e.get("name")]
+    if not team:
+        return agent
+    doc = await db.agents.find_one_and_update({"_id": agent["_id"]}, {"$inc": {"exec_turn": 1}},
+                                              projection={"exec_turn": 1}, return_document=ReturnDocument.AFTER)
+    e = team[((doc or {}).get("exec_turn") or 1) % len(team) - 1]
+    return {**agent, "voice": e["voice"], "name": e["name"], "base_name": agent["name"], "executive": e["name"]}
+
+
 async def dial(agent: dict, lead: dict):
     lid = lead["_id"]
     country = agent.get("country", "ES")
@@ -162,11 +174,12 @@ async def dial(agent: dict, lead: dict):
                      f"{COUNTRIES[country]['prefix']} en Telefonía."}})
         return
     import plan_limits as PL
-    agent = await PL.effective_agent(agent)
+    agent = await PL.effective_agent(await pick_executive(agent))
     try:
         call_id = await vapi.create_call(agent, lead, today_text(country), own)
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",
                                                           "voice_provider": vapi.voice_provider(agent["voice"]),
+                                                          "executive": agent.get("executive", ""),
                                                           "updated_at": now_iso()}})
     except vapi.VapiError as e:
         log.warning("Vapi call failed: %s", e)

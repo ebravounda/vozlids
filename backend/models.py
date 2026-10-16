@@ -41,6 +41,7 @@ class Agent(BaseDocument):
     ambience_volume: int = 35
     greeting: str
     extra_instructions: str = ""
+    executives: List[dict] = []
     active: bool = True
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)
@@ -51,6 +52,7 @@ class Lead(BaseDocument):
     tenant_id: str
     agent_id: str
     agent_name: str = ""
+    executive: str = ""
     name: str
     phone: str
     email: str = ""
