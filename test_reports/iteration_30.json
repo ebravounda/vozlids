@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 30: Tested the Cartesia Premium voices and the real-costs/profit panel. Backend: 10/10 pytest passed, plus a probe that rendered all 13 new Cartesia voices (200, x-voice-source=cartesia, 144-215KB WAV each). Frontend: the Voz tab shows the 9 new ES voices only on ES agents and the 4 new CL voices only on CL agents. Choosing p_blanca (ES) and l_santiago (CL) and saving shows the 'Agente guardado' toast and the voice persists. /app/costes (Super admin > Costes y precios) shows profit-summary, cost-sources with eleven-usage (5460 / 122.495, plan creator) and the Zadarma error, costs-breakdown, the pricing form with the ElevenLabs plan fields, fixed-costs-editor, costs-tenants-table, and the calls table with the 'est.' tag. Adding a $100 fixed cost changed net profit from -2,82 € to -94,82 €; deleting it and saving brought it back to -2,82 €. The sync button shows two toasts (counts and the Zadarma not-connected warning). Fixed one contrast bug in the profit summary. All pricing and agent changes were reverted.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/admin/costs?tenant_id=X", "issue": "Subscription revenue (tenant_revenue) and numbers are not filtered by tenant_id, so a per-tenant query still adds every paying tenant's revenue to profit.revenue and to the tenants list. Fixed costs are also counted in full."},
+      {"endpoint": "GET /api/admin/costs", "issue": "tenant_revenue returns a 'test' flag (billing_test) that is never used. Stripe test-mode subscriptions are counted as real revenue in profit."},
+      {"endpoint": "GET /api/admin/costs (ElevenLabs)", "issue": "Business logic: the ElevenLabs Creator plan costs a fixed $22/month whether or not credits are used, but the cost is only counted per character spoken (and the UI says 'No pongas aquí ElevenLabs'). Net profit is too high by the unused part of the plan. Consider max(plan fee, usage share), or count the plan as a fixed cost and show the per-character share for information only."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/app/costes profit-summary", "issues": ["FIXED by testing agent: the Row values (profit-revenue/variable/per-client/fixed) used text-slate-100, which index.css .app-light does not remap, so they were almost invisible on the white panel. Changed the default tone to text-slate-200 (remapped to #334155). Verified the computed colour is rgb(51,65,85)."]},
+      {"screen": "Agent > Voz (CL)", "issues": ["Two voices are both named 'Catalina' (Premium l_catalina and Estándar cl_catalina), which may confuse users. Consider renaming one."]},
+      {"screen": "/app/costes tenants table", "issues": ["The column header 'Llamadas €' is shown even when the row is in CLP. Use a currency-neutral label, e.g. 'Coste llamadas'."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter30_costs_cartesia.py", "/app/backend/tests/iter30_probe.py", "/app/test_reports/pytest/pytest_iter30.xml"],
+  "action_items": [
+    "Filter revenue and numbers by tenant_id in admin_costs when tenant_id is given.",
+    "Exclude billing_test tenants from profit revenue, or show them separately.",
+    "Decide how to count the ElevenLabs plan: the fixed $22/month vs the per-character share of used credits.",
+    "Optional: rename the duplicate CL 'Catalina' voices; make the tenants-table header currency-neutral."
+  ],
+  "critical_code_review_comments": [
+    "_parts math checked with a seeded 11labs lead (tts=0, 1000 chars, cost 0.10, line_cost_usd 0.02): voz=0.11, otros=0.02, total=0.23, line_real=True. All correct.",
+    "Stripe fixed fee: stripe_fixed_eur/usd_eur*scale is also applied to CL (CLP) tenants. Acceptable, but note it.",
+    "sync_zadarma correctly stores the error string when Zadarma is not connected ('Falta conectar la API de Zadarma en Super admin.')."
+  ],
+  "updated_files": ["/app/frontend/src/components/costs/ProfitParts.jsx", "/app/backend/tests/test_vozlead_iter30_costs_cartesia.py", "/app/backend/tests/iter30_probe.py"],
+  "success_rate": {"backend": "100%", "frontend": "100% (after contrast fix)"},
+  "seed_data_creation": "A temporary TEST_ lead (deleted afterwards) and temporary TEST_ agents (deleted). Pricing restored to the original defaults and verified. Admin agent 'Marta' voice restored to e_jessica.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Costs page route is /app/costes (admin-tab-costs). The ES agent id for the admin is 6acfac3a346c4c1ebc71ff58. The Cartesia key is in platform_settings._id=cartesia and works. Zadarma is not connected in preview, so line_error is expected. The ElevenLabs subscription endpoint works (tier creator)."
+}

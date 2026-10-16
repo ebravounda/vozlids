@@ -36,7 +36,7 @@ VOICES.push(
   { id: "l_eduardo", name: "Eduardo", gender: "Hombre", tone: "Latino natural y cercano", premium: true, country: "CL" },
   { id: "l_mateo", name: "Mateo", gender: "Hombre", tone: "Latino cálido y genuino", premium: true, country: "CL" },
   { id: "l_andres", name: "Andrés", gender: "Hombre", tone: "Latino sereno y profesional", premium: true, country: "CL" },
-  { id: "l_catalina", name: "Catalina", gender: "Mujer", tone: "Latina natural, conversación diaria", premium: true, country: "CL" },
+  { id: "l_catalina", name: "Valeria", gender: "Mujer", tone: "Latina natural, conversación diaria", premium: true, country: "CL" },
   { id: "l_veronica", name: "Verónica", gender: "Mujer", tone: "Latina cálida, ventas", premium: true, country: "CL" },
   { id: "l_rodrigo", name: "Rodrigo", gender: "Hombre", tone: "Latino tranquilo, atención al cliente", premium: true, country: "CL" },
   { id: "l_santiago", name: "Santiago", gender: "Hombre", tone: "Latino moderno y cercano", premium: true, country: "CL" },

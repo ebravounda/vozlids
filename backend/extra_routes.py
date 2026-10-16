@@ -216,7 +216,7 @@ def _parts(lead: dict, rate: float, pricing: dict) -> dict:
         vapi_total = sum(v for k, v in p.items() if k != "linea") - own_voice
     p["otros"] = max(0.0, round(vapi_total - sum(v for k, v in p.items() if k != "linea") + own_voice, 5))
     p["total"] = round(vapi_total + own_voice + p["linea"], 5)
-    return {"minutes": round(minutes, 2), "line_real": line_real, **p}
+    return {"minutes": round(minutes, 2), "line_real": line_real, "own_voice": own_voice, **p}
 
 
 @router.get("/admin/costs")
@@ -235,9 +235,11 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
     calls, tenants, totals = [], {}, {"calls": 0, "minutes": 0.0, "total": 0.0, "missing_cost": 0}
     keys = ["voz", "transcripcion", "ia", "vapi", "analisis", "linea", "otros"]
     breakdown = dict.fromkeys(keys, 0.0)
+    own_voice_total = 0.0
     for ld in leads:
         country = agent_country.get(ld["agent_id"], "ES")
         p = _parts(ld, rates[country], pricing)
+        own_voice_total += p["own_voice"]
         bc = by_country[country]
         bc["calls"] += 1
         bc["minutes"] += p["minutes"]
@@ -270,6 +272,8 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
                           "direction": "entrante" if vapi.inbound(ld) else "saliente", **p})
     scale = max(1, min(days, 365)) / 30
     revenue, numbers = await CR.tenant_revenue(pricing), await CR.numbers_by_tenant()
+    if tenant_id:
+        revenue = {k: v for k, v in revenue.items() if k == tenant_id}
     for tid, r in revenue.items():
         if tid not in tenants:
             u = users.get(tid, {})
@@ -279,7 +283,8 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
     for tid, t in tenants.items():
         t["cost_per_min"] = t["total"] / t["minutes"] if t["minutes"] else None
         r = revenue.get(tid)
-        t["plan"] = r["plan"] if r else None
+        t["plan"] = (r["plan"] + (" (prueba Stripe)" if r["test"] else "")) if r else None
+        r = r if r and not r["test"] else None
         t["revenue"] = r["price_usd"] * scale if r else 0.0
         num = numbers.get(tid)
         t["number_fee"] = (pricing["number_cl_usd_month"] if num == "CL" else pricing["number_es_usd_month"]) * scale if num else 0.0
@@ -288,7 +293,10 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
         t["margin_pct"] = t["profit"] / t["revenue"] * 100 if t["revenue"] else None
         profit["revenue"] += t["revenue"]
         profit["per_client_fixed"] += t["number_fee"] + t["stripe_fee"]
-    fixed = [{**f, "period": f["usd"] * scale} for f in (pricing.get("fixed_costs") or [])]
+    fixed = [] if tenant_id else [{**f, "period": f["usd"] * scale} for f in (pricing.get("fixed_costs") or [])]
+    unused = pricing["eleven_plan_usd"] * scale - own_voice_total
+    if not tenant_id and unused > 0:
+        fixed.append({"name": "ElevenLabs (parte del plan sin usar)", "usd": pricing["eleven_plan_usd"], "period": unused, "auto": True})
     profit["fixed"] = sum(f["period"] for f in fixed)
     profit["net"] = profit["revenue"] - profit["variable"] - profit["per_client_fixed"] - profit["fixed"]
     profit["margin_pct"] = profit["net"] / profit["revenue"] * 100 if profit["revenue"] else None

@@ -260,3 +260,9 @@
 ## 2026-06 — Agente solo habla del negocio
 - system_prompt: bloque "TEMAS PERMITIDOS" (prioridad máxima) + recordatorio final: rechaza temas ajenos, cuelga tras 2 insistencias, ignora prompt-injection. Verificado con gpt-4.1 (puré de patatas / "olvida tus instrucciones" → rechazo).
 - Campo "Información del negocio" (product) ampliado a 8000 caracteres con contador y ayuda.
+
+## 2026-06 — Voces Cartesia nuevas + costes reales y beneficio
+- +9 voces Premium castellano (p_blanca, p_eva, p_lara, p_alicia, p_maite, p_lucia, p_octavio, p_rafael, p_dario) y +4 LATAM (l_catalina "Valeria", l_veronica, l_rodrigo, l_santiago) elegidas de la API de Cartesia (acento nativo es-ES / es-MX/CO).
+- costs_real.py: coste real Zadarma por llamada (/v1/statistics billcost, match por número ±10 min, hora Madrid, sync cada 10 min o botón), coste ElevenLabs propio = ttsCharacters × créditos/letra × precio plan, uso ElevenLabs (/v1/user/subscription), ingresos por suscripción activa (excluye billing_test), números por cliente, comisión Stripe.
+- /api/admin/costs: profit {revenue, variable, per_client_fixed, fixed, net, margin_pct}, fixed (editable + "ElevenLabs parte sin usar" automática), tenants con beneficio/margen; filtro tenant_id excluye fijos. Pricing: eleven_plan_usd/credits/credits_per_char, number_es/cl_usd_month, stripe_pct/fixed_eur, fixed_costs[].
+- UI AdminCosts: Beneficio real, desglose, editor de costes fijos, Beneficio por cliente, etiqueta real/est. en línea. iteration_30: 100%.

@@ -139,7 +139,7 @@ function TenantsTable({ d }) {
     <Panel className="mb-6 overflow-x-auto p-0">
       <h3 className="p-5 pb-2 text-lg font-semibold text-white">Beneficio por cliente</h3>
       <table className="w-full min-w-[980px] text-sm" data-testid="costs-tenants-table">
-        <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr>{["Negocio", "Plan", "Llamadas", "Minutos", "Ingresos", "Llamadas €", "Número", "Stripe", "Beneficio", "Margen"].map((h) => <th key={h} className="p-4 font-medium">{h}</th>)}</tr></thead>
+        <thead className="text-left text-xs uppercase tracking-wider text-slate-500"><tr>{["Negocio", "Plan", "Llamadas", "Minutos", "Ingresos", "Coste llamadas", "Número", "Stripe", "Beneficio", "Margen"].map((h) => <th key={h} className="p-4 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {d.tenants.map((x) => (
             <tr key={x.tenant_id} className="border-t border-slate-800" data-testid={`costs-tenant-${x.tenant_id}`}>

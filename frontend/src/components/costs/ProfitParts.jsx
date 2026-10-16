@@ -8,7 +8,7 @@ const pct = (v) => (v == null ? "—" : `${v.toFixed(0)} %`);
 
 const Row = ({ label, value, strong, tone, testid }) => (
   <div className={`flex justify-between py-1.5 text-sm ${strong ? "border-t border-slate-800 pt-3 font-semibold" : ""}`} data-testid={testid}>
-    <span className="text-slate-300">{label}</span><span className={`font-mono ${tone || "text-slate-100"}`}>{value}</span>
+    <span className="text-slate-300">{label}</span><span className={`font-mono ${tone || "text-slate-200"}`}>{value}</span>
   </div>
 );
 
@@ -24,6 +24,7 @@ export function ProfitSummary({ d, days }) {
       <Row label="Llamadas (Vapi + IA + voz + línea)" value={`− ${eur(p.variable, fx)}`} testid="profit-variable" />
       <Row label="Números de clientes + comisiones Stripe" value={`− ${eur(p.per_client_fixed, fx)}`} testid="profit-per-client" />
       <Row label="Costes fijos" value={`− ${eur(p.fixed, fx)}`} testid="profit-fixed" />
+      {d.fixed.filter((f) => f.period > 0).map((f) => <p key={f.name} className="flex justify-between pl-3 text-xs text-slate-500"><span>{f.name}</span><span className="font-mono">{eur(f.period, fx)}</span></p>)}
       <Row label="Beneficio neto" value={eur(p.net, fx)} tone={net} strong testid="profit-net" />
       <Row label="Margen" value={pct(p.margin_pct)} tone={net} testid="profit-margin" />
       <SourcesNote d={d} />
@@ -48,7 +49,7 @@ export function FixedCostsEditor({ items, onChange }) {
   const set = (i, patch) => onChange(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
     <div className="space-y-2" data-testid="fixed-costs-editor">
-      <p className="text-xs text-slate-400">Costes fijos al mes ($). No pongas aquí ElevenLabs: ya se reparte por llamada.</p>
+      <p className="text-xs text-slate-400">Costes fijos al mes ($). No pongas aquí ElevenLabs: se reparte por llamada y la parte del plan que no uses se suma sola.</p>
       {items.map((x, i) => (
         <div key={i} className="flex gap-2">
           <Input value={x.name} onChange={(e) => set(i, { name: e.target.value })} className="bg-slate-950/60 text-xs" data-testid={`fixed-cost-name-${i}`} />
