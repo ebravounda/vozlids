@@ -306,7 +306,7 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
         raise HTTPException(422, "Email no válido")
     phone = norm_phone(body.phone, agent.get("country", "ES"))
     ip = landing.client_ip(request)
-    await SEC.guard_public(phone, email, ip)
+    await SEC.guard_public(phone, email, ip, request.headers.get("cf-ipcountry", ""))
     if ip and await db.leads.count_documents({"source_ip": ip, "created_at": {"$gt": ago(60)}}) >= 10:
         raise HTTPException(429, "Demasiadas solicitudes. Inténtalo más tarde.")
     tid = agent["tenant_id"]

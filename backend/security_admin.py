@@ -53,10 +53,48 @@ async def blocked_ip(ip: str) -> bool:
     return bool(ip) and bool(await db.blocklist.find_one({"kind": "ip", "value": ip.strip()}))
 
 
-async def guard_public(phone: str = "", email: str = "", ip: str = "") -> None:
+async def country_cfg() -> dict:
+    doc = await db.platform_settings.find_one({"_id": "country_block"}) or {}
+    return {"countries": doc.get("countries", []), "blocked_total": doc.get("blocked_total", 0)}
+
+
+def phone_country(phone: str) -> str:
+    import phonenumbers
+    try:
+        return phonenumbers.region_code_for_number(phonenumbers.parse(phone if phone.startswith("+") else f"+{_digits(phone)}")) or ""
+    except phonenumbers.NumberParseException:
+        return ""
+
+
+async def ip_country(ip: str, header: str = "") -> str:
+    h = (header or "").upper()[:2]
+    if len(h) == 2 and h not in ("XX", "T1"):
+        return h
+    if not ip:
+        return ""
+    hit = await db.ip_geo.find_one({"_id": ip})
+    if hit:
+        return hit["country"]
+    try:
+        async with httpx.AsyncClient(timeout=4) as c:
+            d = (await c.get(f"https://ipwho.is/{ip}", params={"fields": "success,country_code"})).json()
+        cc = (d.get("country_code") or "").upper() if d.get("success") else ""
+    except (httpx.HTTPError, ValueError):
+        return ""
+    await db.ip_geo.update_one({"_id": ip}, {"$set": {"country": cc, "created_at": datetime.now(timezone.utc)}}, upsert=True)
+    return cc
+
+
+async def guard_public(phone: str = "", email: str = "", ip: str = "", cf_country: str = "") -> None:
     """For demos/forms/widget: raise if blocked; auto-block a phone that floods requests."""
     if await blocked_ip(ip):
         raise HTTPException(403, BLOCKED_MSG)
+    banned = set((await country_cfg())["countries"])
+    if banned:
+        hit = {phone_country(phone) if phone else "", await ip_country(ip, cf_country)} & banned
+        if hit:
+            await db.platform_settings.update_one({"_id": "country_block"}, {"$inc": {"blocked_total": 1}}, upsert=True)
+            raise HTTPException(403, "Lo sentimos, este servicio no está disponible en tu país.")
     if phone and await blocked_phone(phone):
         raise HTTPException(403, BLOCKED_MSG)
     if email and (msg := await blocked_email(email)):
@@ -166,6 +204,26 @@ async def del_block(bid: str, user=Depends(require_admin)):
     return {"ok": True}
 
 
+class CountriesIn(BaseModel):
+    countries: list[str] = Field(default_factory=list, max_length=250)
+
+
+@router.get("/admin/country-block")
+async def get_countries(user=Depends(require_admin)):
+    import phonenumbers
+    return {**await country_cfg(), "all": sorted(phonenumbers.SUPPORTED_REGIONS - {"001"})}
+
+
+@router.put("/admin/country-block")
+async def put_countries(body: CountriesIn, user=Depends(require_admin)):
+    import phonenumbers
+    cc = sorted({c.upper() for c in body.countries} & phonenumbers.SUPPORTED_REGIONS)
+    if {"ES", "CL"} & set(cc):
+        raise HTTPException(422, "No puedes bloquear España ni Chile: son tus mercados.")
+    await db.platform_settings.update_one({"_id": "country_block"}, {"$set": {"countries": cc, "updated_at": now_iso()}}, upsert=True)
+    return await country_cfg()
+
+
 # ---------- Admin: live call control ----------
 async def _vapi_call(cid: str) -> dict:
     async with httpx.AsyncClient(timeout=15) as c:
@@ -202,6 +260,7 @@ async def listen_url(cid: str, user=Depends(require_admin)):
 
 async def ensure_indexes() -> None:
     await db.blocklist.create_index([("kind", 1), ("value", 1)], unique=True)
+    await db.ip_geo.create_index("created_at", expireAfterSeconds=30 * 86400)
 
 
 class SayIn(BaseModel):

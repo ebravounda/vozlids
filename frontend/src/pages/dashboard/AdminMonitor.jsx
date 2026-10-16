@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/Common";
 import { AlertSettings, Balances, Margins } from "@/components/MonitorParts";
 import { LiveCalls } from "@/components/LiveCalls";
 import { Blocklist } from "@/components/Blocklist";
+import { CountryBlock } from "@/components/CountryBlock";
 import { CallLog, SipLog } from "@/components/MonitorLogs";
 import { api } from "@/lib/api";
 import { WidgetStats } from "@/components/WidgetStats";
@@ -30,6 +31,7 @@ export default function AdminMonitor() {
       <LiveCalls />
       <div className="grid gap-6 xl:grid-cols-2">
         <Blocklist />
+        <CountryBlock />
         {alerts && <AlertSettings data={alerts} reload={loadA} />}
       </div>
       <Margins />
