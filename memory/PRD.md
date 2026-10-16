@@ -253,3 +253,6 @@
 - ElevenLabs: modelo eleven_flash_v2_5 (mismo coste que turbo), stability 0.32, style 0.15, speed 0.98, chunkPlan minCharacters 40. Prompt con estilo hablado coloquial.
 - Fondos: todos con grabaciones reales; teclados a ratos (bursts) + tono de sala; call_center = 3 min de la grabación del usuario sin capas extra; bucles con fundido (ambience v=6).
 - Clave Cartesia: se conecta en Super Admin → panel "Cartesia" (platform_settings _id=cartesia; env CARTESIA_API_KEY solo como respaldo opcional). Endpoints GET/PUT/DELETE /api/admin/cartesia (PUT valida la clave contra Cartesia).
+
+## 2026-06 — Recepcionista: saludo sin pisar al cliente
+- Entrantes: firstMessageInterruptionsEnabled=true (el cliente puede cortar el saludo) + pausa de 1 s antes del saludo (<break time="1s"/>; 11labs con enableSsmlParsing, Cartesia nativo; Azure sin pausa). Tags eliminados del transcript (services._messages). Validado contra la API de Vapi (201).

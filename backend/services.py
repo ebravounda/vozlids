@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 import logging
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -215,6 +216,7 @@ def _messages(raw: list) -> list:
     for m in raw or []:
         role = {"bot": "agente", "assistant": "agente", "user": "lead"}.get(m.get("role"))
         text = m.get("message") or m.get("content")
+        text = re.sub(r"<break[^>]*>", "", text).strip() if isinstance(text, str) else text
         if role and isinstance(text, str) and text.strip():
             out.append({"role": role, "text": text.strip(), "t": m.get("secondsFromStart")})
     return out

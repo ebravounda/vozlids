@@ -424,6 +424,15 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         confirm = (f"\nINICIO DE LA LLAMADA\nYa has preguntado «¿hablo con {who}?». Si confirma (sí, soy yo, dime…), sigue directamente con: "
                    f"«{rest}» sin volver a saludar. Si dice que no es {who}, pregunta con amabilidad si puede ponerse o "
                    f"cuándo es mejor localizarle; si no es posible, discúlpate por la molestia y despídete.\n") if who else ""
+    voice = voice_config(agent["voice"], agent.get("country", "ES"))
+    if inbound(lead):
+        # Phone lines often connect the caller's audio a moment after "answered": wait ~1 s so the greeting isn't cut,
+        # and let the caller interrupt it ("¿Diga?") like with a real receptionist.
+        extra = {"firstMessageInterruptionsEnabled": True}
+        if voice["provider"] in ("11labs", "cartesia"):
+            first = f'<break time="1s" /> {first}' if voice["provider"] == "11labs" else f'<break time="1s"/> {first}'
+            if voice["provider"] == "11labs":
+                voice = {**voice, "enableSsmlParsing": True}
     return {"firstMessageMode": "assistant-speaks-first", **extra,
         "monitorPlan": {"listenEnabled": True, "controlEnabled": True},
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
@@ -432,7 +441,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         "model": {"provider": "openai", "model": "gpt-4.1", "temperature": 0.6,
                   "messages": [{"role": "system", "content": system_prompt(agent, lead, today) + confirm}],
                   "tools": tools(agent, server, lead)},
-        "voice": voice_config(agent["voice"], agent.get("country", "ES")),
+        "voice": voice,
         "transcriber": transcriber(agent.get("country", "ES")),
         "startSpeakingPlan": {"waitSeconds": 0.4, "transcriptionEndpointingPlan": {
             "onPunctuationSeconds": 0.1, "onNoPunctuationSeconds": 1.2, "onNumberSeconds": 0.6}},
