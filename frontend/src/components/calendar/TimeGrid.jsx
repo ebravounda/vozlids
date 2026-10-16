@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bot, CheckCircle2, UserRound } from "lucide-react";
+import { Bot, CheckCircle2, PhoneCall, UserRound } from "lucide-react";
 import { HOUR_PX, addDays, apptDay, apptMin, bar, cap, dayLabel, endHm, fromMin, sameDay, toMin, tone, ymd } from "@/lib/cal";
 
 const useNow = () => {
@@ -13,7 +13,7 @@ function Event({ a, slot, h0, onOpen, now }) {
   const past = new Date(`${a.start}:00`) < now;
   const top = ((apptMin(a) - h0 * 60) / 60) * HOUR_PX;
   const h = Math.max(22, (dur / 60) * HOUR_PX - 3);
-  const Icon = a.source === "manual" ? UserRound : Bot;
+  const Icon = a.kind === "callback" ? PhoneCall : a.source === "manual" ? UserRound : Bot;
   return (
     <button draggable onDragStart={(e) => { e.dataTransfer.setData("text/appt", a.id); e.dataTransfer.effectAllowed = "move"; }}
       onClick={(e) => { e.stopPropagation(); onOpen(a); }}

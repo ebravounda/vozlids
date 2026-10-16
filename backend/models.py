@@ -75,6 +75,10 @@ class Lead(BaseDocument):
     ended_reason: str = ""
     duration_seconds: Optional[float] = None
     appointment_id: Optional[str] = None
+    callback_of: Optional[str] = None
+    callback_id: Optional[str] = None
+    callback_at: str = ""
+    callback_count: int = 0
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
 

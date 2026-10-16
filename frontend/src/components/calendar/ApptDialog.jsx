@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, errMsg } from "@/lib/api";
 import { cap, endHm } from "@/lib/cal";
 import { fmtSlot } from "@/lib/constants";
+import { CallbackDetail } from "./CallbackDetail";
 
 const field = "border-slate-200 bg-white text-slate-900";
 
@@ -78,14 +79,16 @@ function Create({ start, slot, onSaved }) {
 
 export function ApptDialog({ state, slot, onClose, onChanged, onLead }) {
   const done = () => { onClose(); onChanged(); };
+  const cb = state?.appt?.kind === "callback";
   return (
     <Dialog open={!!state} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg border-slate-200 bg-white text-slate-900" data-testid="appt-dialog">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900">{state?.appt ? state.appt.lead_name : "Nueva cita"}</DialogTitle>
-          <DialogDescription className="text-slate-500">{state?.appt ? "Edita, mueve o cancela la cita." : "Se guarda en tu agenda y el agente ya no ofrecerá ese hueco."}</DialogDescription>
+          <DialogDescription className="text-slate-500">{cb ? "Rellamada automática programada por el agente IA." : state?.appt ? "Edita, mueve o cancela la cita." : "Se guarda en tu agenda y el agente ya no ofrecerá ese hueco."}</DialogDescription>
         </DialogHeader>
-        {state?.appt && <Detail key={state.appt.id} a={state.appt} slot={slot} onSaved={done} onCancelled={done} onLead={(id) => { onClose(); onLead(id); }} />}
+        {cb && <CallbackDetail key={state.appt.id} a={state.appt} onDone={done} onLead={(id) => { onClose(); onLead(id); }} />}
+        {state?.appt && !cb && <Detail key={state.appt.id} a={state.appt} slot={slot} onSaved={done} onCancelled={done} onLead={(id) => { onClose(); onLead(id); }} />}
         {state?.create && <Create start={state.create} slot={slot} onSaved={done} />}
       </DialogContent>
     </Dialog>

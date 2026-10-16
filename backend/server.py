@@ -38,6 +38,7 @@ import gcal  # noqa: E402
 import plan_limits as PL  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
+import callbacks  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
@@ -590,6 +591,7 @@ app.include_router(privacy.router)
 app.include_router(gcal.router)
 app.include_router(SEC.router)
 app.include_router(reminders.router)
+app.include_router(callbacks.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(

@@ -297,6 +297,10 @@ def system_prompt(agent: dict, lead: dict, today: str) -> str:
         f"- Nombre: {lead['name']}\n- Email: {lead.get('email') or 'no indicado'}"
     voicemail = "" if inbound(lead) else ("\n- Si oyes un contestador o buzón de voz (\"deje su mensaje\", \"después de la señal\", "
                                          "\"no está disponible\"), no dejes ningún mensaje: finaliza la llamada al instante.")
+    callback_rule = "Si no es buen momento, pregunta cuándo le viene mejor y despídete." if inbound(lead) else (
+        "Si no es buen momento o te pide que le llames más tarde, pregúntale UNA vez a qué hora le viene mejor. Llama a "
+        "schedule_callback con la fecha y hora que diga (sin hora si no concreta). Confírmale la hora que devuelva la "
+        "herramienta, agradécele y despídete. Si la herramienta dice que no se puede, sigue sus indicaciones.")
     return f"""Eres {agent['name']}, del equipo de atención de {agent['business_name']}. {situation}
 {today}
 
@@ -325,7 +329,7 @@ TRANSPARENCIA Y RESPETO (obligatorio)
 - Preséntate solo con tu nombre y el de la empresa. NUNCA digas por iniciativa propia que eres un asistente virtual, un robot o una IA. Solo si te preguntan directamente si eres una persona, no mientas: responde con naturalidad que eres el asistente digital de la empresa y sigue con la conversación.
 - La llamada se graba para mejorar el servicio; si lo preguntan, confírmalo.
 - Si el lead pide que no le llamen más o se molesta por la llamada, discúlpate, llama a mark_do_not_call y despídete.
-- Si no es buen momento, pregunta cuándo le viene mejor y despídete.
+- {callback_rule}
 - Si el lead pide hablar con una persona, con un humano o con alguien del equipo: no insistas. Pregúntale brevemente el motivo y cuándo le viene bien que le llamen, llama a request_human, dile que una persona del equipo le llamará lo antes posible, agradécele y despídete.
 - Cuando la conversación termine, despídete con amabilidad y finaliza la llamada.{voicemail}
 {extra}"""
@@ -348,6 +352,11 @@ def tools(agent: dict, server: dict, lead: dict | None = None) -> list:
         _fn_tool("request_human", "Avisa a la empresa de que el lead quiere hablar con una persona y debe devolverle la llamada.",
                  {"reason": {"type": "string", "description": "Motivo por el que quiere hablar con una persona"},
                   "best_time": {"type": "string", "description": "Cuándo prefiere que le llamen (opcional)"}}, ["reason"], server)]
+    if not inbound(lead or {}):
+        out.append(_fn_tool(
+            "schedule_callback", "Programa una nueva llamada cuando la persona pide que la llames más tarde o ahora no puede hablar.",
+            {"date": {"type": "string", "description": "Fecha YYYY-MM-DD si la dice (opcional; por defecto hoy)"},
+             "time": {"type": "string", "description": "Hora HH:MM en formato 24h si la dice (opcional)"}}, [], server))
     if agent["objective"] in ("agendar", "recepcion") or inbound(lead or {}):
         out.append(_fn_tool(
             "check_availability", "Consulta los huecos libres para citas. Sin fecha devuelve los próximos días con huecos.",

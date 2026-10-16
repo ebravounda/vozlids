@@ -19,7 +19,11 @@ export function AgendaCalendar({ av }) {
   const [leadId, setLeadId] = useState(null);
   const [lo, hi] = useMemo(() => range(view, cursor), [view, cursor]);
 
-  const load = useCallback(() => api.get("/appointments", { params: { start: ymd(lo), end: ymd(hi) } }).then((r) => setAppts(r.data)).catch(() => {}), [lo, hi]);
+  const load = useCallback(() => {
+    const params = { start: ymd(lo), end: ymd(hi) };
+    return Promise.all([api.get("/appointments", { params }), api.get("/callbacks", { params }).catch(() => ({ data: [] }))])
+      .then(([a, c]) => setAppts([...a.data, ...c.data])).catch(() => {});
+  }, [lo, hi]);
   useEffect(() => { load(); api.get("/google/busy", { params: { start: ymd(lo), end: ymd(hi) } }).then((r) => setGbusy(r.data)).catch(() => setGbusy([])); }, [load, lo, hi]);
 
   const bounds = useMemo(() => {
@@ -32,16 +36,18 @@ export function AgendaCalendar({ av }) {
     const prev = appts.find((a) => a.id === id);
     if (!prev || prev.start === start) return;
     setAppts((xs) => xs.map((a) => (a.id === id ? { ...a, start } : a)));
-    try { await api.patch(`/appointments/${id}`, { start }); toast.success(`Cita movida a las ${start.slice(11)}`); }
+    const cb = prev.kind === "callback";
+    try { await api.patch(`/${cb ? "callbacks" : "appointments"}/${id}`, { start }); toast.success(`${cb ? "Rellamada" : "Cita"} movida a las ${start.slice(11)}`); }
     catch (e) { setAppts((xs) => xs.map((a) => (a.id === id ? prev : a))); toast.error(errMsg(e)); }
   };
   const nextSlot = () => { const n = new Date(); n.setMinutes(0, 0, 0); n.setHours(n.getHours() + 1); return `${ymd(n)}T${pad(n.getHours())}:00`; };
   const common = { appts, av, bounds, gbusy, onOpen: (a) => setDlg({ appt: a }), onCreate: (s) => (new Date(`${s}:00`) < new Date() ? toast.info("Ese hueco ya ha pasado. Elige una hora futura.") : setDlg({ create: s })), onMove: move };
-  const count = appts.length;
+  const ncb = appts.filter((a) => a.kind === "callback").length;
+  const count = appts.length - ncb;
 
   return (
     <div data-testid="agenda-calendar">
-      <Toolbar view={view} setView={setView} label={title(view, cursor)} stats={`${count} ${count === 1 ? "cita" : "citas"}`}
+      <Toolbar view={view} setView={setView} label={title(view, cursor)} stats={`${count} ${count === 1 ? "cita" : "citas"}${ncb ? ` · ${ncb} ${ncb === 1 ? "rellamada" : "rellamadas"}` : ""}`}
         onPrev={() => setCursor((d) => step(view, d, -1))} onNext={() => setCursor((d) => step(view, d, 1))} onToday={() => setCursor(new Date())}
         onNew={() => setDlg({ create: nextSlot() })} />
       {view === "month"

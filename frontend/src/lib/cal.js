@@ -37,8 +37,9 @@ export function hoursBounds(av) {
 
 export const tone = (a, past) => {
   if (past) return "border-slate-300 bg-slate-100 text-slate-500";
+  if (a.kind === "callback") return "border-amber-300 bg-amber-50 text-amber-900";
   if (a.is_sample) return "border-violet-300 bg-violet-50 text-violet-900";
   if (a.source === "manual") return "border-emerald-300 bg-emerald-50 text-emerald-900";
   return "border-blue-300 bg-blue-50 text-blue-900";
 };
-export const bar = (a, past) => (past ? "bg-slate-300" : a.is_sample ? "bg-violet-500" : a.source === "manual" ? "bg-emerald-500" : "bg-blue-600");
+export const bar = (a, past) => (past ? "bg-slate-300" : a.kind === "callback" ? "bg-amber-500" : a.is_sample ? "bg-violet-500" : a.source === "manual" ? "bg-emerald-500" : "bg-blue-600");

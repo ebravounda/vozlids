@@ -132,7 +132,13 @@ async def tool_dnc(lead: dict, args: dict) -> dict:
     return {"ok": True}
 
 
-TOOLS = {"check_availability": tool_check_availability, "book_appointment": tool_book, "mark_do_not_call": tool_dnc}
+async def tool_callback(lead: dict, args: dict) -> dict:
+    import callbacks
+    return await callbacks.schedule(lead, args)
+
+
+TOOLS = {"check_availability": tool_check_availability, "book_appointment": tool_book, "mark_do_not_call": tool_dnc,
+         "schedule_callback": tool_callback}
 
 
 async def dial(agent: dict, lead: dict):
@@ -141,6 +147,8 @@ async def dial(agent: dict, lead: dict):
     import saas
     import security_admin as SEC
     err = "Número bloqueado en la plataforma" if await SEC.blocked_phone(lead.get("phone", "")) else await saas.quota_error(agent["tenant_id"])
+    if not err and lead.get("callback_of") and await db.dnc.find_one({"tenant_id": lead["tenant_id"], "phone": lead["phone"]}):
+        err = "Rellamada anulada: el contacto está en la lista de no llamar"
     if err:
         await db.leads.update_one({"_id": lid}, {"$set": {"status": "fallida", "error": err, "updated_at": now_iso()}})
         return
@@ -241,8 +249,12 @@ async def finalize_call(msg: dict, lead: dict):
         status = sd.get("outcome") if sd.get("outcome") in vapi.AI_OUTCOMES else None
         if status in (None, "cita_agendada"):
             status = "calificado" if (sd.get("interest_score") or 0) >= 50 else "no_interesado"
+    if fresh.get("callback_id") and status not in ("no_llamar", "cita_agendada", "venta", "buzon"):
+        status = "rellamada"
     if status == "no_llamar":
         await add_dnc(lead["tenant_id"], lead["phone"], "Lo pidió durante la llamada")
+        import callbacks
+        await callbacks.cancel_for(fresh)
     score = sd.get("interest_score")
     cost = msg.get("cost", call.get("cost"))
     named = {"name": str(sd["caller_name"])[:80]} if is_in and str(sd.get("caller_name") or "").strip() else {}

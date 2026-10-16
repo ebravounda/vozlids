@@ -29,7 +29,7 @@ export function Toolbar({ view, setView, label, onPrev, onNext, onToday, onNew, 
 
 export const Legend = () => (
   <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500" data-testid="cal-legend">
-    {[["bg-blue-600", "Reservada por el agente IA"], ["bg-emerald-500", "Creada a mano"], ["bg-violet-500", "Ejemplo"], ["bg-slate-300", "Pasada"], ["bg-slate-200 border border-dashed border-slate-400", "Ocupado en Google"]].map(([c, l]) => <span key={l} className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${c}`} />{l}</span>)}
+    {[["bg-blue-600", "Reservada por el agente IA"], ["bg-emerald-500", "Creada a mano"], ["bg-amber-500", "Rellamada automática"], ["bg-violet-500", "Ejemplo"], ["bg-slate-300", "Pasada"], ["bg-slate-200 border border-dashed border-slate-400", "Ocupado en Google"]].map(([c, l]) => <span key={l} className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${c}`} />{l}</span>)}
     <span className="flex items-center gap-1.5"><span className="h-2.5 w-4 rounded-sm bg-[repeating-linear-gradient(135deg,#E2E8F0_0_3px,#F8FAFC_3px_6px)]" />Fuera de horario</span>
     <span>· Arrastra una cita para moverla · Haz clic en un hueco para crear una</span>
   </div>

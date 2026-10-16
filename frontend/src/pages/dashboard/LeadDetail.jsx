@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CalendarCheck, Copy, Download } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Copy, Download, PhoneCall } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/Common";
 import { SubjectActions } from "@/components/PrivacyParts";
@@ -87,6 +87,11 @@ export const LeadDetail = ({ id, onClose }) => {
             {lead.appointment && (
               <div className="flex items-center gap-3 rounded-xl border border-teal-400/30 bg-teal-400/10 p-4 text-sm text-teal-100" data-testid="lead-appointment">
                 <CalendarCheck className="h-5 w-5" /> Cita: <span className="font-semibold capitalize">{fmtSlot(lead.appointment.start)}</span>
+              </div>
+            )}
+            {lead.callback_at && (
+              <div className="flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100" data-testid="lead-callback">
+                <PhoneCall className="h-5 w-5" /> {lead.callback_of ? "Rellamada programada para" : "El agente volverá a llamar el"} <span className="font-semibold capitalize">{fmtSlot(lead.callback_at)}</span>
               </div>
             )}
             {lead.recording_url ? (
