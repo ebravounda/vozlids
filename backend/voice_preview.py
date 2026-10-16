@@ -53,11 +53,46 @@ async def eleven_tts(key: str, voice_id: str, text: str) -> bytes:
     return r.content
 
 
+async def cartesia_tts(voice_id: str, text: str) -> bytes:
+    key = os.environ.get("CARTESIA_API_KEY", "")
+    if not key:
+        raise HTTPException(503, "La vista previa de las voces Premium no está activada (falta la clave de Cartesia en el servidor).")
+    body = {"model_id": "sonic-3", "transcript": text, "voice": {"mode": "id", "id": voice_id}, "language": "es",
+            "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 24000}}
+    async with httpx.AsyncClient(timeout=40) as x:
+        r = await x.post("https://api.cartesia.ai/tts/bytes", json=body,
+                         headers={"X-API-Key": key, "Cartesia-Version": "2025-04-16"})
+    if r.status_code >= 400:
+        log.warning("Cartesia preview failed %s: %s", r.status_code, r.text[:200])
+        raise HTTPException(502, "El motor de las voces Premium no respondió. Inténtalo en unos segundos.")
+    return r.content
+
+
+async def azure_tts(voice_name: str, text: str) -> bytes:
+    import edge_tts
+    out = bytearray()
+    try:
+        async for chunk in edge_tts.Communicate(text, voice_name).stream():
+            if chunk["type"] == "audio":
+                out += chunk["data"]
+    except Exception as e:  # noqa: BLE001
+        log.warning("Standard voice preview failed: %s", e)
+        raise HTTPException(502, "El motor de las voces estándar no respondió. Inténtalo en unos segundos.") from e
+    return bytes(out)
+
+
 async def tts(voice: str, text: str) -> tuple:
     key = await eleven_key()
     vid = eleven_voice_id(voice)
-    source = "elevenlabs" if key and vid else "openai"
-    h = hashlib.sha256(f"{source}|{vid or voice}|{text}".encode()).hexdigest()
+    premium = {**vapi.PREMIUM, **vapi.PREMIUM_LATAM}
+    standard = {**vapi.STANDARD, **vapi.STANDARD_CL}
+    if vid:
+        source, ref = ("elevenlabs" if key else "openai"), f"{vid}|{vapi.eleven_voice(vid)['model']}"
+    elif voice in premium:
+        source, ref = "cartesia", premium[voice]
+    else:
+        source, ref = "azure", standard[voice]
+    h = hashlib.sha256(f"{source}|{ref}|{text}".encode()).hexdigest()
     cached = await db.tts_cache.find_one({"hash": h})
     if cached:
         try:
@@ -65,7 +100,11 @@ async def tts(voice: str, text: str) -> tuple:
         except Exception:  # noqa: BLE001
             pass
     audio = None
-    if source == "elevenlabs":
+    if source == "cartesia":
+        audio = await cartesia_tts(premium[voice], text)
+    elif source == "azure":
+        audio = await azure_tts(standard[voice], text)
+    elif source == "elevenlabs":
         try:
             audio = await eleven_tts(key, vid, text)
         except Exception as e:  # noqa: BLE001
@@ -103,6 +142,13 @@ async def ambience_samples(amb: str, volume: int):
     return _wav_samples(await asyncio.to_thread(ambience.render, amb, volume))
 
 
+def _phone(x):
+    """Sound like a real phone call (narrow band + light compression), not a studio voice-over."""
+    x = ambience._band(x, 250, 3600)
+    x = np.tanh(x * 1.6) / np.tanh(1.6)
+    return np.clip(x / (np.max(np.abs(x)) or 1) * 0.9, -1, 1)
+
+
 def mix(voice_audio: bytes, bg) -> bytes:
     v = ambience.decode(voice_audio)
     v = v / (np.max(np.abs(v)) or 1) * 0.85
@@ -111,7 +157,7 @@ def mix(voice_audio: bytes, bg) -> bytes:
     out[lead:lead + len(v)] += v
     if bg is not None and len(bg):
         out += np.resize(bg, len(out))
-    out = np.clip(out, -1, 1)
+    out = _phone(out)
     fade = int(0.3 * ambience.SR)
     out[-fade:] *= np.linspace(1, 0, fade)
     buf = io.BytesIO()

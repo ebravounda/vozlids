@@ -246,3 +246,10 @@
 - Crea un lead `programada` con `run_at` (lo marca el worker existente), `callback_of`, `callback_count`, `callback_at`. Lead original → estado `rellamada` ("Pidió rellamada").
 - Agenda: rellamadas en ámbar (GET/PATCH/DELETE /api/callbacks), mover arrastrando, cambiar hora o cancelar. DNC cancela/bloquea la rellamada.
 - Archivos: backend/callbacks.py, services.py, vapi.py, models.py; frontend calendar/CallbackDetail.jsx y relacionados. Testeado: iteration_29 (100%).
+
+## 2026-06 — Vista previa de voces y naturalidad
+- Vista previa real por tipo de voz: HD → ElevenLabs (admin key), Premium → Cartesia sonic-3 (env CARTESIA_API_KEY), Estándar → voces Azure Neural vía edge-tts (sin clave). Antes Premium/Estándar sonaban con OpenAI (otra voz).
+- Mezcla de vista previa con filtro telefónico (250–3600 Hz + compresión ligera) para que suene a llamada real.
+- ElevenLabs: modelo eleven_flash_v2_5 (mismo coste que turbo), stability 0.32, style 0.15, speed 0.98, chunkPlan minCharacters 40. Prompt con estilo hablado coloquial.
+- Fondos: todos con grabaciones reales; teclados a ratos (bursts) + tono de sala; call_center = 3 min de la grabación del usuario sin capas extra; bucles con fundido (ambience v=6).
+- Producción: añadir CARTESIA_API_KEY al .env del servidor (deploy/.env).

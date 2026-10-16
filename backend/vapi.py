@@ -62,7 +62,7 @@ def voice_provider(voice: str) -> str:
 
 
 def eleven_voice(voice_id: str) -> dict:
-    return {"provider": "11labs", "model": "eleven_turbo_v2_5", "language": "es", "voiceId": voice_id,
+    return {"provider": "11labs", "model": "eleven_flash_v2_5", "language": "es", "voiceId": voice_id,
             "stability": 0.32, "similarityBoost": 0.75, "style": 0.15, "useSpeakerBoost": True, "speed": 0.98,
             "optimizeStreamingLatency": 3, "chunkPlan": {"enabled": True, "minCharacters": 40}}
 
