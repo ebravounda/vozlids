@@ -10,7 +10,7 @@ export function ExecutivesPanel({ agent, update, voices }) {
   const team = agent.executives || [];
   const byId = Object.fromEntries(voices.map((v) => [v.id, v]));
   const free = voices.filter((v) => !team.some((e) => e.voice === v.id));
-  const save = (next) => update({ executives: next, ...(next[0] ? { voice: next[0].voice, name: next[0].name } : {}) });
+  const save = (next) => update({ executives: next, ...(next[0] ? { voice: next[0].voice } : {}) });
   const add = (id) => save([...team, { voice: id, name: byId[id].name }]);
   const start = () => save([{ voice: agent.voice, name: agent.name || byId[agent.voice]?.name || "" }]);
   return (
@@ -19,7 +19,7 @@ export function ExecutivesPanel({ agent, update, voices }) {
         <div className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-500" /><h3 className="text-lg font-semibold">Varios ejecutivos en rotación</h3></div>
         {!team.length && <Button variant="outline" onClick={start} className="rounded-full" data-testid="executives-enable-button">Activar rotación</Button>}
       </div>
-      <p className="text-sm text-slate-500">Cada llamada (entrante o saliente) la atiende el siguiente ejecutivo por turnos, con su voz y su nombre. Usa un nombre del mismo género que la voz.</p>
+      <p className="text-sm text-slate-500">Cada llamada (entrante o saliente) la atiende el siguiente ejecutivo por turnos, con su voz y su nombre. Usa un nombre del mismo género que la voz. En el saludo, el nombre del agente se cambia solo por el del ejecutivo que llama.</p>
       {team.map((e, i) => <ExecRow key={e.voice} e={e} i={i} v={byId[e.voice]} onName={(name) => save(team.map((x, j) => (j === i ? { ...x, name } : x)))} onRemove={() => save(team.filter((_, j) => j !== i))} />)}
       {team.length > 0 && team.length < MAX && (
         <Select value="" onValueChange={add}>

@@ -1,0 +1,34 @@
+{
+  "summary": "Tested multi-executive rotation end to end. Backend: 8/8 pytest pass (PUT/POST validation for duplicate voices, more than 5, voice from another country, empty name; saved executives persist; plan gating rejects HD exec voices with 403 on POST and PUT for a tenant on a restricted plan). Direct python check: pick_executive rotates in order Marta>Pablo>Lucía>Marta... using exec_turn; one executive or none works; build_assistant uses the executive's voice (Cartesia voiceId of p_gonzalo) and 'Eres Pablo'; inbound greeting says 'te atiende Pablo'. UI (desktop): panel, enable button, add select (name prefilled, hidden at 5/5), name editing, remove, clicking a voice in the main grid replaces executive #1, save, and reload all work. Found 1 real bug: the outbound greeting keeps the old name when executive #1's name differs from the name typed in the greeting (this happens with the default greeting).",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "vapi.greeting (outbound) + UI name sync", "issue": "The greeting replaces only base_name (= agent.name). The UI copies executive #1's name into agent.name (ExecutivesPanel.save and VoiceTab.pickVoice), but the greeting text still has the literal old name (the DEFAULT_GREETING hardcodes 'soy Marta'). Reproduced: agent greeting 'Hola {nombre}, soy Marta de {empresa}', rotation turned on, then voice Lucía clicked in the grid, so agent.name became 'Lucía'. The outbound greeting for ALL executives (Lucía, Pablo, Nuria, Isabel) is 'Hola Laura, soy Marta de ...', while the system prompt says 'Eres Pablo'. The caller hears two different names.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "PUT /api/agents (country change)", "issue": "CountryPick in GeneralTab calls update({country, voice}) and keeps executives. Changing ES<->CL with rotation on leaves voices from the old country, so Save fails with 422 'Esa voz no está disponible...'. Reset or clear executives when the country changes."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Rotation + greeting", "issue": "Editing executive #1's name or clicking another voice in the grid renames the agent (page title changes to the new name) but does not update the literal name in the greeting. See backend critical issue.", "affected_selectors": ["executive-name-0", "agent-voice-*"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter31_executives.py", "/app/backend/tests/rotation_check_iter31.py", "/app/test_reports/pytest/iter31.xml"],
+  "action_items": [
+    "Fix the outbound greeting with executives. Options: in vapi.greeting, swap out every executive name AND the original agent name (keep a stable original name, not the exec #1 name the UI syncs into agent.name); or make DEFAULT_GREETING use {agente} instead of the hardcoded 'Marta'; or both. Then check that the greeting says each executive's name in turn.",
+    "Clear or reset agent.executives when the country is changed in GeneralTab CountryPick, so Save does not fail with 422."
+  ],
+  "critical_code_review_comments": [
+    "pick_executive index math ((turn % n) - 1 with Python negative indexing) is correct but hard to read; (turn - 1) % n is clearer.",
+    "update_agent only checks plan gating for exec voices that were not already saved (grandfathered); effective_agent downgrades HD voices at call time, so this is OK.",
+    "The HD filter in the add select relies on TIER(v)==='eleven'. Custom voices get eleven:true, so they are hidden correctly when premium_voices is false (code-reviewed; UI not tested with a restricted tenant, backend gating was tested)."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter31_executives.py", "/app/backend/tests/rotation_check_iter31.py"],
+  "success_rate": {"backend": "100% of API tests (8/8); rotation logic passes; greeting bug found", "frontend": "100% of the UI flows tested; 1 integration bug (greeting name)"},
+  "seed_data_creation": "Temporary TEST agents (admin TEST UI Biz, plus a pytest agent) and a restricted plan/user were created and deleted. The admin's real agent 6acfac3a346c4c1ebc71ff58 was not touched (executives [] unchanged).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run the rotation check with: cd /app/backend && set -a && . ./.env && set +a && python3 tests/rotation_check_iter31.py. Login is at /login (auth-form, auth-submit-button). Agent editor is at /app/agentes/{id}, voice tab is agent-tab-voice, save is agent-builder-save-button. Admin has premium_voices, so HD options (e_*, x_*) appear in executives-add-select."
+}

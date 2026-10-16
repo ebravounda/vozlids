@@ -271,3 +271,7 @@
 - Antes: e_sarah (voz ElevenLabs americana) leyendo un saludo → sonaba "gringa robot".
 - Ahora: llamada de 2 voces nativas de España (Cartesia Blanca = agente, Alicia = clienta), con pausas naturales, fondo oficina_real y sonido telefónico. Archivo estático backend/assets/demo/demo_call.wav (~50 s), generado con tools/make_demo_call.py; /api/voice-preview/demo.wav lo sirve sin depender de claves en producción. Verificado con Whisper (transcripción correcta).
 - Demos por sector: voces de respaldo ahora Cartesia nativas (ES p_blanca/p_octavio, CL l_veronica/l_rodrigo) tras las voces propias; VERSION=2 regenera automáticamente las cacheadas.
+
+## 2026-06 — Multi-ejecutivo en rotación
+- Agent.executives [{voice, name}] (máx 5, voces distintas, del país del agente, gating HD por plan). services.pick_executive rota por turnos con contador atómico agents.exec_turn; se aplica a salientes (dial, también rellamadas → siguiente en la rotación) y entrantes (assistant_request). Prompt, voz y saludo usan el ejecutivo; el saludo sustituye el nombre del agente / otros ejecutivos por el del que llama. Lead.executive guardado y mostrado en LeadDetail.
+- UI: ExecutivesPanel en pestaña Voz (activar, añadir, renombrar, quitar). Cambiar país vacía la rotación. iteration_31 + fix del saludo.

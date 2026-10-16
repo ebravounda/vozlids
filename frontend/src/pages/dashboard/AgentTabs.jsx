@@ -34,7 +34,7 @@ const CountryPick = ({ agent, update }) => (
     <div className="grid gap-3 sm:grid-cols-2">
       {Object.entries(COUNTRIES).map(([code, c]) => (
         <Choice key={code} active={(agent.country || "ES") === code} testid={`agent-country-${code}`}
-          onClick={() => code !== (agent.country || "ES") && update({ country: code, voice: DEFAULT_VOICE[code] })}
+          onClick={() => code !== (agent.country || "ES") && update({ country: code, voice: DEFAULT_VOICE[code], executives: [] })}
           title={`${c.name} (${c.prefix})`} desc={`Hora de ${c.city} · teléfonos ${c.example}`} />
       ))}
     </div>
@@ -81,7 +81,7 @@ export const VoiceTab = ({ agent, update }) => {
   const country = agent.country || "ES";
   const list = [...custom, ...VOICES].filter((v) => v.country === country || v.country === "ALL");
   const team = agent.executives || [];
-  const pickVoice = (id) => update(team.length ? { voice: id, name: list.find((v) => v.id === id)?.name || agent.name, executives: [{ voice: id, name: list.find((v) => v.id === id)?.name || team[0].name }, ...team.slice(1).filter((e) => e.voice !== id)] } : { voice: id });
+  const pickVoice = (id) => update(team.length ? { voice: id, executives: [{ voice: id, name: list.find((v) => v.id === id)?.name || team[0].name }, ...team.slice(1).filter((e) => e.voice !== id)] } : { voice: id });
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <ExecutivesPanel agent={agent} update={update} voices={list.filter((v) => hd || TIER(v) !== "eleven")} />

@@ -151,7 +151,8 @@ async def pick_executive(agent: dict) -> dict:
     doc = await db.agents.find_one_and_update({"_id": agent["_id"]}, {"$inc": {"exec_turn": 1}},
                                               projection={"exec_turn": 1}, return_document=ReturnDocument.AFTER)
     e = team[((doc or {}).get("exec_turn") or 1) % len(team) - 1]
-    return {**agent, "voice": e["voice"], "name": e["name"], "base_name": agent["name"], "executive": e["name"]}
+    return {**agent, "voice": e["voice"], "name": e["name"], "base_name": agent["name"], "executive": e["name"],
+            "other_names": [agent["name"]] + [x["name"] for x in team if x["name"] != e["name"]]}
 
 
 async def dial(agent: dict, lead: dict):
