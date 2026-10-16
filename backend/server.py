@@ -36,6 +36,7 @@ import apiv1  # noqa: E402
 import privacy  # noqa: E402
 import gcal  # noqa: E402
 import plan_limits as PL  # noqa: E402
+import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
@@ -104,6 +105,8 @@ async def register(body: RegisterIn, response: Response):
         raise HTTPException(422, "Email no válido")
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Ya existe una cuenta con ese email")
+    if msg := await SEC.blocked_email(email):
+        raise HTTPException(403 if msg == SEC.BLOCKED_MSG else 422, msg)
     name = body.name.strip() or f"{body.first_name.strip()} {body.last_name.strip()}".strip()
     if not name:
         raise HTTPException(422, "Indica tu nombre")
@@ -300,6 +303,7 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
     if email and not EMAIL_RE.match(email):
         raise HTTPException(422, "Email no válido")
     phone = norm_phone(body.phone, agent.get("country", "ES"))
+    await SEC.guard_public(phone, email)
     ip = landing.client_ip(request)
     if ip and await db.leads.count_documents({"source_ip": ip, "created_at": {"$gt": ago(60)}}) >= 10:
         raise HTTPException(429, "Demasiadas solicitudes. Inténtalo más tarde.")
@@ -581,6 +585,7 @@ app.include_router(onboarding.router)
 app.include_router(apiv1.router)
 app.include_router(privacy.router)
 app.include_router(gcal.router)
+app.include_router(SEC.router)
 app.include_router(reminders.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
@@ -630,6 +635,7 @@ async def startup():
     await api_core.ensure_indexes()
     await privacy.ensure_indexes()
     await gcal.ensure_indexes()
+    await SEC.ensure_indexes()
     await db.webhook_deliveries.update_many({"status": "sending"}, {"$set": {"status": "pending"}})
     asyncio.create_task(api_core.worker())
 

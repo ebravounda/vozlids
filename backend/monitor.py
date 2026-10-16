@@ -219,6 +219,7 @@ async def live(user=Depends(require_admin)):
         out.append({"id": c["id"], "status": c["status"], "type": c.get("type"),
                     "number": (c.get("customer") or {}).get("number") or ld.get("phone"),
                     "lead": ld.get("name"), "business": users.get(ld.get("tenant_id"), "—"),
+                    "can_listen": bool((c.get("monitor") or {}).get("listenUrl")), "can_hangup": bool((c.get("monitor") or {}).get("controlUrl")),
                     "started_at": c.get("startedAt") or c.get("createdAt")})
     lim = await limits()
     return {"active": out, "limit": lim.get("concurrencyLimit") or 10, "checked_at": now_iso()}

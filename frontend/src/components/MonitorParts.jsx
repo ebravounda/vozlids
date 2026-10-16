@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, BellRing, Bot, CreditCard, Loader2, Mic, PhoneCall, Radio, RefreshCw } from "lucide-react";
+import { AlertTriangle, BellRing, Bot, CreditCard, Loader2, Mic, Radio, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,32 +59,6 @@ export function Balances({ b, alerts, onCredit }) {
         </>}
       </Card>
     </div>
-  );
-}
-
-export function LiveCalls() {
-  const [d, setD] = useState(null);
-  useEffect(() => {
-    const load = () => api.get("/admin/monitor/live").then((r) => setD(r.data)).catch(() => {});
-    load();
-    const t = setInterval(load, 10000);
-    return () => clearInterval(t);
-  }, []);
-  const n = d?.active.length || 0;
-  return (
-    <Panel className="space-y-3" data-testid="live-calls-panel">
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><PhoneCall className="h-5 w-5 text-emerald-300" />Llamadas en curso</h3>
-        <span className={`rounded-full px-3 py-1 font-mono text-xs ${d && n >= d.limit ? "bg-rose-500/15 text-rose-300" : "bg-emerald-500/10 text-emerald-300"}`} data-testid="live-calls-count">{n} / {d?.limit ?? "…"} líneas</span>
-      </div>
-      {d && !n && <p className="text-sm text-slate-500" data-testid="live-calls-empty">Ninguna llamada activa ahora mismo. Se actualiza cada 10 s.</p>}
-      {d?.active.map((c) => (
-        <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-800 p-3 text-sm" data-testid={`live-call-${c.id}`}>
-          <div><p className="text-white">{c.business} · {c.lead || c.number}</p><p className="text-xs text-slate-500">{c.type === "inboundPhoneCall" ? "Entrante" : "Saliente"} · {c.number} · desde {fmtDate(c.started_at)}</p></div>
-          <span className="flex items-center gap-1.5 text-xs text-emerald-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />{c.status}</span>
-        </div>
-      ))}
-    </Panel>
   );
 }
 

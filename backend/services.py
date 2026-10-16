@@ -139,7 +139,9 @@ async def dial(agent: dict, lead: dict):
     lid = lead["_id"]
     country = agent.get("country", "ES")
     import saas
-    if err := await saas.quota_error(agent["tenant_id"]):
+    import security_admin as SEC
+    err = "Número bloqueado en la plataforma" if await SEC.blocked_phone(lead.get("phone", "")) else await saas.quota_error(agent["tenant_id"])
+    if err:
         await db.leads.update_one({"_id": lid}, {"$set": {"status": "fallida", "error": err, "updated_at": now_iso()}})
         return
     import phone_numbers as N

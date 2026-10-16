@@ -388,6 +388,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
     server = server_cfg()
     extra = {} if inbound(lead) else {"voicemailDetection": VOICEMAIL}
     return {**extra,
+        "monitorPlan": {"listenEnabled": True, "controlEnabled": True},
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
         "name": f"{agent['name']} {agent['business_name']}"[:40],
         "firstMessage": greeting(agent, lead),

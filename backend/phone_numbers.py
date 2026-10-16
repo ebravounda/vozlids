@@ -125,6 +125,9 @@ async def assistant_request(msg: dict) -> dict:
     r = await db.tenant_numbers.find_one({"$or": [{"phone_number_id": pid}, {"inbound_phone_number_id": pid}], "status": "activo"})
     if not r:
         return _short(UNAVAILABLE)
+    import security_admin as SEC
+    if await SEC.blocked_phone((call.get("customer") or {}).get("number") or ""):
+        return {"error": "Número bloqueado"}
     agent = None
     if r.get("inbound_agent_id") and ObjectId.is_valid(r["inbound_agent_id"]):
         agent = await db.agents.find_one({"_id": ObjectId(r["inbound_agent_id"]), "tenant_id": r["tenant_id"]})

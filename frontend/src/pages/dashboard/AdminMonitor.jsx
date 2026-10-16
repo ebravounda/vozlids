@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { ProviderAlerts } from "@/components/VoiceBalanceAlert";
 import { VoiceUsage } from "@/components/MonitorVoice";
 import { PageHeader } from "@/components/Common";
-import { AlertSettings, Balances, LiveCalls, Margins } from "@/components/MonitorParts";
+import { AlertSettings, Balances, Margins } from "@/components/MonitorParts";
+import { LiveCalls } from "@/components/LiveCalls";
+import { Blocklist } from "@/components/Blocklist";
 import { CallLog, SipLog } from "@/components/MonitorLogs";
 import { api } from "@/lib/api";
 import { WidgetStats } from "@/components/WidgetStats";
@@ -25,8 +27,9 @@ export default function AdminMonitor() {
       <ProviderAlerts refreshKey={rk} />
       <Balances b={b} alerts={alerts} onCredit={() => loadB(true)} />
       {b && <p className="-mt-3 text-xs text-slate-500" data-testid="monitor-checked-at">Consultado {fmtDate(b.checked_at)}</p>}
+      <LiveCalls />
       <div className="grid gap-6 xl:grid-cols-2">
-        <LiveCalls />
+        <Blocklist />
         {alerts && <AlertSettings data={alerts} reload={loadA} />}
       </div>
       <Margins />

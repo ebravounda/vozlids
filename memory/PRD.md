@@ -221,3 +221,9 @@
 - saas.py GET/PUT /admin/users/{uid}/profile (business_name, name, email único, contact_phone normalizado, sector, website, business_hours); actualiza Stripe customer (name/email/phone) si hay stripe_customer_id y clave propia
 - components/AdminBusinessEdit.jsx: botón Editar en cada cuenta de Super admin
 - billing: aviso uses_shared_test_key en Super Admin Stripe + mensaje claro si la clave compartida devuelve 403 en servidor propio
+
+## 2026-06 Llamadas en directo + bloqueos
+- security_admin.py: blocklist (phone dígitos/email/domain, expires_at para auto 24h), DISPOSABLE emails, guard_public (formularios/widget/demo + auto-bloqueo >5/h), blocked_email en registro, blocked_phone en dial (saliente) y assistant_request (entrante -> {error})
+- Live: GET /admin/monitor/live con can_listen/can_hangup; GET /admin/monitor/calls/{id}/listen (listenUrl), POST .../hangup (controlUrl end-call); vapi.build_assistant monitorPlan listen/control
+- Frontend: components/LiveCalls.jsx (escucha PCM s16le 16k vía WebSocket + Web Audio, auto mono/estéreo), components/Blocklist.jsx en Monitor
+- Escucha/colgar NO probados con una llamada real (no había llamadas activas en preview)
