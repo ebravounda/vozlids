@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Ban, Headphones, Loader2, PhoneCall, PhoneOff, Square } from "lucide-react";
+import { Ban, Headphones, Loader2, MessageSquare, PhoneCall, PhoneOff, Square, UserRound } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
@@ -68,6 +69,19 @@ function CallRow({ c, l, onChange }) {
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); }
   };
   const on = l.listening === c.id;
+  const [msg, setMsg] = useState("");
+  const say = async () => {
+    setBusy("say");
+    try { await api.post(`/admin/monitor/calls/${c.id}/say`, { message: msg }); toast.success("El agente lo está diciendo"); setMsg(""); }
+    catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); }
+  };
+  const transfer = async () => {
+    const num = window.prompt("¿A qué número paso la llamada? (con prefijo, ej. +34 612 345 678)");
+    if (!num) return;
+    setBusy("transfer");
+    try { const r = await api.post(`/admin/monitor/calls/${c.id}/transfer`, { number: num }); toast.success(`Pasando la llamada a ${r.data.number}`); }
+    catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); }
+  };
   return (
     <div className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${on ? "border-emerald-500/60 bg-emerald-500/5" : "border-slate-800"}`} data-testid={`live-call-${c.id}`}>
       <div className="min-w-0">
@@ -81,6 +95,11 @@ function CallRow({ c, l, onChange }) {
         <Button size="sm" variant="outline" disabled={!c.can_hangup || !!busy} onClick={hang} className="h-8 rounded-full border-rose-500/50 text-xs text-rose-300 hover:bg-rose-500/10" data-testid={`live-call-hangup-${c.id}`}>{busy === "hang" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <PhoneOff className="mr-1 h-3.5 w-3.5" />}Colgar</Button>
         <Button size="sm" variant="ghost" disabled={!c.number || !!busy} onClick={block} className="h-8 rounded-full text-xs text-slate-400 hover:text-rose-300" title="Bloquear número y colgar" data-testid={`live-call-block-${c.id}`}><Ban className="mr-1 h-3.5 w-3.5" />Bloquear</Button>
       </div>
+      {on && <div className="flex w-full flex-wrap items-center gap-2 border-t border-emerald-500/20 pt-3" data-testid={`live-call-controls-${c.id}`}>
+          <Input value={msg} onChange={(e) => setMsg(e.target.value)} onKeyDown={(e) => e.key === "Enter" && msg.trim().length > 1 && say()} placeholder="Escribe lo que quieres que diga el agente…" className="h-9 min-w-[240px] flex-1 bg-slate-950/60 text-sm" data-testid={`live-call-say-input-${c.id}`} />
+          <Button size="sm" onClick={say} disabled={msg.trim().length < 2 || !!busy} className="h-9 rounded-full text-xs" data-testid={`live-call-say-${c.id}`}>{busy === "say" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="mr-1 h-3.5 w-3.5" />}Que lo diga</Button>
+          <Button size="sm" variant="outline" onClick={transfer} disabled={!!busy} className="h-9 rounded-full text-xs" data-testid={`live-call-transfer-${c.id}`}>{busy === "transfer" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <UserRound className="mr-1 h-3.5 w-3.5" />}Pasar a una persona</Button>
+        </div>}
     </div>
   );
 }

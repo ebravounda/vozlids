@@ -94,8 +94,8 @@ async def info_request(body: InfoIn, request: Request):
     except ValueError as e:
         raise HTTPException(422, str(e))
     import security_admin as SEC
-    await SEC.guard_public(phone)
     ip = client_ip(request)
+    await SEC.guard_public(phone, ip=ip)
     if ip and await db.info_requests.count_documents({"ip": ip, "created_at": {"$gt": _ago(10)}}) >= 3:
         raise HTTPException(429, "Ya hemos recibido tus datos. Inténtalo de nuevo en unos minutos.")
     name = " ".join(body.name.split())

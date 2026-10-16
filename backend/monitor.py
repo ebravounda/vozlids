@@ -316,13 +316,14 @@ async def put_alerts(body: AlertsIn, user=Depends(require_admin)):
     return await alert_settings()
 
 
-async def notify(kind: str, title: str, rows: list, every_hours: int = 6) -> bool:
+async def notify(kind: str, title: str, rows: list, every_hours: int = 6, cta: str = "", cta_label: str = "") -> bool:
     s = await alert_settings()
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=every_hours)).isoformat()
     if await db.monitor_alerts.find_one({"kind": kind, "created_at": {"$gte": cutoff}}):
         return False
     sent = bool(s["enabled"] and s["email"]) and await emailer.send(s["email"], f"Alerta VozLeads: {title}", title, rows,
-                                                                       f"{vapi.public_url()}/app/monitor")
+                                                                       cta or f"{vapi.public_url()}/app/monitor",
+                                                                       **({"cta_label": cta_label} if cta_label else {}))
     await db.monitor_alerts.insert_one({"kind": kind, "title": title, "rows": [list(r) for r in rows],
                                         "emailed": sent, "created_at": now_iso()})
     return True

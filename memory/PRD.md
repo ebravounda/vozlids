@@ -228,3 +228,5 @@
 - Frontend: components/LiveCalls.jsx (escucha PCM s16le 16k vía WebSocket + Web Audio, auto mono/estéreo), components/Blocklist.jsx en Monitor
 - Escucha/colgar NO probados con una llamada real (no había llamadas activas en preview)
 - Alerta de fraude: fraud_alert() envía email (monitor.notify kind fraud:{num}, 1 por número/24h) con hasta 12 intentos (hora, origen, negocio, nombre, email, IP)
+- Bloqueo IP: kind ip en blocklist, guard_public(ip) en formularios/demo/registro; fraud_alert guarda ips en el bloqueo y el email lleva botón a /app/monitor?block_ip=...&reason=... (confirmación en panel). Botones "Bloquear IP" en filas automáticas
+- Live control: POST /admin/monitor/calls/{id}/say {message} (controlUrl say) y /transfer {number} (+34 si 9 dígitos); UI en LiveCalls al escuchar. NO probado con llamada real

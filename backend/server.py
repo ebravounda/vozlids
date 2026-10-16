@@ -99,12 +99,14 @@ class LoginIn(BaseModel):
 
 
 @api.post("/auth/register")
-async def register(body: RegisterIn, response: Response):
+async def register(body: RegisterIn, response: Response, request: Request):
     email = body.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(422, "Email no válido")
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Ya existe una cuenta con ese email")
+    if await SEC.blocked_ip(landing.client_ip(request)):
+        raise HTTPException(403, SEC.BLOCKED_MSG)
     if msg := await SEC.blocked_email(email):
         raise HTTPException(403 if msg == SEC.BLOCKED_MSG else 422, msg)
     name = body.name.strip() or f"{body.first_name.strip()} {body.last_name.strip()}".strip()
@@ -303,8 +305,8 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
     if email and not EMAIL_RE.match(email):
         raise HTTPException(422, "Email no válido")
     phone = norm_phone(body.phone, agent.get("country", "ES"))
-    await SEC.guard_public(phone, email)
     ip = landing.client_ip(request)
+    await SEC.guard_public(phone, email, ip)
     if ip and await db.leads.count_documents({"source_ip": ip, "created_at": {"$gt": ago(60)}}) >= 10:
         raise HTTPException(429, "Demasiadas solicitudes. Inténtalo más tarde.")
     tid = agent["tenant_id"]

@@ -49,8 +49,14 @@ async def blocked_email(email: str) -> str | None:
     return None
 
 
-async def guard_public(phone: str = "", email: str = "") -> None:
+async def blocked_ip(ip: str) -> bool:
+    return bool(ip) and bool(await db.blocklist.find_one({"kind": "ip", "value": ip.strip()}))
+
+
+async def guard_public(phone: str = "", email: str = "", ip: str = "") -> None:
     """For demos/forms/widget: raise if blocked; auto-block a phone that floods requests."""
+    if await blocked_ip(ip):
+        raise HTTPException(403, BLOCKED_MSG)
     if phone and await blocked_phone(phone):
         raise HTTPException(403, BLOCKED_MSG)
     if email and (msg := await blocked_email(email)):
@@ -90,16 +96,26 @@ async def fraud_alert(d: str, tail: str, since: str, until: datetime) -> None:
     attempts += [(r["created_at"], f"{'Botón web' if r.get('source') == 'widget' else 'Formulario'} de {biz.get(r.get('tenant_id'), '—')} · "
                                    f"{r.get('name') or '—'}{' · ' + r['email'] if r.get('email') else ''} · IP {r.get('source_ip') or '—'}") for r in leads]
     attempts.sort()
+    ips = sorted({r.get("ip") for r in await db.info_requests.find(q, {"ip": 1}).to_list(50) if r.get("ip")}
+                 | {r.get("source_ip") for r in leads if r.get("source_ip")})
+    await db.blocklist.update_one({"kind": "phone", "value": d}, {"$set": {"ips": ips}})
     rows = [("Número", f"+{d}"), ("Motivo", f"{len(attempts)} solicitudes en la última hora (límite {ABUSE_PER_HOUR})"),
             ("Bloqueado hasta", _hm(until.isoformat()))]
     rows += [(f"Intento {i} · {_hm(t)}", txt) for i, (t, txt) in enumerate(attempts[-12:], 1)]
-    rows.append(("Qué hacer", "Nada si es fraude: se desbloquea solo en 24 h. Para bloquearlo para siempre o desbloquearlo ya, entra en Monitor → Números y emails bloqueados."))
-    await monitor.notify(f"fraud:{d}", f"Número bloqueado por abuso: +{d}", rows, every_hours=24)
+    if ips:
+        rows.append(("IPs usadas", ", ".join(ips)))
+    rows.append(("Qué hacer", "Nada si es fraude: el número se desbloquea solo en 24 h. Pulsa el botón para bloquear también la IP (lo confirmas en el panel)."))
+    import os
+    from urllib.parse import urlencode
+    site = os.environ["APP_PUBLIC_URL"].rstrip("/")
+    cta = f"{site}/app/monitor?" + urlencode({"block_ip": ips[0], "reason": f"Abuso desde +{d}"}) if ips else f"{site}/app/monitor"
+    await monitor.notify(f"fraud:{d}", f"Número bloqueado por abuso: +{d}", rows, every_hours=24, cta=cta,
+                         cta_label=f"Bloquear IP {ips[0]}" if len(ips) == 1 else "Revisar y bloquear IPs" if ips else "Abrir Monitor")
 
 
 # ---------- Admin: blocklist ----------
 class BlockIn(BaseModel):
-    kind: Literal["phone", "email", "domain"]
+    kind: Literal["phone", "email", "domain", "ip"]
     value: str = Field(min_length=3, max_length=200)
     reason: str = Field("", max_length=200)
 
@@ -113,6 +129,12 @@ def _norm(kind: str, value: str) -> str:
         return d
     if kind == "email" and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", v):
         raise HTTPException(422, "Email no válido")
+    if kind == "ip":
+        import ipaddress
+        try:
+            return str(ipaddress.ip_address(v))
+        except ValueError:
+            raise HTTPException(422, "IP no válida (ej. 203.0.113.7)")
     if kind == "domain":
         v = v.lstrip("@")
         if "." not in v or "@" in v:
@@ -124,7 +146,7 @@ def _norm(kind: str, value: str) -> str:
 async def list_blocks(user=Depends(require_admin)):
     rows = await db.blocklist.find({"$or": [{"expires_at": None}, {"expires_at": {"$gt": _now()}}]}).sort("created_at", -1).to_list(500)
     return [{"id": str(r["_id"]), "kind": r["kind"], "value": ("+" + r["value"]) if r["kind"] == "phone" else r["value"],
-             "reason": r.get("reason", ""), "source": r.get("source", "manual"), "created_at": r["created_at"], "expires_at": r.get("expires_at")}
+             "reason": r.get("reason", ""), "source": r.get("source", "manual"), "ips": r.get("ips", []), "created_at": r["created_at"], "expires_at": r.get("expires_at")}
             for r in rows]
 
 
@@ -180,3 +202,43 @@ async def listen_url(cid: str, user=Depends(require_admin)):
 
 async def ensure_indexes() -> None:
     await db.blocklist.create_index([("kind", 1), ("value", 1)], unique=True)
+
+
+class SayIn(BaseModel):
+    message: str = Field(min_length=2, max_length=400)
+
+
+class TransferIn(BaseModel):
+    number: str = Field(min_length=6, max_length=25)
+
+
+async def _control(cid: str, payload: dict) -> None:
+    call = await _vapi_call(cid)
+    url = (call.get("monitor") or {}).get("controlUrl")
+    if call.get("status") != "in-progress" or not url:
+        raise HTTPException(409, "La llamada ya no está en curso o no permite control en directo.")
+    async with httpx.AsyncClient(timeout=15) as c:
+        r = await c.post(url, json=payload, headers=vapi._headers())
+    if r.status_code >= 400:
+        raise HTTPException(502, f"Vapi rechazó la orden ({r.status_code}): {r.text[:160]}")
+
+
+@router.post("/admin/monitor/calls/{cid}/say")
+async def say(cid: str, body: SayIn, user=Depends(require_admin)):
+    await _control(cid, {"type": "say", "content": body.message.strip(), "endCallAfterSpoken": False})
+    return {"ok": True}
+
+
+@router.post("/admin/monitor/calls/{cid}/transfer")
+async def transfer(cid: str, body: TransferIn, user=Depends(require_admin)):
+    d = _digits(body.number)
+    if body.number.strip().startswith("+"):
+        num = f"+{d}"
+    elif len(d) == 9:
+        num = f"+34{d}"
+    else:
+        raise HTTPException(422, "Escribe el número con prefijo, por ejemplo +34 612 345 678 o +56 9 1234 5678")
+    await _control(cid, {"type": "transfer", "destination": {"type": "number", "number": num},
+                         "content": "Un momento, te paso con una persona del equipo."})
+    await db.leads.update_one({"vapi_call_id": cid}, {"$set": {"transferred_by_admin": num, "updated_at": now_iso()}})
+    return {"ok": True, "number": num}
