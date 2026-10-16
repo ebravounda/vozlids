@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProviderAlerts } from "@/components/VoiceBalanceAlert";
 import { PageHeader, Panel } from "@/components/Common";
-import { CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
+import { CartesiaSettings, CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
 import { AdminOnboarding } from "@/components/AdminOnboarding";
 import { EditBusinessButton } from "@/components/AdminBusinessEdit";
@@ -182,6 +182,7 @@ export default function SuperAdmin() {
         <LandingSettings />
         <StripeSettings />
         <ElevenLabsSettings />
+        <CartesiaSettings />
         <ResendSettings />
         <GoogleSettings />
         <CustomVoices />

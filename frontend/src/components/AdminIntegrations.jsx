@@ -121,6 +121,38 @@ export function ElevenLabsSettings() {
   );
 }
 
+export function CartesiaSettings() {
+  const [s, setS] = useState(null);
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () => api.get("/admin/cartesia").then((r) => setS(r.data));
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    setBusy(true);
+    try { await api.put("/admin/cartesia", { api_key: key.trim() }); toast.success("Cartesia conectado: ya puedes escuchar las voces Premium"); setKey(""); load(); }
+    catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  const disconnect = async () => { await api.delete("/admin/cartesia"); load(); };
+  if (!s) return null;
+  return (
+    <Panel className="space-y-4" data-testid="cartesia-settings-panel">
+      <div className="flex items-center gap-2"><Mic className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">Cartesia (ejemplos de voces Premium)</h3></div>
+      {s.connected
+        ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200" data-testid="cartesia-status-connected">Conectado · clave …{s.key_last4}. Los ejemplos de las voces Premium suenan con la misma voz que las llamadas.</p>
+        : <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200" data-testid="cartesia-status-missing">Sin conectar: tus clientes no pueden escuchar el ejemplo de las voces Premium. Las llamadas funcionan igual.</p>}
+      <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Clave de API de Cartesia (sk_car_…)" className="bg-slate-950/60 font-mono" data-testid="cartesia-key-input" />
+      <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
+        <li>Entra en play.cartesia.ai y crea una cuenta (el plan gratuito sirve).</li>
+        <li>Menú «API Keys» → «New API key», cópiala y pégala aquí.</li>
+      </ol>
+      <div className="flex gap-2">
+        <Button onClick={save} disabled={busy || key.trim().length < 10} className="rounded-full" data-testid="cartesia-save-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{s.connected ? "Cambiar clave" : "Conectar Cartesia"}</Button>
+        {s.from_panel && <Button variant="ghost" onClick={disconnect} className="rounded-full" data-testid="cartesia-disconnect-button">Desconectar</Button>}
+      </div>
+    </Panel>
+  );
+}
+
 export function ResendSettings() {
   const [s, setS] = useState(null);
   const [f, setF] = useState({ api_key: "", from_email: "", reply_to: "" });

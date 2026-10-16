@@ -252,4 +252,4 @@
 - Mezcla de vista previa con filtro telefónico (250–3600 Hz + compresión ligera) para que suene a llamada real.
 - ElevenLabs: modelo eleven_flash_v2_5 (mismo coste que turbo), stability 0.32, style 0.15, speed 0.98, chunkPlan minCharacters 40. Prompt con estilo hablado coloquial.
 - Fondos: todos con grabaciones reales; teclados a ratos (bursts) + tono de sala; call_center = 3 min de la grabación del usuario sin capas extra; bucles con fundido (ambience v=6).
-- Producción: añadir CARTESIA_API_KEY al .env del servidor (deploy/.env).
+- Clave Cartesia: se conecta en Super Admin → panel "Cartesia" (platform_settings _id=cartesia; env CARTESIA_API_KEY solo como respaldo opcional). Endpoints GET/PUT/DELETE /api/admin/cartesia (PUT valida la clave contra Cartesia).

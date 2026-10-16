@@ -53,18 +53,27 @@ async def eleven_tts(key: str, voice_id: str, text: str) -> bytes:
     return r.content
 
 
-async def cartesia_tts(voice_id: str, text: str) -> bytes:
-    key = os.environ.get("CARTESIA_API_KEY", "")
-    if not key:
-        raise HTTPException(503, "La vista previa de las voces Premium no está activada (falta la clave de Cartesia en el servidor).")
+async def cartesia_key() -> str:
+    doc = await db.platform_settings.find_one({"_id": "cartesia"}) or {}
+    return doc.get("api_key") or os.environ.get("CARTESIA_API_KEY", "")
+
+
+async def _cartesia_post(key: str, voice_id: str, text: str) -> httpx.Response:
     body = {"model_id": "sonic-3", "transcript": text, "voice": {"mode": "id", "id": voice_id}, "language": "es",
             "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 24000}}
     async with httpx.AsyncClient(timeout=40) as x:
-        r = await x.post("https://api.cartesia.ai/tts/bytes", json=body,
-                         headers={"X-API-Key": key, "Cartesia-Version": "2025-04-16"})
+        return await x.post("https://api.cartesia.ai/tts/bytes", json=body,
+                            headers={"X-API-Key": key, "Cartesia-Version": "2025-04-16"})
+
+
+async def cartesia_tts(voice_id: str, text: str) -> bytes:
+    key = await cartesia_key()
+    if not key:
+        raise HTTPException(503, "La vista previa de las voces Premium no está activada: conecta la clave de Cartesia en Super Admin.")
+    r = await _cartesia_post(key, voice_id, text)
     if r.status_code >= 400:
         log.warning("Cartesia preview failed %s: %s", r.status_code, r.text[:200])
-        raise HTTPException(502, "El motor de las voces Premium no respondió. Inténtalo en unos segundos.")
+        raise HTTPException(502, "El motor de las voces Premium no respondió. Revisa la clave de Cartesia en Super Admin.")
     return r.content
 
 
@@ -198,6 +207,36 @@ async def agent_preview(voice: str, text: str, ambience_id: str = "none", volume
     if ambience_id.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], ambience_id[7:]):
         raise HTTPException(404, "Ambiente no encontrado")
     return await preview(voice, text, ambience_id, volume)
+
+
+# ---------- Admin: Cartesia key (Premium voice previews) ----------
+class CartesiaIn(BaseModel):
+    api_key: str = Field(min_length=10, max_length=200)
+
+
+@router.get("/admin/cartesia")
+async def cartesia_status(user=Depends(X.require_admin)):
+    doc = await db.platform_settings.find_one({"_id": "cartesia"}) or {}
+    k = await cartesia_key()
+    return {"connected": bool(k), "key_last4": k[-4:] if k else None, "from_panel": bool(doc.get("api_key"))}
+
+
+@router.put("/admin/cartesia")
+async def cartesia_connect(body: CartesiaIn, user=Depends(X.require_admin)):
+    k = body.api_key.strip()
+    r = await _cartesia_post(k, vapi.PREMIUM["p_marta"], "Hola.")
+    if r.status_code >= 400:
+        raise HTTPException(400, "Cartesia no aceptó la clave. Copia una clave de API válida (empieza por sk_car_).")
+    await db.platform_settings.update_one({"_id": "cartesia"}, {"$set": {"api_key": k, "updated_at": now_iso()}}, upsert=True)
+    _mix_cache.clear()
+    return {"ok": True, "key_last4": k[-4:]}
+
+
+@router.delete("/admin/cartesia")
+async def cartesia_disconnect(user=Depends(X.require_admin)):
+    await db.platform_settings.delete_one({"_id": "cartesia"})
+    _mix_cache.clear()
+    return {"ok": True}
 
 
 # ---------- Admin: ElevenLabs key ----------
