@@ -46,9 +46,9 @@ export const DEFAULT_VOICE = { ES: "e_sarah", CL: "e_sarah" };
 
 export const AMBIENCES = [
   { id: "oficina_real", name: "Oficina real (grabación)", desc: "Oficina real grabada con tecleo bien presente", volume: true, real: true },
-  { id: "teclado_real", name: "Teclado real (grabación)", desc: "Tecleo grabado de un portátil, sin voces", volume: true, real: true },
-  { id: "oficina", name: "Oficina con teclados", desc: "Teclados y murmullo lejano de compañeros", volume: true },
-  { id: "teclados", name: "Solo teclado", desc: "Tecleo suave de escritorio mientras habla", volume: true },
+  { id: "teclado_real", name: "Teclado real (grabación)", desc: "Tecleo grabado de un portátil a ratos, sin voces", volume: true, real: true },
+  { id: "oficina", name: "Oficina con teclados", desc: "Grabación real: murmullo lejano y compañeros tecleando a ratos", volume: true, real: true },
+  { id: "teclados", name: "Solo teclado", desc: "Grabación real: tecleo suave de escritorio, con pausas", volume: true, real: true },
   { id: "call_center", name: "Call center (grabación)", desc: "Grabación real: compañeros hablando por teléfono y tecleo", volume: true, real: true },
   { id: "vapi_office", name: "Oficina clásica", desc: "Ambiente integrado, volumen fijo", volume: false },
   { id: "none", name: "Sin ambiente", desc: "Voz limpia, sin sonido de fondo", volume: false },
