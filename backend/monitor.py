@@ -105,7 +105,13 @@ def provider_issues(b: dict, s: dict) -> list:
 @router.get("/admin/monitor/provider-alerts")
 async def provider_alerts(user=Depends(require_admin)):
     b = await cached("balances", 300, all_balances)
-    return {"issues": provider_issues(b, await alert_settings()), "checked_at": b["checked_at"]}
+    issues = provider_issues(b, await alert_settings())
+    n = await db.silent_calls.count_documents({"created_at": {"$gt": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()}})
+    if n >= 2:
+        issues.append({"kind": "silent", "level": "critical" if n >= 4 else "warning", "title": f"Posible fallo de línea: {n} llamadas mudas en la última hora",
+                       "detail": "Se conectaron pero el cliente no dijo nada. Revisa la lista de llamadas mudas más abajo y escucha alguna grabación.",
+                       "url": "#silent-calls", "action": "Ver llamadas mudas"})
+    return {"issues": issues, "checked_at": b["checked_at"]}
 
 
 @router.get("/admin/monitor/voice-usage")
@@ -438,3 +444,37 @@ async def resend_test(user=Depends(require_admin)):
     if err:
         raise HTTPException(502, err)
     return {"ok": True, "to": to, "via": "resend" if (await emailer.resend_cfg()).get("api_key") else "emergent"}
+
+
+# ---------- Silent calls (call connected but the other side never spoke) ----------
+NOT_SILENT = ("customer-did-not-answer", "customer-busy", "voicemail", "assistant-forwarded-call", "assistant-request-failed")
+
+
+async def check_silent(msg: dict, lead: dict) -> None:
+    call = msg.get("call") or {}
+    ended = msg.get("endedReason") or call.get("endedReason") or ""
+    secs = float(msg.get("durationSeconds") or 0)
+    msgs = (msg.get("artifact") or {}).get("messages") or msg.get("messages") or []
+    if secs < 4 or any(m.get("role") == "user" for m in msgs) or any(ended.startswith(x) for x in NOT_SILENT) or "error" in ended:
+        return
+    owner = await db.users.find_one({"_id": ObjectId(lead["tenant_id"])}, {"business_name": 1}) if ObjectId.is_valid(lead.get("tenant_id", "")) else None
+    bot_spoke = any(m.get("role") in ("bot", "assistant") for m in msgs)
+    doc = {"call_id": call.get("id") or lead.get("vapi_call_id"), "lead_id": str(lead["_id"]), "tenant_id": lead.get("tenant_id"),
+           "business": (owner or {}).get("business_name", "—"), "phone": lead.get("phone", ""), "direction": lead.get("direction", "saliente"),
+           "ended_reason": ended, "seconds": round(secs), "bot_spoke": bot_spoke, "created_at": now_iso()}
+    await db.silent_calls.insert_one(doc)
+    hour = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    n = await db.silent_calls.count_documents({"created_at": {"$gt": hour}})
+    await notify("silent_call", f"{n} {'llamada muda' if n == 1 else 'llamadas mudas'} en la última hora", [
+        ("Última", f"{doc['business']} · {doc['phone']} · {'entrante' if doc['direction'] == 'entrante' else 'saliente'} · {doc['seconds']} s"),
+        ("Qué pasó", "La llamada se conectó pero la otra persona no dijo nada" + ("" if bot_spoke else " y el agente tampoco habló (posible fallo de voz)")),
+        ("Qué revisar", "Si se repite: saldo y estado de la línea (Zadarma), saldo de voces (ElevenLabs) y escucha la grabación en Monitor.")],
+        every_hours=1)
+
+
+@router.get("/admin/monitor/silent")
+async def silent_calls(user=Depends(require_admin)):
+    since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    rows = await db.silent_calls.find({"created_at": {"$gt": since}}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    hour = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    return {"rows": rows, "last_hour": sum(1 for r in rows if r["created_at"] > hour), "last_24h": len(rows)}

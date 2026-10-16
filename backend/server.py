@@ -565,6 +565,7 @@ async def vapi_webhook(request: Request):
     elif typ == "end-of-call-report":
         await S.finalize_call(msg, lead)
         await api_core.on_lead_change(lead["_id"])
+        await monitor.check_silent(msg, lead)
     return {"ok": True}
 
 

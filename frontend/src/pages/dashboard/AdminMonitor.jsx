@@ -8,6 +8,7 @@ import { AlertSettings, Balances, Margins } from "@/components/MonitorParts";
 import { LiveCalls } from "@/components/LiveCalls";
 import { Blocklist } from "@/components/Blocklist";
 import { CountryBlock } from "@/components/CountryBlock";
+import { SilentCalls } from "@/components/SilentCalls";
 import { CallLog, SipLog } from "@/components/MonitorLogs";
 import { api } from "@/lib/api";
 import { WidgetStats } from "@/components/WidgetStats";
@@ -29,6 +30,7 @@ export default function AdminMonitor() {
       <Balances b={b} alerts={alerts} onCredit={() => loadB(true)} />
       {b && <p className="-mt-3 text-xs text-slate-500" data-testid="monitor-checked-at">Consultado {fmtDate(b.checked_at)}</p>}
       <LiveCalls />
+      <SilentCalls />
       <div className="grid gap-6 xl:grid-cols-2">
         <Blocklist />
         <CountryBlock />

@@ -1,3 +1,4 @@
+import re
 import os
 import httpx
 from countries import COUNTRIES
@@ -263,6 +264,16 @@ def inbound(lead: dict) -> bool:
     return lead.get("direction") == "entrante"
 
 
+GREET_RE = re.compile(r"^\s*(hola|buenas|buenos días|buenas tardes)\b[^,.!?¿]*[,.!?]?\s*", re.I)
+GENERIC_NAMES = {"", "admin", "cliente", "contacto", "lead", "usuario", "x", "test", "prueba"}
+
+
+def confirm_name(lead: dict) -> str:
+    """First name to confirm on outbound calls ('¿Hablo con Eduardo?'), or '' if the name is unusable."""
+    n = first_name(lead.get("name", ""))
+    return "" if inbound(lead) or n.lower() in GENERIC_NAMES or len(n) < 2 or any(ch.isdigit() for ch in n) else n
+
+
 def greeting(agent: dict, lead: dict) -> str:
     if inbound(lead):
         return f"Hola, {agent['business_name']}, te atiende {agent['name']}. ¿En qué te puedo ayudar?"
@@ -386,20 +397,29 @@ VOICEMAIL = {"provider": "vapi", "type": "audio", "beepMaxAwaitSeconds": 0,
 
 def build_assistant(agent: dict, lead: dict, today: str) -> dict:
     server = server_cfg()
+    who, first, confirm = "", greeting(agent, lead), ""
     extra = {} if inbound(lead) else {
         "voicemailDetection": VOICEMAIL,
         # Outbound: some carriers report "answered" while the phone still rings, so wait for the person's "¿Diga?".
         "firstMessageMode": "assistant-waits-for-user",
-        "messagePlan": {"idleMessages": [f"¿Hola? Soy {agent['name']}, de {agent['business_name']}. ¿Me escuchas bien?"],
+        "messagePlan": {"idleMessages": [f"¿Hola? ¿Hablo con {confirm_name(lead)}?" if confirm_name(lead) and (lead.get("max_seconds") or 900) > 20 else
+                                         f"¿Hola? Soy {agent['name']}, de {agent['business_name']}. ¿Me escuchas bien?"],
                         "idleTimeoutSeconds": 5, "idleMessageMaxSpokenCount": 2},
     }
+    if not inbound(lead) and (lead.get("max_seconds") or 900) > 20:
+        who = confirm_name(lead)
+        first = f"Hola, ¿hablo con {who}?" if who else first
+        rest = GREET_RE.sub("", greeting(agent, lead), count=1)
+        confirm = (f"\nINICIO DE LA LLAMADA\nYa has preguntado «¿hablo con {who}?». Si confirma (sí, soy yo, dime…), sigue directamente con: "
+                   f"«{rest}» sin volver a saludar. Si dice que no es {who}, pregunta con amabilidad si puede ponerse o "
+                   f"cuándo es mejor localizarle; si no es posible, discúlpate por la molestia y despídete.\n") if who else ""
     return {"firstMessageMode": "assistant-speaks-first", **extra,
         "monitorPlan": {"listenEnabled": True, "controlEnabled": True},
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
         "name": f"{agent['name']} {agent['business_name']}"[:40],
-        "firstMessage": greeting(agent, lead),
+        "firstMessage": first,
         "model": {"provider": "openai", "model": "gpt-4.1", "temperature": 0.6,
-                  "messages": [{"role": "system", "content": system_prompt(agent, lead, today)}],
+                  "messages": [{"role": "system", "content": system_prompt(agent, lead, today) + confirm}],
                   "tools": tools(agent, server, lead)},
         "voice": voice_config(agent["voice"], agent.get("country", "ES")),
         "transcriber": transcriber(agent.get("country", "ES")),

@@ -235,3 +235,8 @@
 ## 2026-06 Fix llamada muda (saliente)
 - Causa: grabaciones estéreo muestran canal cliente en silencio digital ~10 s tras "answered" (la línea marca contestada mientras aún suena) -> el saludo se decía a nadie. 15-oct mañana además ElevenLabs free agotado (voice chars 0)
 - vapi.build_assistant saliente: firstMessageMode assistant-waits-for-user + messagePlan idleMessages "¿Hola? Soy X, de Y. ¿Me escuchas bien?" a los 5 s (máx 2). Entrantes sin cambios. Validado creando asistente en Vapi (201)
+
+## 2026-06 Confirmar nombre + llamadas mudas
+- vapi: confirm_name(lead) (excluye nombres genéricos/demos <=20 s); saliente firstMessage "Hola, ¿hablo con X?", idle "¿Hola? ¿Hablo con X?", prompt INICIO DE LA LLAMADA con saludo sin "Hola" (GREET_RE)
+- monitor.check_silent en end-of-call-report: conectada >=4 s sin mensajes del cliente (excluye no contesta/ocupado/buzón/errores) -> db.silent_calls + notify silent_call (1/h); GET /admin/monitor/silent; provider-alerts añade kind silent si >=2 en 1 h; GET /admin/monitor/calls/{id}/recording (admin)
+- UI components/SilentCalls.jsx en Monitor (escuchar grabación)

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Bot, ExternalLink, Mic, Radio, Users } from "lucide-react";
+import { AlertTriangle, Bot, ExternalLink, Mic, PhoneOff, Radio, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 
-const ICON = { voice: Mic, sip: Radio, ai: Bot, concurrency: Users };
+const ICON = { voice: Mic, sip: Radio, ai: Bot, concurrency: Users, silent: PhoneOff };
 
 function Issue({ i }) {
   const I = ICON[i.kind] || AlertTriangle;
@@ -16,7 +16,7 @@ function Issue({ i }) {
         <p className="text-sm opacity-80">{i.detail}{i.runs_out_at ? ` · al ritmo actual se agota hacia el ${fmtDate(i.runs_out_at)}` : ""}{i.reset_at ? ` · se renueva el ${fmtDate(i.reset_at)}` : ""}</p>
         {i.pct != null && <div className="mt-2 h-1.5 max-w-md overflow-hidden rounded-full bg-white/70"><div className={`h-full ${crit ? "bg-rose-500" : "bg-amber-500"}`} style={{ width: `${Math.max(2, i.pct)}%` }} /></div>}
       </div>
-      <a href={i.url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-current/20 bg-white px-3.5 py-1.5 text-xs font-semibold hover:bg-white/80" data-testid={`provider-alert-${i.kind}-action`}>{i.action} <ExternalLink className="h-3 w-3" /></a>
+      <a href={i.url} {...(i.url.startsWith("#") ? {} : { target: "_blank", rel: "noreferrer" })} className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-current/20 bg-white px-3.5 py-1.5 text-xs font-semibold hover:bg-white/80" data-testid={`provider-alert-${i.kind}-action`}>{i.action} <ExternalLink className="h-3 w-3" /></a>
     </div>
   );
 }

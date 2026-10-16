@@ -301,3 +301,17 @@ async def transfer(cid: str, body: TransferIn, user=Depends(require_admin)):
                          "content": "Un momento, te paso con una persona del equipo."})
     await db.leads.update_one({"vapi_call_id": cid}, {"$set": {"transferred_by_admin": num, "updated_at": now_iso()}})
     return {"ok": True, "number": num}
+
+
+@router.get("/admin/monitor/calls/{cid}/recording")
+async def admin_recording(cid: str, user=Depends(require_admin)):
+    from fastapi.responses import Response
+    try:
+        url = await vapi.recording_url(cid)
+    except vapi.VapiError as e:
+        raise HTTPException(404, str(e))
+    async with httpx.AsyncClient(timeout=60) as c:
+        r = await c.get(url)
+    if r.status_code >= 400:
+        raise HTTPException(404, "La grabación no está disponible")
+    return Response(r.content, media_type=r.headers.get("content-type", "audio/wav"))
