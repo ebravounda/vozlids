@@ -63,10 +63,38 @@ async def guard_public(phone: str = "", email: str = "") -> None:
     n = await db.leads.count_documents({"phone": {"$regex": f"{tail}$"}, "direction": {"$ne": "entrante"}, "created_at": {"$gt": hour}})
     n += await db.info_requests.count_documents({"phone": {"$regex": f"{tail}$"}, "created_at": {"$gt": hour}})
     if n >= ABUSE_PER_HOUR:
-        await db.blocklist.update_one({"kind": "phone", "value": d}, {"$setOnInsert": {
-            "kind": "phone", "value": d, "reason": f"Automático: más de {ABUSE_PER_HOUR} solicitudes en 1 hora", "source": "auto",
-            "created_at": now_iso(), "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()}}, upsert=True)
+        until = datetime.now(timezone.utc) + timedelta(hours=24)
+        res = await db.blocklist.update_one({"kind": "phone", "value": d}, {"$setOnInsert": {
+            "kind": "phone", "value": d, "reason": f"Automático: {ABUSE_PER_HOUR} o más solicitudes en 1 hora", "source": "auto",
+            "created_at": now_iso(), "expires_at": until.isoformat()}}, upsert=True)
+        if res.upserted_id:
+            import asyncio
+            asyncio.create_task(fraud_alert(d, tail, hour, until))
         raise HTTPException(429, "Demasiadas solicitudes desde este número. Inténtalo mañana.")
+
+
+def _hm(iso: str) -> str:
+    from zoneinfo import ZoneInfo
+    return datetime.fromisoformat(iso).astimezone(ZoneInfo("Europe/Madrid")).strftime("%d/%m %H:%M")
+
+
+async def fraud_alert(d: str, tail: str, since: str, until: datetime) -> None:
+    import monitor
+    from bson import ObjectId
+    q = {"phone": {"$regex": f"{tail}$"}, "created_at": {"$gt": since}}
+    attempts = [(r["created_at"], f"Demo de la web · {r.get('name') or '—'} · página {r.get('page') or '—'} · IP {r.get('ip') or '—'}")
+                async for r in db.info_requests.find(q).limit(20)]
+    leads = await db.leads.find({**q, "direction": {"$ne": "entrante"}}).limit(20).to_list(20)
+    biz = {str(u["_id"]): u.get("business_name", "—") async for u in db.users.find(
+        {"_id": {"$in": [ObjectId(x["tenant_id"]) for x in leads if ObjectId.is_valid(x.get("tenant_id", ""))]}}, {"business_name": 1})}
+    attempts += [(r["created_at"], f"{'Botón web' if r.get('source') == 'widget' else 'Formulario'} de {biz.get(r.get('tenant_id'), '—')} · "
+                                   f"{r.get('name') or '—'}{' · ' + r['email'] if r.get('email') else ''} · IP {r.get('source_ip') or '—'}") for r in leads]
+    attempts.sort()
+    rows = [("Número", f"+{d}"), ("Motivo", f"{len(attempts)} solicitudes en la última hora (límite {ABUSE_PER_HOUR})"),
+            ("Bloqueado hasta", _hm(until.isoformat()))]
+    rows += [(f"Intento {i} · {_hm(t)}", txt) for i, (t, txt) in enumerate(attempts[-12:], 1)]
+    rows.append(("Qué hacer", "Nada si es fraude: se desbloquea solo en 24 h. Para bloquearlo para siempre o desbloquearlo ya, entra en Monitor → Números y emails bloqueados."))
+    await monitor.notify(f"fraud:{d}", f"Número bloqueado por abuso: +{d}", rows, every_hours=24)
 
 
 # ---------- Admin: blocklist ----------

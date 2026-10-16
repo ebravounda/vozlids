@@ -24,7 +24,7 @@ export function Blocklist() {
     <Panel className="space-y-4" data-testid="blocklist-panel">
       <div>
         <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><Ban className="h-5 w-5 text-rose-300" />Números y emails bloqueados</h3>
-        <p className="text-xs text-slate-500">Un número bloqueado no puede pedir demos ni dejar datos en formularios o en el botón web, sus llamadas entrantes se cuelgan sin gastar minutos y nadie puede llamarle desde la plataforma. Un email o dominio bloqueado no puede registrarse ni usar formularios. Los emails temporales (mailinator, yopmail…) se rechazan solos y un número que pide más de 5 demos o formularios en una hora se bloquea 24 h automáticamente.</p>
+        <p className="text-xs text-slate-500">Un número bloqueado no puede pedir demos ni dejar datos en formularios o en el botón web, sus llamadas entrantes se cuelgan sin gastar minutos y nadie puede llamarle desde la plataforma. Un email o dominio bloqueado no puede registrarse ni usar formularios. Los emails temporales (mailinator, yopmail…) se rechazan solos y un número que pide 5 o más demos o formularios en una hora se bloquea 24 h automáticamente y te avisamos por email.</p>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900" data-testid="block-kind-select">

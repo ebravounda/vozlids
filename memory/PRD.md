@@ -227,3 +227,4 @@
 - Live: GET /admin/monitor/live con can_listen/can_hangup; GET /admin/monitor/calls/{id}/listen (listenUrl), POST .../hangup (controlUrl end-call); vapi.build_assistant monitorPlan listen/control
 - Frontend: components/LiveCalls.jsx (escucha PCM s16le 16k vía WebSocket + Web Audio, auto mono/estéreo), components/Blocklist.jsx en Monitor
 - Escucha/colgar NO probados con una llamada real (no había llamadas activas en preview)
+- Alerta de fraude: fraud_alert() envía email (monitor.notify kind fraud:{num}, 1 por número/24h) con hasta 12 intentos (hora, origen, negocio, nombre, email, IP)
