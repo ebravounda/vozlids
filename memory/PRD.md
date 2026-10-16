@@ -266,3 +266,8 @@
 - costs_real.py: coste real Zadarma por llamada (/v1/statistics billcost, match por número ±10 min, hora Madrid, sync cada 10 min o botón), coste ElevenLabs propio = ttsCharacters × créditos/letra × precio plan, uso ElevenLabs (/v1/user/subscription), ingresos por suscripción activa (excluye billing_test), números por cliente, comisión Stripe.
 - /api/admin/costs: profit {revenue, variable, per_client_fixed, fixed, net, margin_pct}, fixed (editable + "ElevenLabs parte sin usar" automática), tenants con beneficio/margen; filtro tenant_id excluye fijos. Pricing: eleven_plan_usd/credits/credits_per_char, number_es/cl_usd_month, stripe_pct/fixed_eur, fixed_costs[].
 - UI AdminCosts: Beneficio real, desglose, editor de costes fijos, Beneficio por cliente, etiqueta real/est. en línea. iteration_30: 100%.
+
+## 2026-06 — Audio "Escuchar una llamada real" del landing
+- Antes: e_sarah (voz ElevenLabs americana) leyendo un saludo → sonaba "gringa robot".
+- Ahora: llamada de 2 voces nativas de España (Cartesia Blanca = agente, Alicia = clienta), con pausas naturales, fondo oficina_real y sonido telefónico. Archivo estático backend/assets/demo/demo_call.wav (~50 s), generado con tools/make_demo_call.py; /api/voice-preview/demo.wav lo sirve sin depender de claves en producción. Verificado con Whisper (transcripción correcta).
+- Demos por sector: voces de respaldo ahora Cartesia nativas (ES p_blanca/p_octavio, CL l_veronica/l_rodrigo) tras las voces propias; VERSION=2 regenera automáticamente las cacheadas.

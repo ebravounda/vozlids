@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import io
+from pathlib import Path
 import logging
 import os
 import wave
@@ -21,8 +22,6 @@ from models import now_iso
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.preview")
 ELEVEN_URL = "https://api.elevenlabs.io/v1"
-DEMO_TEXT = ("Hola Laura, soy Sara, de Clínica Sonrisa. Te llamo porque acabas de pedir información "
-             "en nuestra web. ¿Tienes un minuto?")
 _mix_cache: "OrderedDict[str, bytes]" = OrderedDict()
 
 
@@ -192,9 +191,13 @@ async def preview(voice: str, text: str, amb: str, volume: int) -> Response:
     return Response(wav, media_type="audio/wav", headers={"Cache-Control": "private, max-age=3600", "X-Voice-Source": source})
 
 
+DEMO_CALL = Path(__file__).resolve().parent / "assets" / "demo" / "demo_call.wav"
+
+
 @router.get("/voice-preview/demo.wav")
 async def demo_preview():
-    return await preview("e_sarah", DEMO_TEXT, "oficina_real", 35)
+    # Pre-recorded two-voice call (tools/make_demo_call.py): native Spain voices, no API key needed in production.
+    return Response(DEMO_CALL.read_bytes(), media_type="audio/wav", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.get("/voice-preview")

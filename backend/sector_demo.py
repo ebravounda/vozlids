@@ -18,14 +18,17 @@ from models import now_iso
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.sector_demo")
 DIALOGS = json.loads((Path(__file__).parent / "assets" / "sector_dialogs.json").read_text())
-FALLBACK = {"agent": ["e_sarah", "elvira"], "caller": ["e_chris", "alvaro"]}
+FALLBACK = {"ES": {"agent": ["p_blanca", "e_sarah", "elvira"], "caller": ["p_octavio", "e_chris", "alvaro"]},
+            "CL": {"agent": ["l_veronica", "e_sarah", "cl_catalina"], "caller": ["l_rodrigo", "e_chris", "cl_lorenzo"]}}
 _locks: dict = {}
+VERSION = 2
 
 
 def voices_for(country: str) -> dict:
     custom = [v for v in vapi.STATE["custom_voices"].values() if v["country"] == country]
     pick = lambda g: [v["id"] for v in custom if v["gender"] == g][:1]  # noqa: E731
-    return {"agent": pick("Mujer") + FALLBACK["agent"], "caller": pick("Hombre") + FALLBACK["caller"]}
+    fb = FALLBACK.get(country, FALLBACK["ES"])
+    return {"agent": pick("Mujer") + fb["agent"], "caller": pick("Hombre") + fb["caller"]}
 
 
 async def speak(candidates: list, text: str) -> np.ndarray:
@@ -70,7 +73,7 @@ async def build(country: str, slug: str) -> dict:
     mixed[-fade:] *= np.linspace(1, 0, fade)
     mp3 = await asyncio.to_thread(to_mp3, mixed)
     doc = {"_id": f"{country}-{slug}", "audio": Binary(mp3), "marks": marks, "duration": round(t + 0.8, 2),
-           "voices": voices, "created_at": now_iso()}
+           "voices": voices, "v": VERSION, "created_at": now_iso()}
     await db.sector_demos.replace_one({"_id": doc["_id"]}, doc, upsert=True)
     return doc
 
@@ -82,7 +85,7 @@ async def get_demo(country: str, slug: str) -> dict:
     key = f"{country}-{slug}"
     async with _locks.setdefault(key, asyncio.Lock()):
         doc = await db.sector_demos.find_one({"_id": key})
-        if not doc:
+        if not doc or doc.get("v") != VERSION:
             try:
                 doc = await build(country, slug)
             except Exception as e:  # noqa: BLE001
