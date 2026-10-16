@@ -46,7 +46,7 @@ async def main():
             x = ambience._band(x, 320, 3300)
         parts += [np.zeros(int(rng.uniform(*GAPS[who]) * ambience.SR)), x]
     voice = np.concatenate([np.zeros(int(0.6 * ambience.SR))] + parts + [np.zeros(int(1.2 * ambience.SR))])
-    bg = V._wav_samples(ambience.render("oficina_real", 30))
+    bg = V._wav_samples(ambience.render("oficina_real", 15))
     out = V._phone(voice + np.resize(bg, len(voice)))
     fade = int(0.4 * ambience.SR)
     out[-fade:] *= np.linspace(1, 0, fade)

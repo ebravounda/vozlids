@@ -21,7 +21,7 @@ DIALOGS = json.loads((Path(__file__).parent / "assets" / "sector_dialogs.json").
 FALLBACK = {"ES": {"agent": ["p_blanca", "e_sarah", "elvira"], "caller": ["p_octavio", "e_chris", "alvaro"]},
             "CL": {"agent": ["l_veronica", "e_sarah", "cl_catalina"], "caller": ["l_rodrigo", "e_chris", "cl_lorenzo"]}}
 _locks: dict = {}
-VERSION = 2
+VERSION = 3
 
 
 def voices_for(country: str) -> dict:
@@ -66,7 +66,7 @@ async def build(country: str, slug: str) -> dict:
         out += [x, np.zeros(int(0.45 * sr))]
         t += len(x) / sr + 0.45
     voice = np.concatenate(out + [np.zeros(int(0.8 * sr))])
-    bg = V._wav_samples(await asyncio.to_thread(ambience.render, "oficina_real", 30))
+    bg = V._wav_samples(await asyncio.to_thread(ambience.render, "oficina_real", 15))
     mixed = voice + np.resize(bg, len(voice))
     mixed = mixed / (np.max(np.abs(mixed)) or 1) * 0.9
     fade = int(0.4 * sr)
