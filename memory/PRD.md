@@ -231,3 +231,7 @@
 - Bloqueo IP: kind ip en blocklist, guard_public(ip) en formularios/demo/registro; fraud_alert guarda ips en el bloqueo y el email lleva botón a /app/monitor?block_ip=...&reason=... (confirmación en panel). Botones "Bloquear IP" en filas automáticas
 - Live control: POST /admin/monitor/calls/{id}/say {message} (controlUrl say) y /transfer {number} (+34 si 9 dígitos); UI en LiveCalls al escuchar. NO probado con llamada real
 - Bloqueo por país: platform_settings country_block {countries, blocked_total}; GET/PUT /admin/country-block (ES/CL no bloqueables); guard_public comprueba prefijo (phonenumbers) e IP (cf-ipcountry o ipwho.is cacheado 30 días en ip_geo). UI components/CountryBlock.jsx en Monitor
+
+## 2026-06 Fix llamada muda (saliente)
+- Causa: grabaciones estéreo muestran canal cliente en silencio digital ~10 s tras "answered" (la línea marca contestada mientras aún suena) -> el saludo se decía a nadie. 15-oct mañana además ElevenLabs free agotado (voice chars 0)
+- vapi.build_assistant saliente: firstMessageMode assistant-waits-for-user + messagePlan idleMessages "¿Hola? Soy X, de Y. ¿Me escuchas bien?" a los 5 s (máx 2). Entrantes sin cambios. Validado creando asistente en Vapi (201)

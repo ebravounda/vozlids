@@ -386,13 +386,18 @@ VOICEMAIL = {"provider": "vapi", "type": "audio", "beepMaxAwaitSeconds": 0,
 
 def build_assistant(agent: dict, lead: dict, today: str) -> dict:
     server = server_cfg()
-    extra = {} if inbound(lead) else {"voicemailDetection": VOICEMAIL}
-    return {**extra,
+    extra = {} if inbound(lead) else {
+        "voicemailDetection": VOICEMAIL,
+        # Outbound: some carriers report "answered" while the phone still rings, so wait for the person's "¿Diga?".
+        "firstMessageMode": "assistant-waits-for-user",
+        "messagePlan": {"idleMessages": [f"¿Hola? Soy {agent['name']}, de {agent['business_name']}. ¿Me escuchas bien?"],
+                        "idleTimeoutSeconds": 5, "idleMessageMaxSpokenCount": 2},
+    }
+    return {"firstMessageMode": "assistant-speaks-first", **extra,
         "monitorPlan": {"listenEnabled": True, "controlEnabled": True},
         "metadata": {"lead_id": str(lead["_id"]), "tenant_id": lead["tenant_id"]},
         "name": f"{agent['name']} {agent['business_name']}"[:40],
         "firstMessage": greeting(agent, lead),
-        "firstMessageMode": "assistant-speaks-first",
         "model": {"provider": "openai", "model": "gpt-4.1", "temperature": 0.6,
                   "messages": [{"role": "system", "content": system_prompt(agent, lead, today)}],
                   "tools": tools(agent, server, lead)},
