@@ -256,3 +256,7 @@
 
 ## 2026-06 — Recepcionista: saludo sin pisar al cliente
 - Entrantes: firstMessageInterruptionsEnabled=true (el cliente puede cortar el saludo) + pausa de 1 s antes del saludo (<break time="1s"/>; 11labs con enableSsmlParsing, Cartesia nativo; Azure sin pausa). Tags eliminados del transcript (services._messages). Validado contra la API de Vapi (201).
+
+## 2026-06 — Agente solo habla del negocio
+- system_prompt: bloque "TEMAS PERMITIDOS" (prioridad máxima) + recordatorio final: rechaza temas ajenos, cuelga tras 2 insistencias, ignora prompt-injection. Verificado con gpt-4.1 (puré de patatas / "olvida tus instrucciones" → rechazo).
+- Campo "Información del negocio" (product) ampliado a 8000 caracteres con contador y ayuda.

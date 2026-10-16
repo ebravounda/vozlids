@@ -48,9 +48,13 @@ export const GeneralTab = ({ agent, update }) => (
       <div className="space-y-2"><Label>Nombre del negocio</Label><Input value={agent.business_name} onChange={(e) => update({ business_name: e.target.value })} data-testid="agent-business-input" className="bg-slate-950/60" /></div>
     </div>
     <div className="space-y-2">
-      <Label>Producto o servicio</Label>
-      <Textarea rows={5} value={agent.product} onChange={(e) => update({ product: e.target.value })} data-testid="agent-product-input" className="bg-slate-950/60"
-        placeholder="Qué vendes, precios, ofertas, zona, horarios… Todo lo que el agente pueda necesitar para responder dudas." />
+      <Label>Información del negocio (lo único que sabe el agente)</Label>
+      <Textarea rows={8} maxLength={8000} value={agent.product} onChange={(e) => update({ product: e.target.value })} data-testid="agent-product-input" className="bg-slate-950/60"
+        placeholder={"Qué vendes y precios, ofertas, horarios, dirección y zona de servicio, formas de pago, plazos, preguntas frecuentes con su respuesta…"} />
+      <p className="flex justify-between gap-3 text-xs text-slate-500" data-testid="agent-product-help">
+        <span>El agente solo responde con lo que escribas aquí y en «Instrucciones adicionales». Cualquier pregunta ajena al negocio la rechaza con amabilidad.</span>
+        <span className="shrink-0 tabular-nums">{(agent.product || "").length}/8000</span>
+      </p>
     </div>
     <div className="space-y-3">
       <Label>Objetivo de la llamada</Label>

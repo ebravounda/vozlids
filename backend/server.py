@@ -186,7 +186,7 @@ async def set_country(body: CountryIn, user=CurrentUser):
 class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     business_name: str = Field(min_length=1, max_length=120)
-    product: str = Field(min_length=1, max_length=3000)
+    product: str = Field(min_length=1, max_length=8000)
     objective: Literal["agendar", "calificar", "vender", "recepcion"]
     questions: List[str] = Field(default=[], max_length=10)
     country: Literal["ES", "CL"] = "ES"
