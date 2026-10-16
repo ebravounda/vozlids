@@ -1,0 +1,38 @@
+{
+  "summary": "Tested the 'Llámame más tarde' auto-callback feature end to end. Backend: 19/19 pytest passed. Covered target()/fit_window() rules, vapi.tools() adding schedule_callback for outbound only, handle_tool_calls schedule_callback (creates exactly 1 'programada' lead with the right UTC run_at, callback_of and callback_count=1; a second call reschedules instead of duplicating; callback_count=2 gets ok:false), finalize_call (status becomes 'rellamada'; no_llamar cancels the pending callback), GET/PATCH/DELETE /api/callbacks (auth required, isolation between tenants, 422 for past/weekend/<9:00/>=21:00/bad format, 404 for unknown or invalid ids, PATCH updates run_at and the original lead's callback_at, DELETE sets 'cancelada', clears the original lead's callback_id and drops it from the list). Frontend: amber callback events with a phone icon in the week view, cal-count 'N citas · M rellamadas', legend 'Rellamada automática', callback dialog (phone, info 'rellamada 1 de 2 · Marta', save button disabled until the value changes, weekend rejected with a toast, valid change moves the event, cancel removes it), 'Ver la llamada anterior' opens LeadDetail with the lead-callback box, drag-move of callbacks works (dropping on Saturday is rejected and reverted), normal appointments still open the old detail dialog, month view shows callbacks, and the 'Rellamada programada'/'Programada'/'Cancelada' badges are readable in the light theme.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "DELETE /api/callbacks/{id} and finalize/worker flow", "issue": "If the callback is cancelled (or later carried out), the original lead keeps status 'rellamada', so the leads list still shows the badge 'Rellamada programada' even though nothing is scheduled. The DELETE handler clears callback_id/callback_at but does not change status. Suggest changing the label to something neutral like 'Pidió rellamada', or resetting/deriving the status."},
+      {"endpoint": "callbacks.schedule (tool)", "issue": "When lead.callback_id points to a callback that is no longer 'programada' (e.g. cancelled by cancel_for on no_llamar, which does NOT clear callback_id, or already dialled), update_one matches nothing but the tool still returns ok:true. The agent then confirms a callback that does not exist. Check matched_count, or fall back to creating a new callback."},
+      {"endpoint": "callbacks window", "issue": "Only weekday and hour are checked; Spanish public holidays are ignored (nice-to-have)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "CallbackDetail dialog", "issues": ["callback-edit-start is the native <input type='datetime-local'>. It renders in the browser's locale (en-US '10/21/2026, 12:00 PM', 12h AM/PM) inside a Spanish UI. Consider the shadcn date picker plus a 24h time select.", "'Cancelar rellamada' acts immediately with no confirmation."]},
+      {"screen": "LeadDetail lead-callback box", "issues": ["The 'capitalize' class title-cases every word: 'Jueves, 22 De Octubre · 16:30'. Only the first letter should be uppercase (use cap() as CallbackDetail does)."]},
+      {"screen": "Agenda week grid", "issues": ["Callbacks at times outside the appointment hours (e.g. 17:30) sit on the hatched 'Fuera de horario' area, which may suggest they are invalid. Minor."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter29_callbacks.py", "/app/test_reports/pytest/iter29.xml"],
+  "action_items": [
+    "Fix the stale 'Rellamada programada' status/badge on the original lead after its callback is cancelled or completed",
+    "In callbacks.schedule, verify the reschedule actually matched a 'programada' doc. Otherwise create a new one or return ok:false. Also clear callback_id in cancel_for.",
+    "Optional: replace the native datetime-local picker with a shadcn picker in 24h format; fix the title-case in the lead-callback box; add a confirmation to cancel",
+    "IMPORTANT: your own seed callback 6ad2443b6aa8a3e4414faabf (Prueba Rellamada, run_at 2026-10-19T15:30Z, ~3 days away) is still 'programada'. Cancel it before then or the worker will dial +34600000001 via Vapi."
+  ],
+  "critical_code_review_comments": [
+    "callbacks.cancel_for leaves callback_id set on the original lead (see the schedule ok:true issue above)",
+    "list_callbacks uses end as exclusive on the YYYY-MM-DD string compare, consistent with /appointments and the frontend range(). OK.",
+    "Ownership is enforced through the tenant_id filter in _own(): other tenants get 404 on PATCH/DELETE (verified)"
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter29_callbacks.py"],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "Created is_test leads TEST_Rellamada Orig (+34600000098), TEST_API Rellamada (+34600000097) and TEST_UI Rellamada (+34600000096) plus their callbacks. All callbacks were scheduled in the future and are now 'cancelada'; the original leads were set to status 'cancelada'. Removed the DNC entry created by the no_llamar test. The only remaining 'programada' lead is the main agent's 6ad2443b6aa8a3e4414faabf.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The worker dials any lead with status 'programada' and run_at <= now (real VAPI key configured). Always use future dates and cancel at teardown. The test file creates callbacks through services.handle_tool_calls directly (needs /app/backend on sys.path and .env loaded). Server clock is 2026-10-16."
+}

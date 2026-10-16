@@ -11,6 +11,7 @@ import { fmtSlot } from "@/lib/constants";
 export function CallbackDetail({ a, onDone, onLead }) {
   const [start, setStart] = useState(a.start);
   const [busy, setBusy] = useState("");
+  const [ask, setAsk] = useState(false);
   const run = async (k, fn, msg) => { setBusy(k); try { await fn(); toast.success(msg); onDone(); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); } };
   return (
     <div className="space-y-4" data-testid="callback-detail">
@@ -25,8 +26,8 @@ export function CallbackDetail({ a, onDone, onLead }) {
         <Input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} className="border-slate-200 bg-white text-slate-900" data-testid="callback-edit-start" />
       </div>
       <div className="flex justify-between gap-2">
-        <Button variant="ghost" disabled={!!busy} onClick={() => run("del", () => api.delete(`/callbacks/${a.id}`), "Rellamada cancelada")} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700" data-testid="callback-cancel-button">
-          {busy === "del" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />}Cancelar rellamada</Button>
+        <Button variant="ghost" disabled={!!busy} onClick={() => (ask ? run("del", () => api.delete(`/callbacks/${a.id}`), "Rellamada cancelada") : setAsk(true))} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700" data-testid="callback-cancel-button">
+          {busy === "del" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />}{ask ? "¿Seguro? Pulsa para cancelar" : "Cancelar rellamada"}</Button>
         <Button disabled={!!busy || start === a.start} onClick={() => run("save", () => api.patch(`/callbacks/${a.id}`, { start }), `Rellamada movida a las ${start.slice(11)}`)} className="rounded-full bg-amber-500 text-white hover:bg-amber-600" data-testid="callback-save-button">
           {busy === "save" && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Cambiar hora</Button>
       </div>

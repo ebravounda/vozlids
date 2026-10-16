@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/Common";
 import { SubjectActions } from "@/components/PrivacyParts";
 import { API, api } from "@/lib/api";
 import { fmtDate, fmtSlot } from "@/lib/constants";
+import { cap } from "@/lib/cal";
 
 const Score = ({ value }) => (
   <div data-testid="lead-interest-score">
@@ -91,7 +92,7 @@ export const LeadDetail = ({ id, onClose }) => {
             )}
             {lead.callback_at && (
               <div className="flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100" data-testid="lead-callback">
-                <PhoneCall className="h-5 w-5" /> {lead.callback_of ? "Rellamada programada para" : "El agente volverá a llamar el"} <span className="font-semibold capitalize">{fmtSlot(lead.callback_at)}</span>
+                <PhoneCall className="h-5 w-5" /> {lead.callback_of ? "Rellamada programada para" : "El agente volverá a llamar el"} <span className="font-semibold">{cap(fmtSlot(lead.callback_at))}</span>
               </div>
             )}
             {lead.recording_url ? (

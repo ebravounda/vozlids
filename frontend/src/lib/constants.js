@@ -72,7 +72,7 @@ export const STATUS = {
   buzon: { label: "Buzón de voz", cls: "bg-slate-500/15 text-slate-300 border-slate-500/30", dot: "bg-slate-500" },
   atendida: { label: "Entrante atendida", cls: "bg-sky-500/15 text-sky-300 border-sky-500/30", dot: "bg-sky-400" },
   en_curso: { label: "En curso", cls: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30", dot: "bg-cyan-400 animate-pulse" },
-  rellamada: { label: "Rellamada programada", cls: "bg-amber-400/15 text-amber-200 border-amber-400/40", dot: "bg-amber-300" },
+  rellamada: { label: "Pidió rellamada", cls: "bg-amber-400/15 text-amber-200 border-amber-400/40", dot: "bg-amber-300" },
   programada: { label: "Programada", cls: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30", dot: "bg-indigo-400" },
   cancelada: { label: "Cancelada", cls: "bg-slate-500/15 text-slate-400 border-slate-500/30", dot: "bg-slate-500" },
   fallida: { label: "Fallida", cls: "bg-red-500/15 text-red-300 border-red-500/30", dot: "bg-red-400" },

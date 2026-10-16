@@ -240,3 +240,9 @@
 - vapi: confirm_name(lead) (excluye nombres genéricos/demos <=20 s); saliente firstMessage "Hola, ¿hablo con X?", idle "¿Hola? ¿Hablo con X?", prompt INICIO DE LA LLAMADA con saludo sin "Hola" (GREET_RE)
 - monitor.check_silent en end-of-call-report: conectada >=4 s sin mensajes del cliente (excluye no contesta/ocupado/buzón/errores) -> db.silent_calls + notify silent_call (1/h); GET /admin/monitor/silent; provider-alerts añade kind silent si >=2 en 1 h; GET /admin/monitor/calls/{id}/recording (admin)
 - UI components/SilentCalls.jsx en Monitor (escuchar grabación)
+
+## 2026-06 — Rellamadas automáticas ("llámame más tarde")
+- Herramienta Vapi `schedule_callback` (solo salientes): hora que diga el cliente o +2h; ventana L-V 9:00-21:00 (hora local del agente); máx. 2 rellamadas por contacto; si se vuelve a pedir en la misma llamada se reprograma (no duplica).
+- Crea un lead `programada` con `run_at` (lo marca el worker existente), `callback_of`, `callback_count`, `callback_at`. Lead original → estado `rellamada` ("Pidió rellamada").
+- Agenda: rellamadas en ámbar (GET/PATCH/DELETE /api/callbacks), mover arrastrando, cambiar hora o cancelar. DNC cancela/bloquea la rellamada.
+- Archivos: backend/callbacks.py, services.py, vapi.py, models.py; frontend calendar/CallbackDetail.jsx y relacionados. Testeado: iteration_29 (100%).

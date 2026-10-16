@@ -65,10 +65,10 @@ async def schedule(lead: dict, args: dict) -> dict:
     asked = str(args.get("time") or "").strip()
     moved = bool(asked) and when.strftime("%H:%M") != asked
     run_at, local = when.astimezone(timezone.utc).isoformat(), when.strftime("%Y-%m-%dT%H:%M")
-    if lead.get("callback_id") and ObjectId.is_valid(lead["callback_id"]):
-        await db.leads.update_one({"_id": ObjectId(lead["callback_id"]), "status": "programada"},
-                                  {"$set": {"run_at": run_at, "callback_at": local, "updated_at": now_iso()}})
-    else:
+    cid = lead.get("callback_id")
+    moved_existing = cid and ObjectId.is_valid(cid) and (await db.leads.update_one(
+        {"_id": ObjectId(cid), "status": "programada"}, {"$set": {"run_at": run_at, "callback_at": local, "updated_at": now_iso()}})).matched_count
+    if not moved_existing:
         base = lead.get("purpose") or vapi.OBJECTIVES.get(agent["objective"], "")
         new = Lead(tenant_id=lead["tenant_id"], agent_id=lead["agent_id"], agent_name=lead.get("agent_name") or agent["name"],
                    name=lead["name"], phone=lead["phone"], email=lead.get("email") or "", consent=lead.get("consent", True),
@@ -89,6 +89,7 @@ async def cancel_for(lead: dict) -> None:
     if lead.get("callback_id") and ObjectId.is_valid(lead["callback_id"]):
         await db.leads.update_one({"_id": ObjectId(lead["callback_id"]), "status": "programada"},
                                   {"$set": {"status": "cancelada", "updated_at": now_iso()}})
+        await db.leads.update_one({"_id": lead["_id"]}, {"$set": {"callback_id": None, "callback_at": ""}})
 
 
 def _out(d: dict) -> dict:
