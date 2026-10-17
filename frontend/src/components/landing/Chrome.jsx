@@ -7,10 +7,10 @@ import { SEO_PAGES } from "@/components/Seo";
 import { COMPANY } from "@/pages/Legal";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
-const LINKS = [["#plataforma", "Plataforma"], ["#citas", "Citas"], ["#voces", "Voces"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
+const LINKS = [["#plataforma", "Plataforma"], ["#citas", "Citas"], ["#voces", "Voces"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"]];
 
 export const Brand = () => (
-  <Link to="/" className="flex items-center" data-testid="landing-brand"><Logo /></Link>
+  <Link to="/" className="flex shrink-0 items-center" data-testid="landing-brand"><Logo /></Link>
 );
 
 export const Nav = ({ home = false }) => (
@@ -22,9 +22,7 @@ export const Nav = ({ home = false }) => (
         <Link to="/desarrolladores" className="hover:text-slate-900" data-testid="landing-nav-api-link">API</Link>
       </nav>
       <div className="flex items-center gap-2">
-        <Link to="/login" data-testid="landing-nav-login-button" className="hidden whitespace-nowrap px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:block">Acceder</Link>
-        <a href="#solicitar" data-testid="landing-nav-info-button" className="hidden whitespace-nowrap rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 md:block">Llamada demo</a>
-        <Link to="/registro" data-testid="landing-nav-register-button" className="hidden whitespace-nowrap rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:block">Empezar ahora</Link>
+        <Link to="/login" data-testid="landing-nav-login-button" className="hidden whitespace-nowrap rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:block">Acceder</Link>
         <MobileMenu home={home} />
       </div>
     </div>
