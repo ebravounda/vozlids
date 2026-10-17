@@ -28,9 +28,9 @@ export const AgentTeam = () => (
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {TEAM.map(([n, where, tone, c]) => (
-          <div key={n} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" data-testid={`agent-team-${n.toLowerCase()}`}>
+          <div key={n} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" data-testid={`agent-team-${n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}`}>
             <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-full text-lg font-bold ${c}`} style={H}>{n[0]}</span>
-            <div className="min-w-0"><p className="font-semibold text-slate-900">{n} <span className="text-xs font-normal text-slate-400">· {where}</span></p><p className="truncate text-sm text-slate-500">{tone}</p></div>
+            <div className="min-w-0"><p className="font-semibold text-slate-900">{n}</p><p className="truncate text-sm text-slate-500">{tone}</p><p className="text-xs text-slate-400">{where}</p></div>
           </div>
         ))}
       </div>

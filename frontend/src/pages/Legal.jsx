@@ -50,7 +50,7 @@ export default function Legal({ path }) {
   useEffect(() => { document.title = `${title} | VozLeads`; window.scrollTo(0, 0); }, [title]);
   return (
     <div className="min-h-screen bg-white text-slate-700" style={{ fontFamily: "'DM Sans', sans-serif" }} data-testid={`legal-page-${path.slice(1)}`}>
-      <Nav />
+      <Nav home />
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "Plus Jakarta Sans" }}>{title}</h1>
         <p className="mt-3 text-sm text-slate-500">Última actualización: octubre de 2026</p>

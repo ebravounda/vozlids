@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only test of VozLeads landing updates. Mobile (390) on / and /es: hamburger visible, sheet opens with all 8 section links + Acceder/Llamada demo/Empezar ahora; section links close sheet and scroll to section (top ~80px = scroll-mt-20); demo link scrolls to #solicitar; register/login links navigate correctly and don't leave body pointer-events locked. 800/1100: hamburger visible, header buttons single line (36-38px, header 65px). 1280/1920: inline nav visible, hamburger hidden. #citas (online-booking + mock + CTA -> /registro) OK. #voces 6 cards OK, demo button fetches /api/voice-preview/demo.wav (200 audio/wav) and toggles to 'Parar'. #funciones heading '20 funciones en todos los planes', 20 feature-card incl. all 6 required, 11 feature-soon-card each with 'Próximamente'. Hero checklist contains the 3 new items. No horizontal overflow at any width; no JS page errors (only expected 401s from /api/auth/me & /api/auth/refresh for anonymous visitors). /cl and /es/clinicas-dentales render with all anchors present.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AgentTeam cards", "issue": "data-testid used raw accented names (agent-team-lucía, agent-team-verónica) instead of agent-team-lucia/-veronica. FIXED by testing agent via NFD normalization.", "selector": "[data-testid^=agent-team-]", "priority": "LOW (fixed)"}
+    ],
+    "integration_issues": [
+      {"flow": "Nav/MobileMenu on legal pages (/terminos, /privacidad, /cookies, /aviso-legal)", "issue": "Legal.jsx reuses <Nav/>; links are bare hashes (#citas, #voces...) so on legal pages none of the 8 section links work (no matching ids). Now more visible since the mobile menu exposes them. Use '/#citas' style hrefs (or Link to '/' + hash) when not on a landing page.", "affected_selectors": ["landing-mobile-nav-*-link", "landing-nav-*-link"]}
+    ],
+    "design_issues": [
+      {"screen": "AgentTeam (desktop)", "issues": ["Verónica card: '· Latinoamérica' wraps to a second line while other cards are single line, making card heights/alignment inconsistent. Consider placing country on its own line for all cards or shortening to 'LatAm'."]},
+      {"screen": "Header at 1280px", "issues": ["Inline nav with 8 links + 3 buttons is tight; logo nearly touches 'Plataforma'. Acceptable but consider gap-5 or showing inline nav from 1366px."]},
+      {"screen": "Mobile scroll to #citas", "issues": ["After tapping 'Citas' in menu, section top landed at ~26px (under the sticky header) instead of ~80px, likely because vl-reveal translateY animation shifts the section after scroll. Minor."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Make Nav/MobileMenu section hrefs work on non-landing pages (Legal): use '/#section' when the section id does not exist on the page.",
+    "Optional: fix Verónica card wrapping and 1280px header spacing."
+  ],
+  "critical_code_review_comments": [
+    "Chrome.jsx LINKS are bare hashes shared by Legal pages -> dead links there.",
+    "Highlights.jsx: data-testid built from accented names (fixed)."
+  ],
+  "updated_files": ["/app/frontend/src/components/landing/Highlights.jsx"],
+  "success_rate": {"backend": "N/A", "frontend": "97%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Public landing; no auth. 401s on /api/auth/me and /api/auth/refresh are expected for anonymous users. Sector page example /es/clinicas-dentales.",
+  "test_credentials": "Not needed (public pages)"
+}

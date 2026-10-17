@@ -275,3 +275,8 @@
 ## 2026-06 — Multi-ejecutivo en rotación
 - Agent.executives [{voice, name}] (máx 5, voces distintas, del país del agente, gating HD por plan). services.pick_executive rota por turnos con contador atómico agents.exec_turn; se aplica a salientes (dial, también rellamadas → siguiente en la rotación) y entrantes (assistant_request). Prompt, voz y saludo usan el ejecutivo; el saludo sustituye el nombre del agente / otros ejecutivos por el del que llama. Lead.executive guardado y mostrado en LeadDetail.
 - UI: ExecutivesPanel en pestaña Voz (activar, añadir, renombrar, quitar). Cambiar país vacía la rotación. iteration_31 + fix del saludo.
+
+## 2026-06 — Landing: nuevas funciones, citas, equipo de voces, menú móvil
+- Highlights.jsx: secciones #citas (OnlineBooking, "Citas en línea 24/7") y #voces (AgentTeam, voces 100% realistas España/Latam, rotación de ejecutivos, botón demo).
+- Features: 20 funciones (nuevas: voces 100% realistas, equipo de ejecutivos, citas en línea, rellamadas, escucha en directo, solo habla de tu negocio) + bloque "Próximamente" con 11 ideas (WhatsApp, memoria, resumen al oído, voz clonada, informe semanal, llamadas perdidas, campañas calendario, Excel, CRM, mejora automática, multi-idioma).
+- Menú móvil (Sheet) visible < 1280px; Nav home prop para páginas legales (/#ancla). Hero checklist actualizado. iteration_32: 97% + fixes.
