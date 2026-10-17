@@ -6,6 +6,7 @@ import { Footer, MobileCta, Nav } from "@/components/landing/Chrome";
 import { SectorHero, Sectors } from "@/components/landing/Sectors";
 import { PlatformTour } from "@/components/landing/Showcase";
 import { FeatureGrid, LogoStrip, LostCalls, Testimonials } from "@/components/landing/Features";
+import { AgentTeam, OnlineBooking } from "@/components/landing/Highlights";
 import { ApiBlock, Compatible, Faq, FinalCta, Hero, Steps, TopicSections, TrustBar, Uses, WhyNow } from "@/components/landing/Sections";
 
 
@@ -39,6 +40,8 @@ function LandingPage({ path = "/" }) {
         <LogoStrip />
         <TrustBar m={m} />
         <PlatformTour />
+        <OnlineBooking />
+        <AgentTeam />
         {page.sections?.length > 0 && <TopicSections sections={page.sections} title={sector ? `Cómo ayuda a ${page.name.toLowerCase()}` : ""} />}
         {!sector && <Sectors country={m.market} />}
         {!sector && <WhyNow />}

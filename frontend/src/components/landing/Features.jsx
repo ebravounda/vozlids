@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BellRing, Bot, CalendarCheck, Clock3, Code2, FileText, Gauge, Globe2, Headphones, Lock, Mic, MousePointerClick, PhoneIncoming, PhoneOff, PhoneOutgoing, Quote, Server, ShieldCheck } from "lucide-react";
+import { ArrowRight, BarChart3, BellRing, Bot, Brain, CalendarCheck, CalendarHeart, Clock3, Code2, Ear, FileSpreadsheet, FileText, Gauge, Globe2, Headphones, Languages, Lock, MessageCircle, Mic, MousePointerClick, PhoneCall, PhoneForwarded, PhoneIncoming, PhoneOff, PhoneOutgoing, Plug, Quote, Repeat2, Server, ShieldCheck, Target, Users, WandSparkles } from "lucide-react";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
 
@@ -8,8 +8,12 @@ const FEATURES = [
   [PhoneIncoming, "Recepcionista 24/7", "Atiende llamadas entrantes, resuelve dudas y toma recados."],
   [PhoneOutgoing, "Llamadas a leads y campañas", "Llama en segundos a cada formulario o programa campañas."],
   [Server, "Número incluido", "Línea +34 o +56 lista, sin contratar operador."],
-  [Mic, "Voces naturales", "Voces realistas en español con ambiente de oficina."],
-  [CalendarCheck, "Agenda y calendario", "Reserva citas en tus huecos libres; vista día, semana y mes."],
+  [Mic, "Voces 100% realistas", "Voces HD de España y Latinoamérica con ambiente de oficina real."],
+  [Users, "Equipo de ejecutivos", "Hasta 5 voces y nombres que se turnan en cada llamada."],
+  [CalendarCheck, "Citas en línea 24/7", "Cierra citas en tus huecos libres durante la llamada; vista día, semana y mes."],
+  [Repeat2, "Rellamadas automáticas", "Si dicen «llámame más tarde», el agente vuelve a llamar solo."],
+  [Ear, "Escucha en directo", "Oye cualquier llamada en curso, cuélgala o pásala a tu equipo."],
+  [Target, "Solo habla de tu negocio", "Rechaza con amabilidad cualquier tema que no sea tuyo."],
   [FileText, "Grabación y transcripción", "Cada llamada grabada, transcrita y resumida por IA."],
   [Gauge, "Puntuación de interés", "Sabes a quién llamar primero tu equipo."],
   [BellRing, "Avisos al instante", "Email cuando hay cita o el cliente pide una persona."],
@@ -23,21 +27,45 @@ const FEATURES = [
   [ShieldCheck, "Sin permanencia", "Cancela cuando quieras desde tu panel."],
 ];
 
+const SOON = [
+  [MessageCircle, "WhatsApp tras la llamada", "Confirmación de la cita con dirección y botón para cambiarla."],
+  [Brain, "Memoria de cada cliente", "Recuerda lo que se habló la última vez y lo retoma."],
+  [PhoneForwarded, "Paso con resumen al oído", "Tu equipo oye en 5 segundos quién llama y qué quiere."],
+  [WandSparkles, "Tu propia voz clonada", "Graba 1 minuto y el agente habla con la voz de tu negocio."],
+  [BarChart3, "Informe semanal de ventas", "Llamadas, citas y euros recuperados, cada lunes en tu email."],
+  [PhoneCall, "Llamadas perdidas al minuto", "Si no contestas, el agente devuelve la llamada al momento."],
+  [CalendarHeart, "Campañas por calendario", "Cumpleaños, revisiones y promociones de temporada."],
+  [FileSpreadsheet, "Subir leads desde Excel", "Carga tu lista y lanza una campaña en un clic."],
+  [Plug, "Conexión con tu CRM", "HubSpot y formularios de Facebook e Instagram."],
+  [Gauge, "Mejora automática del agente", "La IA te dice qué añadir para cerrar más citas."],
+  [Languages, "Varios idiomas en la llamada", "Cambia a inglés o catalán si el cliente lo habla."],
+];
+
+const Card = ({ I, t, d, soon }) => (
+  <div className={`group rounded-xl border p-5 transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:shadow-md ${soon ? "border-dashed border-slate-300 bg-white/60" : "border-slate-200 bg-white hover:border-blue-200"}`} data-testid={soon ? "feature-soon-card" : "feature-card"}>
+    <div className="flex items-start justify-between gap-2">
+      <span className={`grid h-9 w-9 place-items-center rounded-lg transition-colors ${soon ? "bg-slate-100 text-slate-500" : "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white"}`}><I className="h-4 w-4" /></span>
+      {soon && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700">Próximamente</span>}
+    </div>
+    <p className="mt-4 font-semibold text-slate-900">{t}</p><p className="mt-1 text-sm leading-relaxed text-slate-500">{d}</p>
+  </div>
+);
+
 export const FeatureGrid = () => (
   <section id="funciones" className="vl-reveal scroll-mt-20 border-b border-slate-200 bg-slate-50" data-testid="feature-grid">
     <div className="mx-auto max-w-6xl px-6 py-24">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Todo incluido</p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>16 funciones en todos los planes. Sin extras escondidos.</h2></div>
+          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>{FEATURES.length} funciones en todos los planes. Sin extras escondidos.</h2></div>
         <Link to="/registro" className="group inline-flex items-center gap-2 text-sm font-semibold text-blue-700" data-testid="features-register-link">Crear mi cuenta <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
       </div>
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURES.map(([I, t, d]) => (
-          <div key={t} className="group rounded-xl border border-slate-200 bg-white p-5 transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md" data-testid="feature-card">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-600 group-hover:text-white"><I className="h-4 w-4" /></span>
-            <p className="mt-4 font-semibold text-slate-900">{t}</p><p className="mt-1 text-sm leading-relaxed text-slate-500">{d}</p>
-          </div>
-        ))}
+        {FEATURES.map(([I, t, d]) => <Card key={t} I={I} t={t} d={d} />)}
+      </div>
+      <div className="mt-16" data-testid="feature-soon">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">En camino</p>
+        <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900" style={H}>Lo que llega a tu agente muy pronto</h3>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{SOON.map(([I, t, d]) => <Card key={t} I={I} t={t} d={d} soon />)}</div>
       </div>
     </div>
   </section>

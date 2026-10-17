@@ -88,7 +88,7 @@ export const Hero = ({ page, m }) => (
           <Link to="/registro" data-testid="landing-hero-register-button" className="group inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">Empezar ahora <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
         </div>
         <ul className="mt-8 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-          {[m.t.short, "Llama en menos de 30 segundos", "Agenda y calendario incluidos", "Voz natural en español", "Cumple el RGPD", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-blue-600" />{t}</li>)}
+          {[m.t.short, "Citas en línea 24/7", "Voces 100% realistas", "Equipo de agentes de España y Latinoamérica", "Llama en menos de 30 segundos", "Sin permanencia"].map((t) => <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-blue-600" />{t}</li>)}
         </ul>
       </div>
       <div className="fade-up lg:sticky lg:top-24" style={{ animationDelay: "0.15s" }}><InfoForm m={m} page={page.path} /></div>

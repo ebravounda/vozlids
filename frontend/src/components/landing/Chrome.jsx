@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
-import { PhoneCall } from "lucide-react";
+import { useState } from "react";
+import { Menu, PhoneCall } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/Common";
 import { SEO_PAGES } from "@/components/Seo";
 import { COMPANY } from "@/pages/Legal";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
-const LINKS = [["#plataforma", "Plataforma"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
+const LINKS = [["#plataforma", "Plataforma"], ["#citas", "Citas"], ["#voces", "Voces"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"], ["#faq", "Preguntas"]];
 
 export const Brand = () => (
   <Link to="/" className="flex items-center" data-testid="landing-brand"><Logo /></Link>
@@ -15,17 +17,41 @@ export const Nav = () => (
   <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
       <Brand />
-      <nav className="hidden gap-7 text-sm text-slate-600 lg:flex" aria-label="Secciones">
+      <nav className="hidden gap-6 whitespace-nowrap text-sm text-slate-600 xl:flex" aria-label="Secciones">
         {LINKS.map(([h, l]) => <a key={h} href={h} className="hover:text-slate-900" data-testid={`landing-nav-${h.slice(1)}-link`}>{l}</a>)}
       </nav>
       <div className="flex items-center gap-2">
-        <Link to="/login" data-testid="landing-nav-login-button" className="hidden px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:block">Acceder</Link>
-        <a href="#solicitar" data-testid="landing-nav-info-button" className="hidden rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 md:block">Llamada demo</a>
-        <Link to="/registro" data-testid="landing-nav-register-button" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Empezar ahora</Link>
+        <Link to="/login" data-testid="landing-nav-login-button" className="hidden whitespace-nowrap px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:block">Acceder</Link>
+        <a href="#solicitar" data-testid="landing-nav-info-button" className="hidden whitespace-nowrap rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 md:block">Llamada demo</a>
+        <Link to="/registro" data-testid="landing-nav-register-button" className="hidden whitespace-nowrap rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:block">Empezar ahora</Link>
+        <MobileMenu />
       </div>
     </div>
   </header>
 );
+
+function MobileMenu() {
+  const [open, setOpen] = useState(false);
+  const item = "block rounded-lg px-3 py-3 text-base font-medium text-slate-800 hover:bg-slate-50";
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button type="button" aria-label="Abrir menú" className="grid h-10 w-10 place-items-center rounded-md border border-slate-300 text-slate-800 xl:hidden" data-testid="landing-mobile-menu-button"><Menu className="h-5 w-5" /></button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[300px] bg-white" data-testid="landing-mobile-menu">
+        <SheetHeader><SheetTitle className="text-left"><Logo /></SheetTitle></SheetHeader>
+        <nav className="mt-6 space-y-1" aria-label="Menú móvil">
+          {LINKS.map(([h, l]) => <a key={h} href={h} onClick={() => setOpen(false)} className={item} data-testid={`landing-mobile-nav-${h.slice(1)}-link`}>{l}</a>)}
+        </nav>
+        <div className="mt-6 space-y-2 border-t border-slate-200 pt-6">
+          <Link to="/login" className={item} data-testid="landing-mobile-login-link">Acceder</Link>
+          <a href="#solicitar" onClick={() => setOpen(false)} className="flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800" data-testid="landing-mobile-demo-link"><PhoneCall className="h-4 w-4" /> Llamada demo</a>
+          <Link to="/registro" className="flex h-12 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white" data-testid="landing-mobile-register-link">Empezar ahora</Link>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 export const MobileCta = () => (
   <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur md:hidden">
