@@ -280,3 +280,8 @@
 - Highlights.jsx: secciones #citas (OnlineBooking, "Citas en línea 24/7") y #voces (AgentTeam, voces 100% realistas España/Latam, rotación de ejecutivos, botón demo).
 - Features: 20 funciones (nuevas: voces 100% realistas, equipo de ejecutivos, citas en línea, rellamadas, escucha en directo, solo habla de tu negocio) + bloque "Próximamente" con 11 ideas (WhatsApp, memoria, resumen al oído, voz clonada, informe semanal, llamadas perdidas, campañas calendario, Excel, CRM, mejora automática, multi-idioma).
 - Menú móvil (Sheet) visible < 1280px; Nav home prop para páginas legales (/#ancla). Hero checklist actualizado. iteration_32: 97% + fixes.
+
+## 2026-06 — Documentación pública de la API
+- Revisión: /api/v1/docs y openapi.json solo exponen los 15 endpoints públicos (19 operaciones) con X-API-Key; sin claves, emails, IPs ni rutas internas. Swagger se mantiene como "Probar en vivo".
+- Endurecido: FastAPI interno (server.py) sin docs/redoc/openapi (docs_url=None…), antes accesible en :8001/docs.
+- Nueva página pública /desarrolladores (pages/ApiDocs.jsx + components/apidocs/*): hero, guías (inicio rápido cURL/Python/Node, autenticación, webhooks con payload real y verificación HMAC, errores/límites) y referencia generada desde openapi.json. Enlaces: nav "API", menú móvil, footer, botón en bloque API del landing.

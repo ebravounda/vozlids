@@ -48,7 +48,7 @@ from seed import seed  # noqa: E402
 from countries import COUNTRIES, norm_any_phone, norm_phone  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 api = APIRouter(prefix="/api")
 CurrentUser = Depends(A.get_current_user)
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")

@@ -210,6 +210,7 @@ export const ApiBlock = () => (
             <li key={t} className="flex items-center gap-3"><I className="h-5 w-5 text-blue-700" />{t}</li>
           ))}
         </ul>
+        <Link to="/desarrolladores" className="group mt-8 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800" data-testid="api-block-docs-link">Ver la documentación de la API <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
       </div>
       <pre className="overflow-x-auto rounded-xl bg-slate-900 p-6 font-mono text-xs leading-relaxed text-slate-200">{`POST /api/v1/calls
 X-API-Key: vl_live_…

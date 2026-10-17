@@ -19,6 +19,7 @@ export const Nav = ({ home = false }) => (
       <Brand />
       <nav className="hidden gap-5 whitespace-nowrap text-sm text-slate-600 xl:flex" aria-label="Secciones">
         {LINKS.map(([h, l]) => <a key={h} href={home ? `/${h}` : h} className="hover:text-slate-900" data-testid={`landing-nav-${h.slice(1)}-link`}>{l}</a>)}
+        <Link to="/desarrolladores" className="hover:text-slate-900" data-testid="landing-nav-api-link">API</Link>
       </nav>
       <div className="flex items-center gap-2">
         <Link to="/login" data-testid="landing-nav-login-button" className="hidden whitespace-nowrap px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:block">Acceder</Link>
@@ -42,6 +43,7 @@ function MobileMenu({ home }) {
         <SheetHeader><SheetTitle className="text-left"><Logo /></SheetTitle></SheetHeader>
         <nav className="mt-6 space-y-1" aria-label="Menú móvil">
           {LINKS.map(([h, l]) => <a key={h} href={home ? `/${h}` : h} onClick={() => setOpen(false)} className={item} data-testid={`landing-mobile-nav-${h.slice(1)}-link`}>{l}</a>)}
+          <Link to="/desarrolladores" className={item} data-testid="landing-mobile-nav-api-link">API</Link>
         </nav>
         <div className="mt-6 space-y-2 border-t border-slate-200 pt-6">
           <Link to="/login" className={item} data-testid="landing-mobile-login-link">Acceder</Link>
@@ -89,7 +91,7 @@ export const Footer = ({ m }) => (
           <p data-testid="footer-address">{COMPANY.address} · <a href={`mailto:${COMPANY.email}`} className="hover:underline" data-testid="footer-email">{COMPANY.email}</a></p>
         </div>
         <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1">
-          {[["/terminos", "Términos y condiciones"], ["/privacidad", "Privacidad"], ["/cookies", "Cookies"], ["/aviso-legal", "Aviso legal"]].map(([to, l]) => <Link key={to} to={to} className="hover:text-slate-900 hover:underline" data-testid={`footer-link-${to.slice(1)}`}>{l}</Link>)}
+          {[["/desarrolladores", "API para desarrolladores"], ["/terminos", "Términos y condiciones"], ["/privacidad", "Privacidad"], ["/cookies", "Cookies"], ["/aviso-legal", "Aviso legal"]].map(([to, l]) => <Link key={to} to={to} className="hover:text-slate-900 hover:underline" data-testid={`footer-link-${to.slice(1)}`}>{l}</Link>)}
           <span>© {new Date().getFullYear()} VozLeads.com</span>
         </nav>
       </div>
