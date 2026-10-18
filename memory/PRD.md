@@ -299,4 +299,4 @@
 
 ## 2026-06 — Demo: número del dueño sin límites + voz Jessica
 - security_admin.OWNER_PHONES = {"34600850506"}: nunca bloqueado (blocked_phone/guard_public), sin límite por IP, sin "repetida", sin topes diarios/internacionales; info_requests.owner_test=True (no cuenta en topes ni envía email de solicitud).
-- Demo web siempre con voz e_jessica (ElevenLabs HD), nombre Jessica, sin rotación de ejecutivos; keep_voice evita la bajada por plan (plan_limits.effective_agent).
+- Demo web: landing.demo_voice(phone): +34 → voz propia ElevenLabs ES de mujer (Carolina primero; si no hay, p_blanca); resto (Chile, LATAM, otros) → e_jessica. Sin rotación de ejecutivos; keep_voice evita la bajada por plan.

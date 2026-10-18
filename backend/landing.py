@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 import emailer
 import extra_routes as X
 import services as S
+import vapi
 from countries import COUNTRIES, DEMO_DIALS, norm_demo_phone
 from db import db
 from models import Lead, now_iso
@@ -14,7 +15,15 @@ from models import Lead, now_iso
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.landing")
 MAX_SECONDS = 25
-DEMO_VOICE = "e_jessica"
+
+
+def demo_voice(phone: str) -> tuple:
+    """Spain: native ultra-HD voice (own ElevenLabs voice, Carolina first). Chile, LATAM and rest: Jessica."""
+    if not phone.startswith("+34"):
+        return "e_jessica", "Jessica"
+    own = [v for v in vapi.STATE["custom_voices"].values() if v["country"] == "ES" and v["gender"] == "Mujer"]
+    v = next((x for x in own if "carolina" in x["name"].lower()), own[0] if own else None)
+    return (v["id"], v["name"].split()[0]) if v else ("p_blanca", "Blanca")
 INTL_DAILY_CAP = 40
 DAILY_CALL_CAP = 20
 CALL_LABELS = {"llamando": "Sí, llamando ahora", "en_curso": "Sí, en curso", "sin_agente": "No: no hay agente de demo configurado",
@@ -59,8 +68,9 @@ async def _call(agent: dict, name: str, phone: str) -> str:
     doc = lead.to_mongo()
     res = await db.leads.insert_one(doc)
     doc["_id"] = res.inserted_id
-    # First impression: always Jessica (ultra-realistic HD voice), no executive rotation, never downgraded by plan.
-    await S.dial({**agent, "business_name": "VozLeads", "name": "Jessica", "voice": DEMO_VOICE, "executives": [], "keep_voice": True}, doc)
+    # First impression: ultra-realistic HD voice per market, no executive rotation, never downgraded by plan.
+    voice, who = demo_voice(phone)
+    await S.dial({**agent, "business_name": "VozLeads", "name": who, "voice": voice, "executives": [], "keep_voice": True}, doc)
     return (await db.leads.find_one({"_id": res.inserted_id}))["status"]
 
 
