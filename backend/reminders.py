@@ -141,7 +141,7 @@ def _row(a: dict) -> tuple:
 async def owner_reminders() -> int:
     """Remind the business owner to attend: daily summary at 8:00 and one email 1 h before each appointment."""
     n, url = 0, os.environ["APP_PUBLIC_URL"] + "/app/agenda"
-    async for owner in db.users.find({"role": {"$ne": "admin"}, "suspended": {"$ne": True}, "email": {"$nin": ["", None]}},
+    async for owner in db.users.find({"suspended": {"$ne": True}, "email": {"$nin": ["", None]}},
                                      {"email": 1, "country": 1, "business_name": 1, "agenda_digest_day": 1}):
         tid, now = str(owner["_id"]), datetime.now(S.tz_of(owner.get("country", "ES")))
         base = {"tenant_id": tid, "is_sample": {"$ne": True}}
@@ -150,20 +150,24 @@ async def owner_reminders() -> int:
         q = {**base, "start": {"$gt": now.strftime("%Y-%m-%dT%H:%M"), "$lte": hi}, "owner_hour_at": None, "created_at": {"$lt": recent}}
         for a in await db.appointments.find(q).to_list(50):
             if (await db.appointments.update_one({"_id": a["_id"], "owner_hour_at": None}, {"$set": {"owner_hour_at": now_iso()}})).modified_count:
-                await emailer.send(owner["email"], f"En 1 hora: cita con {a.get('lead_name') or 'un cliente'} a las {a['start'][11:16]}",
+                ok = await emailer.send(owner["email"], f"En 1 hora: cita con {a.get('lead_name') or 'un cliente'} a las {a['start'][11:16]}",
                                    "Tienes una cita dentro de una hora", [("Hora", a["start"][11:16]), ("Cliente", a.get("lead_name") or "—"),
                                    ("Teléfono", a.get("lead_phone") or "—"), ("Notas", a.get("notes") or "—")], url,
                                    intro="Recuerda atender a tu cliente. Si no puedes, cambia la cita desde tu agenda.", cta_label="Abrir mi agenda")
-                n += 1
+                if not ok:
+                    await db.appointments.update_one({"_id": a["_id"]}, {"$set": {"owner_hour_at": None}})
+                n += ok
         today = now.strftime("%Y-%m-%d")
         if DIGEST_HOUR <= now.hour < DIGEST_UNTIL and owner.get("agenda_digest_day") != today:
             await db.users.update_one({"_id": owner["_id"]}, {"$set": {"agenda_digest_day": today}})
             day = await db.appointments.find({**base, "start": {"$gte": f"{today}T00:00", "$lte": f"{today}T23:59"}}).sort("start", 1).to_list(100)
             if day:
-                await emailer.send(owner["email"], f"Tu agenda de hoy: {len(day)} {'cita' if len(day) == 1 else 'citas'}",
+                ok = await emailer.send(owner["email"], f"Tu agenda de hoy: {len(day)} {'cita' if len(day) == 1 else 'citas'}",
                                    "Estas son tus citas de hoy", [_row(a) for a in day], url,
                                    intro="Que no se te pase ningún cliente: aquí tienes todas las citas del día.", cta_label="Abrir mi agenda")
-                n += 1
+                if not ok:
+                    await db.users.update_one({"_id": owner["_id"]}, {"$unset": {"agenda_digest_day": ""}})
+                n += ok
     return n
 
 

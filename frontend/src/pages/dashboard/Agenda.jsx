@@ -63,7 +63,7 @@ export default function Agenda() {
     <div className="fade-up" data-testid="agenda-page">
       <PageHeader eyebrow="Agenda" title="Agenda y citas" desc="Todas las citas que reserva tu agente IA y las que creas tú. El agente solo ofrece huecos libres dentro de tu horario y nunca reserva dos citas a la misma hora." />
       <Tabs defaultValue={new URLSearchParams(window.location.search).get("google") ? "connect" : "calendar"}>
-        <TabsList className="mb-4 bg-slate-100">
+        <TabsList className="mb-4 max-w-full justify-start overflow-x-auto bg-slate-100">
           <TabsTrigger value="calendar" data-testid="agenda-tab-calendar"><CalendarDays className="mr-1.5 h-4 w-4" />Calendario</TabsTrigger>
           <TabsTrigger value="hours" data-testid="agenda-tab-hours"><SlidersHorizontal className="mr-1.5 h-4 w-4" />Horario de citas</TabsTrigger>
           <TabsTrigger value="connect" data-testid="agenda-tab-connect"><BellRing className="mr-1.5 h-4 w-4" />Recordatorios y Google</TabsTrigger>

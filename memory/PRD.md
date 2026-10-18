@@ -292,3 +292,7 @@
 - Fix: email de solicitud decía "Sí, en curso" aunque no se llamara (tope, sin agente, no_llamar) → CALL_LABELS con el motivo real.
 - Validado payload contra Vapi (201). Preview sin agente demo configurado (Super Admin → Landing) → "sin_agente".
 - Demo web (v2): vapi.is_demo(lead) (source web_vozleads) → habla primero tras 1 s (<break>), no interrumpible, sin detección de buzón, mensaje "Hola {nombre}, te estoy llamando de VozLeads. Esta es una llamada demostrativa…¡Hasta luego!" y cuelga (endCallPhrases); máx 25 s. Las demos no cuentan como "llamadas mudas". Validado contra Vapi (201).
+
+## 2026-06 — Recordatorios al dueño + calendario moderno
+- reminders.owner_reminders() (worker cada ~60 s): email "En 1 hora: cita con X" (appointments.owner_hour_at, se resetea al mover la cita) y resumen diario "Tu agenda de hoy" entre 8:00–12:00 hora local (users.agenda_digest_day). Todas las citas (agente y manuales), excluye ejemplos. Si el envío falla, se reintenta. Ya existía el email al agendar (saas.notify_appointment).
+- Calendario "Claro y limpio" (design_guidelines.json): toolbar en tarjeta, eventos con borde izquierdo de color y etiqueta de tipo, fuera de horario gris suave, línea "ahora" con punto, mes con chips de color y contador, leyenda en tarjeta, panel "Próximas citas de hoy" (xl), citas solapadas lado a lado, tabs sin desbordar en móvil. iteration_33 + fixes.

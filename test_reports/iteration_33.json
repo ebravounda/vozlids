@@ -1,0 +1,39 @@
+{
+  "summary": "Frontend test of the redesigned /app/agenda > Calendario as admin@vozlead.es, at 1920 and 390 widths (browser TZ UTC, ~21:36). Everything requested works: the toolbar card (Hoy/prev/next/title/count), the Día/Semana/Mes switch, the 'Nueva cita' button, the week TimeGrid with day headers and today highlighted, out-of-hours shown in soft grey with 0 striped elements, the now-line and events with a colored left border. The month view shows 42 cells, colored chips and a per-day count, and the legend card is there. The TodayPanel shows on xl: a TEST_ appointment created via Nueva cita (prefilled to the next hour, 22:00) showed up in the panel and on the grid, and clicking the panel item opened the dialog. Regressions pass: a past slot gives the 'Ese hueco ya ha pasado' toast; a future slot opens the create dialog with the right start; drag&drop moved the event (toast 'Cita movida a las 22:30'); prev/next/Hoy work in all views; clicking a month cell goes to Día. The test appointment was deleted through the dialog's cancel (panel back to 0, event gone). On mobile 390 the default view is Día, with 1 column and the panel hidden. Two issues: the TodayPanel shows the old time after a drag (race), and the agenda tabs overflow horizontally on mobile. No JS page errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "reminders.owner_reminders()", "issue": "The query excludes role=admin, so the demo tenant admin@vozlead.es ('Clínica Dental Sonrisa') never gets the 1h/digest owner emails. Confirm this is intended; it may confuse anyone checking reminders with the demo account."},
+      {"endpoint": "reminders.owner_reminders()", "issue": "agenda_digest_day is set BEFORE emailer.send. If the send fails, that day's digest is lost with no retry. The same applies to owner_hour_at (set before send)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "TodayPanel", "issue": "After drag&drop the panel keeps the OLD time (it showed 22:00 after a move to 22:30) until another refresh. Cause: TodayPanel refetches on the `refresh={appts}` change, which happens on the optimistic setAppts in move(), BEFORE the PATCH finishes, so it gets stale data. Fix: refetch after the PATCH resolves (e.g. pass a counter that is bumped after move/load completes, or call load() after the patch).", "selector": "[data-testid=cal-today-panel]", "priority": "MEDIUM"},
+      {"component": "Agenda TabsList (pages/dashboard/Agenda.jsx ~L66)", "issue": "Horizontal page overflow on mobile 390: document scrollWidth is 497. The TabsList (Calendario/Horario de citas/Recordatorios y Google) is inline-flex and wider than the viewport, which cuts off 'Recordatorios y Google'. The calendar itself does not overflow. Fix: add 'max-w-full overflow-x-auto justify-start' to TabsList, or shorten the labels on mobile.", "selector": "[data-testid=agenda-tab-connect]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Week TimeGrid", "issues": ["Grid bounds stop 30 min after the last appointment (hi = ceil((m+30)/60)), so late-evening slots past the business hours+1 can't be targets (a drop at 23:00 was clamped to 22:30).", "Overlapping appointments at the same time render stacked on top of each other (no side-by-side layout).", "Short 30-min past events are ~25px tall and show the name only."]},
+      {"screen": "TodayPanel", "issues": ["Uses the browser's local date/time while appointment strings are in the tenant's timezone. For an owner browsing from another TZ, 'hoy' and 'upcoming' can be off (minor)."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "TodayPanel: refetch after the PATCH/POST/DELETE resolves rather than on the optimistic appts change (stale time after drag).",
+    "Agenda.jsx TabsList: make it horizontally scrollable or wrap on mobile to remove the 107px page overflow at 390px.",
+    "Optional: decide whether admin tenants should receive owner_reminders; consider setting the digest/hour flags only after a successful send."
+  ],
+  "critical_code_review_comments": [
+    "AgendaCalendar.move(): optimistic update triggers the TodayPanel fetch before persistence (race).",
+    "TimeGrid has no overlap layout for concurrent events.",
+    "owner_reminders marks the sent flags before the send (no retry on failure)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (optional, code reviewed only)", "frontend": "~90% (all requested flows pass; 2 medium issues)"},
+  "test_credentials": "admin@vozlead.es / VozLead2026!",
+  "seed_data_creation": "Created TEST_Panel Cliente at 2026-10-18T22:00 (moved to 22:30) and deleted it via the UI cancel. Nothing left behind.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The calendar lives at /app/agenda (tab agenda-tab-calendar). The browser TZ is UTC while tenants are Europe/Madrid. Playwright drag_to fails because the TimeGrid scrolls internally (max-h-68vh); simulate the drop by dispatching DragEvent dragstart/dragover/drop with a shared DataTransfer via page.evaluate. HOUR_PX=56."
+}

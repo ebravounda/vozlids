@@ -18,19 +18,20 @@ export function AgendaCalendar({ av }) {
   const [gbusy, setGbusy] = useState([]);
   const [dlg, setDlg] = useState(null);
   const [leadId, setLeadId] = useState(null);
+  const [rev, setRev] = useState(0);
   const [lo, hi] = useMemo(() => range(view, cursor), [view, cursor]);
 
   const load = useCallback(() => {
     const params = { start: ymd(lo), end: ymd(hi) };
     return Promise.all([api.get("/appointments", { params }), api.get("/callbacks", { params }).catch(() => ({ data: [] }))])
-      .then(([a, c]) => setAppts([...a.data, ...c.data])).catch(() => {});
+      .then(([a, c]) => { setAppts([...a.data, ...c.data]); setRev((r) => r + 1); }).catch(() => {});
   }, [lo, hi]);
   useEffect(() => { load(); api.get("/google/busy", { params: { start: ymd(lo), end: ymd(hi) } }).then((r) => setGbusy(r.data)).catch(() => setGbusy([])); }, [load, lo, hi]);
 
   const bounds = useMemo(() => {
     const [a, b] = hoursBounds(av);
     const mins = appts.map(apptMin);
-    return [Math.min(a, ...mins.map((m) => Math.floor(m / 60))), Math.max(b, ...mins.map((m) => Math.ceil((m + 30) / 60)))];
+    return [Math.min(a, ...mins.map((m) => Math.floor(m / 60))), Math.min(24, Math.max(b, ...mins.map((m) => Math.ceil((m + 90) / 60))))];
   }, [av, appts]);
 
   const move = async (id, start) => {
@@ -38,7 +39,7 @@ export function AgendaCalendar({ av }) {
     if (!prev || prev.start === start) return;
     setAppts((xs) => xs.map((a) => (a.id === id ? { ...a, start } : a)));
     const cb = prev.kind === "callback";
-    try { await api.patch(`/${cb ? "callbacks" : "appointments"}/${id}`, { start }); toast.success(`${cb ? "Rellamada" : "Cita"} movida a las ${start.slice(11)}`); }
+    try { await api.patch(`/${cb ? "callbacks" : "appointments"}/${id}`, { start }); toast.success(`${cb ? "Rellamada" : "Cita"} movida a las ${start.slice(11)}`); setRev((r) => r + 1); }
     catch (e) { setAppts((xs) => xs.map((a) => (a.id === id ? prev : a))); toast.error(errMsg(e)); }
   };
   const nextSlot = () => { const n = new Date(); n.setMinutes(0, 0, 0); n.setHours(n.getHours() + 1); return `${ymd(n)}T${pad(n.getHours())}:00`; };
@@ -57,7 +58,7 @@ export function AgendaCalendar({ av }) {
             ? <MonthGrid start={lo} cursor={cursor} appts={appts} onOpen={common.onOpen} onMove={move} onDay={(d) => { setCursor(d); setView("day"); }} />
             : <TimeGrid start={lo} days={view === "week" ? 7 : 1} {...common} />}
         </div>
-        <TodayPanel onOpen={common.onOpen} refresh={appts} />
+        <TodayPanel onOpen={common.onOpen} refresh={rev} />
       </div>
       <Legend />
       <ApptDialog state={dlg} slot={av.slot_minutes} onClose={() => setDlg(null)} onChanged={load} onLead={setLeadId} />
