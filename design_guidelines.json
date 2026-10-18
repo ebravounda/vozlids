@@ -1,111 +1,120 @@
 {
-  "project_name": "VozLeads",
-  "archetype": "Architectural Precision & Human Trust (Anti-AI Slop)",
-  "theme": "Light Modern Professional",
-  "styling_stack": "Tailwind CSS + Shadcn UI + Native CSS Keyframe Animations",
-  "color_palette": {
-    "hex": {
-      "background": "#F8FAFC",
-      "surface": "#FFFFFF",
-      "surface_subtle": "#F1F5F9",
-      "primary": "#2563EB",
-      "primary_hover": "#1D4ED8",
-      "text_main": "#0F172A",
-      "text_muted": "#64748B",
-      "border": "#E2E8F0",
-      "accent_emerald": "#10B981",
-      "accent_amber": "#F59E0B",
-      "accent_red": "#EF4444",
-      "blue_soft": "#EFF6FF"
-    },
-    "hsl_css_vars": {
-      "--background": "210 40% 98%",
-      "--foreground": "222.2 84% 4.9%",
-      "--card": "0 0% 100%",
-      "--card-foreground": "222.2 84% 4.9%",
-      "--popover": "0 0% 100%",
-      "--popover-foreground": "222.2 84% 4.9%",
-      "--primary": "221.2 83.2% 53.3%",
-      "--primary-foreground": "210 40% 98%",
-      "--secondary": "210 40% 96.1%",
-      "--secondary-foreground": "222.2 47.4% 11.2%",
-      "--muted": "210 40% 96.1%",
-      "--muted-foreground": "215.4 16.3% 46.9%",
-      "--accent": "210 40% 96.1%",
-      "--accent-foreground": "222.2 47.4% 11.2%",
-      "--destructive": "0 84.2% 60.2%",
-      "--border": "214.3 31.8% 91.4%",
-      "--input": "214.3 31.8% 91.4%",
-      "--ring": "221.2 83.2% 53.3%",
-      "--radius": "0.5rem"
-    }
-  },
+  "theme": "Claro y limpio",
+  "archetype": "Pastel & Soft / Organic Minimalist (Google Calendar & Notion inspired)",
   "typography": {
-    "heading_font": "Plus Jakarta Sans, sans-serif",
-    "body_font": "DM Sans, sans-serif",
-    "mono_font": "JetBrains Mono, monospace",
-    "hierarchy": {
-      "h1": "text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]",
-      "h2": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900",
-      "h3": "text-xl sm:text-2xl font-semibold text-slate-900",
-      "subtitle": "text-lg text-slate-600 leading-relaxed",
-      "body": "text-base text-slate-600 leading-normal",
-      "badge": "text-xs font-semibold tracking-wide uppercase"
+    "headings": "Plus Jakarta Sans, sans-serif",
+    "body": "DM Sans, sans-serif",
+    "font_pairing_notes": "Use font-sans with Plus Jakarta Sans for titles/toolbar/modal headers and DM Sans for event detail, time labels, badge text."
+  },
+  "colors": {
+    "page_bg": "#FAFAFA (bg-slate-50/60)",
+    "card_bg": "#FFFFFF (bg-white)",
+    "border": "#E2E8F0 (border-slate-200/80)",
+    "text_primary": "#0F172A (text-slate-900)",
+    "text_secondary": "#64748B (text-slate-500)",
+    "event_types": {
+      "ai_booked": {
+        "bg": "bg-blue-50/90 hover:bg-blue-100/90",
+        "border": "border-l-4 border-l-blue-600 border-blue-200/60",
+        "text": "text-blue-950",
+        "badge": "bg-blue-100 text-blue-700"
+      },
+      "manual": {
+        "bg": "bg-emerald-50/90 hover:bg-emerald-100/90",
+        "border": "border-l-4 border-l-emerald-600 border-emerald-200/60",
+        "text": "text-emerald-950",
+        "badge": "bg-emerald-100 text-emerald-700"
+      },
+      "callback": {
+        "bg": "bg-amber-50/90 hover:bg-amber-100/90",
+        "border": "border-l-4 border-l-amber-500 border-amber-200/60",
+        "text": "text-amber-950",
+        "badge": "bg-amber-100 text-amber-800"
+      },
+      "sample": {
+        "bg": "bg-violet-50/90 hover:bg-violet-100/90",
+        "border": "border-l-4 border-l-violet-600 border-violet-200/60",
+        "text": "text-violet-950",
+        "badge": "bg-violet-100 text-violet-700"
+      },
+      "past": {
+        "bg": "bg-slate-100/70 hover:bg-slate-200/60",
+        "border": "border-l-4 border-l-slate-400 border-slate-200",
+        "text": "text-slate-600 opacity-80",
+        "badge": "bg-slate-200 text-slate-600"
+      },
+      "google_busy": {
+        "bg": "bg-slate-100/50 border border-dashed border-slate-300",
+        "text": "text-slate-400 text-xs italic"
+      }
     }
   },
-  "provider_naming_rules": {
-    "public_web_and_client_dashboard": "STRICTLY BAN names like ElevenLabs, Zadarma, Vapi, OpenAI. Use generic high-end terms: 'Motor de Voz Ultra-Natural HD', 'Red Telefónica Directa España y Chile', 'Sintetizador de Voz Premium'.",
-    "super_admin_panel": "Allowed to show exact API providers (Zadarma, ElevenLabs, Vapi) for technical infrastructure management."
-  },
-  "hero_redesign_strategy": {
-    "concept": "Tactical Live Call Studio (replaces generic AI gradient pills)",
-    "eyebrow_badge": "Live activity indicator: green pulsing dot + text 'Red Telefónica ES (+34) & CL (+56) Operativa'",
-    "headline": "Llamamos a tus leads web en menos de 30 segundos",
-    "interactive_widget": "Audio waveform call simulator with live audio trigger ('Escuchar llamada real') and typing transcript",
-    "cta_lead_form": "Solicita información ahora form with flag pills (🇪🇸 España / 🇨🇱 Chile), clean input shadows, and instant submission"
-  },
-  "animations": {
-    "css_keyframes": {
-      "waveform": "@keyframes waveform { 0%, 100% { height: 6px; } 50% { height: 28px; } }",
-      "streamPulse": "@keyframes streamPulse { 0%, 100% { opacity: 0.3; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.1); } }",
-      "subtleFloat": "@keyframes subtleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }"
+  "layout_components": {
+    "toolbar": {
+      "container": "flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-slate-200/80 rounded-xl shadow-sm mb-4",
+      "controls": "flex items-center gap-2",
+      "today_btn": "px-3 py-1.5 text-sm font-medium bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors active:scale-95",
+      "nav_btns": "p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors",
+      "title": "text-lg md:text-xl font-bold text-slate-900 font-heading tracking-tight",
+      "stats_badge": "px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full border border-slate-200/60",
+      "view_switcher": "inline-flex p-1 bg-slate-100 rounded-lg border border-slate-200/60 gap-1",
+      "view_btn_active": "px-3 py-1 text-xs font-semibold bg-white text-slate-900 rounded-md shadow-sm transition-all",
+      "view_btn_inactive": "px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-md transition-all",
+      "new_cita_btn": "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm shadow-sm hover:shadow transition-all active:scale-95"
     },
-    "hover_effects": {
-      "button": "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
-      "card": "transition-all duration-200 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/50"
+    "time_grid_header": {
+      "wrapper": "grid border-b border-slate-200 bg-slate-50/50 text-slate-600 font-medium text-xs rounded-t-xl",
+      "day_col_header": "py-2.5 text-center border-r border-slate-200/70 last:border-r-0",
+      "day_name": "uppercase text-[11px] tracking-wider text-slate-400 font-semibold",
+      "day_num_active": "inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-sm shadow-sm mt-0.5",
+      "day_num": "inline-flex items-center justify-center w-7 h-7 rounded-full text-slate-800 font-bold text-sm mt-0.5 hover:bg-slate-200/60"
+    },
+    "time_grid": {
+      "container": "bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden",
+      "hour_gutter": "w-16 text-right pr-3 text-xs text-slate-400 font-medium select-none border-r border-slate-200/60",
+      "out_of_hours": "bg-slate-50/70 relative backdrop-blur-[1px] (replacing harsh diagonal stripes with clean soft slate fill + subtle boundary line)",
+      "working_hours": "bg-white hover:bg-blue-50/30 transition-colors cursor-pointer",
+      "now_indicator": {
+        "line": "absolute left-0 right-0 border-t-2 border-rose-500 z-20 pointer-events-none",
+        "dot": "absolute -left-1.5 -top-1.5 w-3 h-3 bg-rose-500 rounded-full shadow-sm ring-2 ring-white"
+      }
+    },
+    "event_card": {
+      "container": "absolute inset-x-1 rounded-lg p-2 shadow-xs border transition-all hover:shadow-md hover:z-30 cursor-pointer overflow-hidden flex flex-col justify-between group",
+      "title": "font-semibold text-xs leading-snug truncate font-heading",
+      "time_range": "text-[11px] opacity-80 font-mono mt-0.5",
+      "badge": "inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-md border"
+    },
+    "month_grid": {
+      "container": "grid grid-cols-7 border-t border-l border-slate-200 rounded-xl overflow-hidden shadow-sm bg-slate-200/60 gap-[1px]",
+      "cell": "bg-white min-h-[110px] p-1.5 flex flex-col justify-between hover:bg-slate-50/80 transition-colors",
+      "cell_other_month": "bg-slate-50/50 text-slate-300",
+      "cell_header": "flex items-center justify-between mb-1 px-1",
+      "event_chip": "px-2 py-0.5 text-xs rounded-md truncate font-medium border border-transparent shadow-2xs mb-1 hover:brightness-95 transition-all cursor-pointer flex items-center justify-between gap-1",
+      "more_badge": "text-[10px] font-semibold text-slate-500 hover:text-blue-600 px-1 py-0.5 cursor-pointer"
+    },
+    "legend": {
+      "container": "flex flex-wrap items-center gap-4 p-3 bg-white border border-slate-200/80 rounded-xl shadow-sm mt-4 text-xs text-slate-600",
+      "item": "flex items-center gap-1.5",
+      "dot": "w-2.5 h-2.5 rounded-full border"
+    },
+    "upcoming_today_panel": {
+      "container": "w-72 bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex flex-col gap-3",
+      "header": "text-sm font-bold text-slate-900 flex items-center justify-between font-heading",
+      "list": "space-y-2 overflow-y-auto max-h-[500px]",
+      "item": "p-2.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-2xs cursor-pointer"
     }
   },
-  "layout_modules": {
-    "landing_page": {
-      "nav": "Sticky glassmorphism header (bg-white/80 backdrop-blur-md border-b border-slate-200/80) with logo, quick links, ES/CL switch, and CTA",
-      "sections": [
-        "Hero with Lead Form + Audio Wave Simulator",
-        "Trust Metrics Bar (<30s response, 98% lead reach)",
-        "Use Cases Grid (Recepcionista, Captura de Leads, Cobranzas, Agendamiento)",
-        "Free ES/CL Telephony Number Highlights",
-        "How It Works (3 step flow)",
-        "Pricing Table (EUR / CLP Currency Toggle)",
-        "FAQ Accordion",
-        "Final Action Lead Form",
-        "Footer with country support & clean branding"
-      ]
-    },
-    "login_page": {
-      "style": "Split-Screen Modern & Pro",
-      "left_panel": "Dark Slate background (#0F172A) with interactive live voice waveform preview card, real customer testimonial, and Spain/Chile trust badges",
-      "right_panel": "Crisp White container with tabbed Auth (Iniciar Sesión / Registrarse), Google SSO button, float label inputs, and instant loading state"
-    },
-    "dashboard": {
-      "sidebar": "Clean light sidebar (bg-white border-r border-slate-200) with active blue pill highlights and clear icons",
-      "topbar": "Light topbar showing current balance, call minutes indicator, notifications, and profile dropdown",
-      "widgets": "Cardless borders (border border-slate-200 bg-white rounded-xl shadow-xs p-6) for high data clarity"
-    }
-  },
-  "image_urls": {
-    "hero_office": "https://images.unsplash.com/photo-1790597035898-95815872211e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBob25lJTIwY2FsbCUyMGN1c3RvbWVyJTIwb2ZmaWNlfGVufDB8fHx8MTc5MjAyOTU0OHww&ixlib=rb-4.1.0&q=85",
-    "call_center_support": "https://images.unsplash.com/photo-1766066014237-00645c74e9c6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBob25lJTIwY2FsbCUyMGN1c3RvbWVyJTIwb2ZmaWNlfGVufDB8fHx8MTc5MjAyOTU0OHww&ixlib=rb-4.1.0&q=85"
-  },
-  "testing_requirements": {
-    "data_testid_rule": "MANDATORY: All interactive elements, form inputs, submit buttons, tabs, and key metrics must include unique data-testid attributes (e.g. data-testid='login-email-input')."
+  "instructions_to_main_agent": [
+    "Maintain all existing data-testid attributes for testing compatibility (e.g. data-testid='agenda-calendar').",
+    "Replace out-of-hours diagonal striping in TimeGrid with clean soft tint `bg-slate-50/70` and clean hairline borders.",
+    "Implement Google Calendar / Notion soft color aesthetic using rounded surfaces, subtle inner borders, and high contrast typography.",
+    "Use standard interactive states with explicit hover and focus colors.",
+    "Ensure responsiveness on mobile viewports for Day/Week/Month switcher."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": {
+    "no_ai_slop": "Avoid generic centered layouts or muddy gradients.",
+    "data_testids": "All interactive buttons and calendar containers MUST retain data-testid attributes.",
+    "spacing": "Generous inner padding for touch targets and card legibility."
   }
 }

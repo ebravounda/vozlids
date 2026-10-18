@@ -282,6 +282,7 @@ async def worker() -> None:
             if tick % 12 == 3:
                 import reminders
                 await reminders.run_due()
+                await reminders.owner_reminders()
             if tick % 120 == 7:
                 import saas
                 import billing

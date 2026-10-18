@@ -35,11 +35,15 @@ export function hoursBounds(av) {
   return [Math.max(0, Math.floor(lo / 60) - 1), Math.min(24, Math.ceil(hi / 60) + 1)];
 }
 
-export const tone = (a, past) => {
-  if (past) return "border-slate-300 bg-slate-100 text-slate-500";
-  if (a.kind === "callback") return "border-amber-300 bg-amber-50 text-amber-900";
-  if (a.is_sample) return "border-violet-300 bg-violet-50 text-violet-900";
-  if (a.source === "manual") return "border-emerald-300 bg-emerald-50 text-emerald-900";
-  return "border-blue-300 bg-blue-50 text-blue-900";
+export const kindOf = (a, past) => (past ? "past" : a.kind === "callback" ? "callback" : a.is_sample ? "sample" : a.source === "manual" ? "manual" : "ai");
+const TONES = {
+  past: "border-slate-200 border-l-slate-400 bg-slate-100/70 text-slate-500 hover:bg-slate-200/60",
+  callback: "border-amber-200/70 border-l-amber-500 bg-amber-50/90 text-amber-950 hover:bg-amber-100/90",
+  sample: "border-violet-200/70 border-l-violet-600 bg-violet-50/90 text-violet-950 hover:bg-violet-100/90",
+  manual: "border-emerald-200/70 border-l-emerald-600 bg-emerald-50/90 text-emerald-950 hover:bg-emerald-100/90",
+  ai: "border-blue-200/70 border-l-blue-600 bg-blue-50/90 text-blue-950 hover:bg-blue-100/90",
 };
+export const KIND_LABEL = { past: "Pasada", callback: "Rellamada", sample: "Ejemplo", manual: "A mano", ai: "Agente IA" };
+export const tone = (a, past) => TONES[kindOf(a, past)];
+export const chip = (a, past) => TONES[kindOf(a, past)].replace(/border-\S+/g, "").trim();
 export const bar = (a, past) => (past ? "bg-slate-300" : a.kind === "callback" ? "bg-amber-500" : a.is_sample ? "bg-violet-500" : a.source === "manual" ? "bg-emerald-500" : "bg-blue-600");

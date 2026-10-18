@@ -459,7 +459,7 @@ async def update_appointment(appt_id: str, body: ApptPatch, user=CurrentUser):
         raise HTTPException(422, "Nada que cambiar")
     if "start" in upd:
         _slot(upd["start"])
-        upd.update(reminder_sent_at=None, reminder_email_at=None, reminder_call_at=None, confirmed_at=None, reminder_channels=[])
+        upd.update(reminder_sent_at=None, reminder_email_at=None, reminder_call_at=None, owner_hour_at=None, confirmed_at=None, reminder_channels=[])
     try:
         doc = await db.appointments.find_one_and_update({"_id": oid(appt_id), "tenant_id": user["id"]}, {"$set": upd},
                                                         return_document=True)

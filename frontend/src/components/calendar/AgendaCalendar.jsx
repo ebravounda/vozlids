@@ -5,6 +5,7 @@ import { addDays, apptMin, hoursBounds, pad, range, title, ymd } from "@/lib/cal
 import { LeadDetail } from "@/pages/dashboard/LeadDetail";
 import { ApptDialog } from "./ApptDialog";
 import { MonthGrid } from "./MonthGrid";
+import { TodayPanel } from "./TodayPanel";
 import { TimeGrid } from "./TimeGrid";
 import { Legend, Toolbar } from "./Toolbar";
 
@@ -50,9 +51,14 @@ export function AgendaCalendar({ av }) {
       <Toolbar view={view} setView={setView} label={title(view, cursor)} stats={`${count} ${count === 1 ? "cita" : "citas"}${ncb ? ` · ${ncb} ${ncb === 1 ? "rellamada" : "rellamadas"}` : ""}`}
         onPrev={() => setCursor((d) => step(view, d, -1))} onNext={() => setCursor((d) => step(view, d, 1))} onToday={() => setCursor(new Date())}
         onNew={() => setDlg({ create: nextSlot() })} />
-      {view === "month"
-        ? <MonthGrid start={lo} cursor={cursor} appts={appts} onOpen={common.onOpen} onMove={move} onDay={(d) => { setCursor(d); setView("day"); }} />
-        : <TimeGrid start={lo} days={view === "week" ? 7 : 1} {...common} />}
+      <div className="flex gap-4">
+        <div className="min-w-0 flex-1">
+          {view === "month"
+            ? <MonthGrid start={lo} cursor={cursor} appts={appts} onOpen={common.onOpen} onMove={move} onDay={(d) => { setCursor(d); setView("day"); }} />
+            : <TimeGrid start={lo} days={view === "week" ? 7 : 1} {...common} />}
+        </div>
+        <TodayPanel onOpen={common.onOpen} refresh={appts} />
+      </div>
       <Legend />
       <ApptDialog state={dlg} slot={av.slot_minutes} onClose={() => setDlg(null)} onChanged={load} onLead={setLeadId} />
       <LeadDetail id={leadId} onClose={() => setLeadId(null)} />
