@@ -457,8 +457,10 @@ async def check_silent(msg: dict, lead: dict) -> None:
     msgs = (msg.get("artifact") or {}).get("messages") or msg.get("messages") or []
     if secs < 4 or any(m.get("role") == "user" for m in msgs) or any(ended.startswith(x) for x in NOT_SILENT) or "error" in ended:
         return
-    owner = await db.users.find_one({"_id": ObjectId(lead["tenant_id"])}, {"business_name": 1}) if ObjectId.is_valid(lead.get("tenant_id", "")) else None
     bot_spoke = any(m.get("role") in ("bot", "assistant") for m in msgs)
+    if bot_spoke and lead.get("source") == "web_vozleads":
+        return  # web demo is a one-way message: listening in silence is expected
+    owner = await db.users.find_one({"_id": ObjectId(lead["tenant_id"])}, {"business_name": 1}) if ObjectId.is_valid(lead.get("tenant_id", "")) else None
     doc = {"call_id": call.get("id") or lead.get("vapi_call_id"), "lead_id": str(lead["_id"]), "tenant_id": lead.get("tenant_id"),
            "business": (owner or {}).get("business_name", "—"), "phone": lead.get("phone", ""), "direction": lead.get("direction", "saliente"),
            "ended_reason": ended, "seconds": round(secs), "bot_spoke": bot_spoke, "created_at": now_iso()}

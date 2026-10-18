@@ -291,3 +291,4 @@
 - Fix: duración máx. demo 15 → 20 s (el saludo dura ~10 s + espera al "¿Diga?"; se cortaba).
 - Fix: email de solicitud decía "Sí, en curso" aunque no se llamara (tope, sin agente, no_llamar) → CALL_LABELS con el motivo real.
 - Validado payload contra Vapi (201). Preview sin agente demo configurado (Super Admin → Landing) → "sin_agente".
+- Demo web (v2): vapi.is_demo(lead) (source web_vozleads) → habla primero tras 1 s (<break>), no interrumpible, sin detección de buzón, mensaje "Hola {nombre}, te estoy llamando de VozLeads. Esta es una llamada demostrativa…¡Hasta luego!" y cuelga (endCallPhrases); máx 25 s. Las demos no cuentan como "llamadas mudas". Validado contra Vapi (201).

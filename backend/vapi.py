@@ -432,18 +432,22 @@ VOICEMAIL = {"provider": "vapi", "type": "audio", "beepMaxAwaitSeconds": 0,
              "backoffPlan": {"startAtSeconds": 2, "frequencySeconds": 2.5, "maxRetries": 6}}
 
 
+def is_demo(lead: dict) -> bool:
+    return lead.get("source") == "web_vozleads"
+
+
 def build_assistant(agent: dict, lead: dict, today: str) -> dict:
     server = server_cfg()
     who, first, confirm = "", greeting(agent, lead), ""
-    extra = {} if inbound(lead) else {
+    extra = {} if inbound(lead) or is_demo(lead) else {
         "voicemailDetection": VOICEMAIL,
         # Outbound: some carriers report "answered" while the phone still rings, so wait for the person's "¿Diga?".
         "firstMessageMode": "assistant-waits-for-user",
-        "messagePlan": {"idleMessages": [f"¿Hola? ¿Hablo con {confirm_name(lead)}?" if confirm_name(lead) and (lead.get("max_seconds") or 900) > 20 else
+        "messagePlan": {"idleMessages": [f"¿Hola? ¿Hablo con {confirm_name(lead)}?" if confirm_name(lead) else
                                          f"¿Hola? Soy {agent['name']}, de {agent['business_name']}. ¿Me escuchas bien?"],
                         "idleTimeoutSeconds": 5, "idleMessageMaxSpokenCount": 2},
     }
-    if not inbound(lead) and (lead.get("max_seconds") or 900) > 20:
+    if not inbound(lead) and not is_demo(lead):
         who = confirm_name(lead)
         first = f"Hola, ¿hablo con {who}?" if who else first
         rest = GREET_RE.sub("", greeting(agent, lead), count=1)
@@ -451,10 +455,10 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
                    f"«{rest}» sin volver a saludar. Si dice que no es {who}, pregunta con amabilidad si puede ponerse o "
                    f"cuándo es mejor localizarle; si no es posible, discúlpate por la molestia y despídete.\n") if who else ""
     voice = voice_config(agent["voice"], agent.get("country", "ES"))
-    if inbound(lead):
+    if inbound(lead) or is_demo(lead):
         # Phone lines often connect the caller's audio a moment after "answered": wait ~1 s so the greeting isn't cut,
         # and let the caller interrupt it ("¿Diga?") like with a real receptionist.
-        extra = {"firstMessageInterruptionsEnabled": True}
+        extra = {"firstMessageInterruptionsEnabled": not is_demo(lead)}
         if voice["provider"] in ("11labs", "cartesia"):
             first = f'<break time="1s" /> {first}' if voice["provider"] == "11labs" else f'<break time="1s"/> {first}'
             if voice["provider"] == "11labs":
@@ -475,7 +479,7 @@ def build_assistant(agent: dict, lead: dict, today: str) -> dict:
         "backgroundSound": background_sound(agent),
         "silenceTimeoutSeconds": 30,
         "maxDurationSeconds": lead.get("max_seconds") or 900,
-        **({"endCallPhrases": ["hasta luego"]} if (lead.get("max_seconds") or 900) <= 20 else {}),
+        **({"endCallPhrases": ["hasta luego"]} if is_demo(lead) else {}),
         "serverMessages": ["status-update", "end-of-call-report", "tool-calls"],
         "server": server,
         "analysisPlan": analysis_plan(),

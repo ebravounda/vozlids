@@ -13,18 +13,18 @@ from models import Lead, now_iso
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.landing")
-MAX_SECONDS = 20
+MAX_SECONDS = 25
 INTL_DAILY_CAP = 40
 DAILY_CALL_CAP = 20
 CALL_LABELS = {"llamando": "Sí, llamando ahora", "en_curso": "Sí, en curso", "sin_agente": "No: no hay agente de demo configurado",
                "fallida": "No: la llamada falló (revisa Leads)", "no_llamar": "No: el número pidió no ser llamado",
                "limite_diario": "No: tope diario de demos alcanzado", "limite_internacional": "No: tope internacional alcanzado"}
 NO_CALL = ["", "sin_agente", "fallida", "repetida", "limite_internacional", "limite_diario"]
-PURPOSE = ("MUESTRA de 10 a 15 segundos como máximo: {name} pidió escuchar un ejemplo en la web de VozLeads. Ya has dicho el "
-           "saludo con todo lo necesario. Si responde algo, contesta en UNA frase muy corta, despídete con \"¡hasta luego!\" y "
-           "termina la llamada con endCall de inmediato. No hagas preguntas ni des precios.")
-GREETING = ("Hola {nombre}, soy {agente}, de VozLeads. Esta es tu muestra: así de rápido llamaríamos a tus clientes. "
-            "Un asesor te escribirá muy pronto. ¡Hasta luego!")
+PURPOSE = ("LLAMADA DEMOSTRATIVA de unos 20 segundos: {name} pidió en la web de VozLeads escuchar un ejemplo. Ya has dicho el "
+           "mensaje completo. Si responde algo, contesta en UNA frase muy corta, despídete con \"¡hasta luego!\" y termina la "
+           "llamada con endCall de inmediato. No hagas preguntas ni des precios.")
+GREETING = ("Hola {nombre}, te estoy llamando de VozLeads. Esta es una llamada demostrativa: así llamaríamos a tus clientes, "
+            "en segundos y a cualquier hora. Un asesor te escribirá muy pronto. ¡Hasta luego!")
 
 
 def _ago(minutes: int) -> str:
