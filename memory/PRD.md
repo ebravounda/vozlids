@@ -296,3 +296,7 @@
 ## 2026-06 — Recordatorios al dueño + calendario moderno
 - reminders.owner_reminders() (worker cada ~60 s): email "En 1 hora: cita con X" (appointments.owner_hour_at, se resetea al mover la cita) y resumen diario "Tu agenda de hoy" entre 8:00–12:00 hora local (users.agenda_digest_day). Todas las citas (agente y manuales), excluye ejemplos. Si el envío falla, se reintenta. Ya existía el email al agendar (saas.notify_appointment).
 - Calendario "Claro y limpio" (design_guidelines.json): toolbar en tarjeta, eventos con borde izquierdo de color y etiqueta de tipo, fuera de horario gris suave, línea "ahora" con punto, mes con chips de color y contador, leyenda en tarjeta, panel "Próximas citas de hoy" (xl), citas solapadas lado a lado, tabs sin desbordar en móvil. iteration_33 + fixes.
+
+## 2026-06 — Demo: número del dueño sin límites + voz Jessica
+- security_admin.OWNER_PHONES = {"34600850506"}: nunca bloqueado (blocked_phone/guard_public), sin límite por IP, sin "repetida", sin topes diarios/internacionales; info_requests.owner_test=True (no cuenta en topes ni envía email de solicitud).
+- Demo web siempre con voz e_jessica (ElevenLabs HD), nombre Jessica, sin rotación de ejecutivos; keep_voice evita la bajada por plan (plan_limits.effective_agent).

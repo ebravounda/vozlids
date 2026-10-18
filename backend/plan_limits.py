@@ -78,7 +78,7 @@ async def effective_agent(agent: dict) -> dict:
     lim = await for_tenant(agent["tenant_id"])
     out = dict(agent)
     v = agent.get("voice", "")
-    if not lim["premium_voices"] and (v in vapi.ELEVEN or v in vapi.STATE["custom_voices"]):
+    if not lim["premium_voices"] and not agent.get("keep_voice") and (v in vapi.ELEVEN or v in vapi.STATE["custom_voices"]):
         custom = vapi.STATE["custom_voices"].get(v)
         female = custom["gender"] == "Mujer" if custom else v in vapi.FEMALE
         cl = agent.get("country") == "CL"

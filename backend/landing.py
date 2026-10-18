@@ -14,6 +14,7 @@ from models import Lead, now_iso
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.landing")
 MAX_SECONDS = 25
+DEMO_VOICE = "e_jessica"
 INTL_DAILY_CAP = 40
 DAILY_CALL_CAP = 20
 CALL_LABELS = {"llamando": "Sí, llamando ahora", "en_curso": "Sí, en curso", "sin_agente": "No: no hay agente de demo configurado",
@@ -58,7 +59,8 @@ async def _call(agent: dict, name: str, phone: str) -> str:
     doc = lead.to_mongo()
     res = await db.leads.insert_one(doc)
     doc["_id"] = res.inserted_id
-    await S.dial({**agent, "business_name": "VozLeads"}, doc)
+    # First impression: always Jessica (ultra-realistic HD voice), no executive rotation, never downgraded by plan.
+    await S.dial({**agent, "business_name": "VozLeads", "name": "Jessica", "voice": DEMO_VOICE, "executives": [], "keep_voice": True}, doc)
     return (await db.leads.find_one({"_id": res.inserted_id}))["status"]
 
 
@@ -77,7 +79,7 @@ def client_ip(request: Request) -> str:
 
 
 async def daily_cap_reached() -> bool:
-    n = await db.info_requests.count_documents({"created_at": {"$gt": _ago(24 * 60)}, "call_status": {"$nin": NO_CALL}})
+    n = await db.info_requests.count_documents({"created_at": {"$gt": _ago(24 * 60)}, "call_status": {"$nin": NO_CALL}, "owner_test": {"$ne": True}})
     return n >= DAILY_CALL_CAP
 
 
@@ -99,25 +101,26 @@ async def info_request(body: InfoIn, request: Request):
     import security_admin as SEC
     ip = client_ip(request)
     await SEC.guard_public(phone, ip=ip, cf_country=request.headers.get("cf-ipcountry", ""))
-    if ip and await db.info_requests.count_documents({"ip": ip, "created_at": {"$gt": _ago(10)}}) >= 3:
+    owner = SEC.is_owner_phone(phone)
+    if not owner and ip and await db.info_requests.count_documents({"ip": ip, "created_at": {"$gt": _ago(10)}, "owner_test": {"$ne": True}}) >= 3:
         raise HTTPException(429, "Ya hemos recibido tus datos. Inténtalo de nuevo en unos minutos.")
     name = " ".join(body.name.split())
     req = {"name": name, "phone": phone, "country": body.country, "page": body.page, "ip": ip, "created_at": now_iso(), "call_status": "",
-           "intl": body.country not in COUNTRIES}
-    repeated = await db.info_requests.find_one({"phone": phone, "created_at": {"$gt": _ago(24 * 60)}})
+           "intl": body.country not in COUNTRIES, "owner_test": owner}
+    repeated = None if owner else await db.info_requests.find_one({"phone": phone, "created_at": {"$gt": _ago(24 * 60)}})
     cfg = await settings()
     market = body.country if body.country in COUNTRIES else "ES"
     agent = await _agent(cfg.get(f"agent_{market.lower()}", ""))
     intl = market != body.country
     if repeated:
         req["call_status"] = "repetida"
-    elif await daily_cap_reached():
+    elif not owner and await daily_cap_reached():
         req["call_status"] = "limite_diario"
         import monitor
         await monitor.notify("demo_cap", f"Tope diario de {DAILY_CALL_CAP} llamadas de prueba alcanzado",
                              [("Qué pasa", "Las nuevas solicitudes de la web se guardan pero no se llama"),
                               ("Se reanuda", "Automáticamente cuando pasen 24 h desde las primeras llamadas")], every_hours=24)
-    elif intl and await db.info_requests.count_documents({"intl": True, "created_at": {"$gt": _ago(24 * 60)}}) >= INTL_DAILY_CAP:
+    elif not owner and intl and await db.info_requests.count_documents({"intl": True, "created_at": {"$gt": _ago(24 * 60)}}) >= INTL_DAILY_CAP:
         req["call_status"] = "limite_internacional"
     elif agent and agent.get("active") and agent.get("country", "ES") == market:
         try:
@@ -128,7 +131,7 @@ async def info_request(body: InfoIn, request: Request):
     else:
         req["call_status"] = "sin_agente"
     await db.info_requests.insert_one(req)
-    if not repeated:
+    if not repeated and not owner:
         await _notify(cfg, req)
     return {"ok": True, "calling": req["call_status"] in ("llamando", "en_curso"), "repeated": bool(repeated)}
 

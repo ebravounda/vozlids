@@ -29,9 +29,16 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+OWNER_PHONES = {"34600850506"}  # platform owner's test number: never blocked or rate-limited
+
+
+def is_owner_phone(phone: str) -> bool:
+    return _digits(phone) in OWNER_PHONES
+
+
 async def blocked_phone(phone: str) -> dict | None:
     d = _digits(phone)
-    if len(d) < 6:
+    if len(d) < 6 or d in OWNER_PHONES:
         return None
     return await db.blocklist.find_one({"kind": "phone", "value": d, "$or": [{"expires_at": None}, {"expires_at": {"$gt": _now()}}]})
 
@@ -87,6 +94,8 @@ async def ip_country(ip: str, header: str = "") -> str:
 
 async def guard_public(phone: str = "", email: str = "", ip: str = "", cf_country: str = "") -> None:
     """For demos/forms/widget: raise if blocked; auto-block a phone that floods requests."""
+    if phone and is_owner_phone(phone):
+        return
     if await blocked_ip(ip):
         raise HTTPException(403, BLOCKED_MSG)
     banned = set((await country_cfg())["countries"])
