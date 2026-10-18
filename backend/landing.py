@@ -13,9 +13,12 @@ from models import Lead, now_iso
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("vozlead.landing")
-MAX_SECONDS = 15
+MAX_SECONDS = 20
 INTL_DAILY_CAP = 40
 DAILY_CALL_CAP = 20
+CALL_LABELS = {"llamando": "Sí, llamando ahora", "en_curso": "Sí, en curso", "sin_agente": "No: no hay agente de demo configurado",
+               "fallida": "No: la llamada falló (revisa Leads)", "no_llamar": "No: el número pidió no ser llamado",
+               "limite_diario": "No: tope diario de demos alcanzado", "limite_internacional": "No: tope internacional alcanzado"}
 NO_CALL = ["", "sin_agente", "fallida", "repetida", "limite_internacional", "limite_diario"]
 PURPOSE = ("MUESTRA de 10 a 15 segundos como máximo: {name} pidió escuchar un ejemplo en la web de VozLeads. Ya has dicho el "
            "saludo con todo lo necesario. Si responde algo, contesta en UNA frase muy corta, despídete con \"¡hasta luego!\" y "
@@ -55,7 +58,7 @@ async def _call(agent: dict, name: str, phone: str) -> str:
     doc = lead.to_mongo()
     res = await db.leads.insert_one(doc)
     doc["_id"] = res.inserted_id
-    await S.dial(agent, doc)
+    await S.dial({**agent, "business_name": "VozLeads"}, doc)
     return (await db.leads.find_one({"_id": res.inserted_id}))["status"]
 
 
@@ -63,7 +66,7 @@ async def _notify(cfg: dict, req: dict) -> None:
     to = cfg.get("notify_email") or ((await db.users.find_one({"role": "admin"}, {"email": 1})) or {}).get("email", "")
     await emailer.send(to, f"Nueva solicitud de información: {req['name']}", "Alguien ha pedido información en la web", [
         ("Nombre", req["name"]), ("Teléfono", req["phone"]), ("País", (COUNTRIES.get(req["country"]) or {}).get("name", req["country"])),
-        ("Página", req["page"]), ("Llamada IA", "Sí, en curso" if req["call_status"] not in ("", "sin_agente", "fallida") else "No")])
+        ("Página", req["page"]), ("Llamada IA", CALL_LABELS.get(req["call_status"], req["call_status"] or "No"))])
 
 
 def client_ip(request: Request) -> str:

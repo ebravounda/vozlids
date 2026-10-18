@@ -285,3 +285,9 @@
 - Revisión: /api/v1/docs y openapi.json solo exponen los 15 endpoints públicos (19 operaciones) con X-API-Key; sin claves, emails, IPs ni rutas internas. Swagger se mantiene como "Probar en vivo".
 - Endurecido: FastAPI interno (server.py) sin docs/redoc/openapi (docs_url=None…), antes accesible en :8001/docs.
 - Nueva página pública /desarrolladores (pages/ApiDocs.jsx + components/apidocs/*): hero, guías (inicio rápido cURL/Python/Node, autenticación, webhooks con payload real y verificación HMAC, errores/límites) y referencia generada desde openapi.json. Enlaces: nav "API", menú móvil, footer, botón en bloque API del landing.
+
+## 2026-06 — Revisión llamada demo del landing
+- Fix: la frase de "¿me escuchas?" usaba el nombre del negocio del agente (p. ej. OpenFactura.es) → la demo fuerza business_name "VozLeads".
+- Fix: duración máx. demo 15 → 20 s (el saludo dura ~10 s + espera al "¿Diga?"; se cortaba).
+- Fix: email de solicitud decía "Sí, en curso" aunque no se llamara (tope, sin agente, no_llamar) → CALL_LABELS con el motivo real.
+- Validado payload contra Vapi (201). Preview sin agente demo configurado (Super Admin → Landing) → "sin_agente".
