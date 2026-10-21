@@ -7,6 +7,7 @@ import { SubjectActions } from "@/components/PrivacyParts";
 import { API, api } from "@/lib/api";
 import { fmtDate, fmtSlot } from "@/lib/constants";
 import { cap } from "@/lib/cal";
+import { LangFlag } from "@/components/LangFlag";
 
 const Score = ({ value }) => (
   <div data-testid="lead-interest-score">
@@ -76,8 +77,10 @@ export const LeadDetail = ({ id, onClose }) => {
                 <span className="font-mono">{lead.phone}</span>
                 {lead.email && <span>{lead.email}</span>}
                 <StatusBadge status={lead.status} testid="lead-detail-status" />
+                <LangFlag lang={lead.language} phone={lead.phone} withName testid="lead-detail-language" />
               </div>
               <p className="text-left text-xs text-slate-500">Agente {lead.agent_name}{lead.executive && lead.executive !== lead.agent_name ? ` (habló ${lead.executive})` : ""} · {fmtDate(lead.created_at)}{lead.duration_seconds ? ` · ${Math.round(lead.duration_seconds)} s` : ""}{lead.is_sample ? " · Ejemplo" : ""}</p>
+              {lead.memory_calls > 0 && <p className="text-left text-xs text-blue-500" data-testid="lead-memory-note">El agente recordó {lead.memory_calls === 1 ? "1 llamada anterior" : `${lead.memory_calls} llamadas anteriores`} con este número</p>}
             </SheetHeader>
             {lead.error && (
               <div className="flex gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200" data-testid="lead-error">

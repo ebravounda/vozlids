@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Panel } from "@/components/Common";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
@@ -143,6 +144,10 @@ export const ScriptTab = ({ agent, update }) => {
           <Label>Instrucciones adicionales (opcional)</Label>
           <Textarea rows={4} value={agent.extra_instructions} onChange={(e) => update({ extra_instructions: e.target.value })} data-testid="agent-extra-input" className="bg-slate-950/60" placeholder="Ej.: si preguntan por aparcamiento, di que hay parking gratuito en la puerta." />
         </div>
+        <label className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 p-4" data-testid="agent-memory-row">
+          <span><span className="block text-sm font-semibold">Memoria de llamadas</span><span className="block text-xs text-slate-500">Si la persona ya habló con tu empresa, el agente recuerda sus últimas 3 llamadas y lo menciona con naturalidad («la otra vez hablamos de…»).</span></span>
+          <Switch checked={agent.memory !== false} onCheckedChange={(v) => update({ memory: v })} data-testid="agent-memory-switch" />
+        </label>
       </Panel>
       <Panel className="space-y-3">
         <Label>Preguntas de calificación</Label>

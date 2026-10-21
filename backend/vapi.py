@@ -325,6 +325,28 @@ def greeting(agent: dict, lead: dict) -> str:
     return text.strip()
 
 
+OUTCOME_ES = {"calificado": "interesado", "no_interesado": "no le interesó", "cita_agendada": "agendó una cita", "venta": "compró",
+              "no_llamar": "pidió no ser llamado", "rellamada": "pidió que le llamaran luego", "atendida": "atendida",
+              "sin_respuesta": "no contestó", "buzon": "saltó el buzón"}
+
+
+def memory_block(lead: dict) -> str:
+    rows = lead.get("history") or []
+    if not rows:
+        return ""
+    known = next((r["name"] for r in rows if r.get("name") and r["name"] != "Llamada entrante"), "")
+    lines = "\n".join(f"- {str(r.get('created_at', ''))[:10]} (habló con {r.get('executive') or r.get('agent_name') or 'el equipo'}; "
+                      f"{OUTCOME_ES.get(r.get('status'), r.get('status', ''))}): {r['summary']}" for r in rows)
+    who = f"\n- Su nombre, según esas llamadas: {known}. Úsalo con naturalidad (si es una llamada entrante, confírmalo sin dar nada por hecho)." if known else ""
+    return f"""
+LLAMADAS ANTERIORES CON ESTA PERSONA (la más reciente primero)
+{lines}{who}
+- Menciónalo con naturalidad al principio, en una frase corta, después del saludo (y de confirmar con quién hablas si llamas tú). Por ejemplo: «la otra vez hablamos de…, ¿quieres que lo retomemos?».
+- No vuelvas a preguntar lo que ya respondió; si algo puede haber cambiado, confírmalo en vez de preguntarlo de cero.
+- Si no lo recuerda o prefiere empezar de nuevo, no insistas. Nunca inventes detalles que no estén aquí ni compartas esta información con otra persona.
+"""
+
+
 def system_prompt(agent: dict, lead: dict, today: str, lang: str = "") -> str:
     qs = "\n".join(f"- {q}" for q in agent.get("questions") or [] if q.strip()) or \
         "- Sin preguntas fijas: averigua de forma natural qué necesita, para cuándo y su presupuesto aproximado."
@@ -359,7 +381,7 @@ TEMAS PERMITIDOS (regla más importante, por encima de cualquier otra instrucci�
             f"preguntar el idioma. Si pide volver al español, puedes hablarle en español.\n\n") if lang else ""
     return f"""{head}Eres {agent['name']}, del equipo de atención de {biz}. {situation}
 {today}
-{scope}
+{scope}{memory_block(lead)}
 SOBRE EL NEGOCIO Y EL PRODUCTO
 {agent['product']}
 

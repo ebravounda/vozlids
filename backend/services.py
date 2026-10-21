@@ -155,6 +155,20 @@ async def pick_executive(agent: dict) -> dict:
             "other_names": [agent["name"]] + [x["name"] for x in team if x["name"] != e["name"]]}
 
 
+async def attach_history(agent: dict, lead: dict) -> dict:
+    """Last 3 calls of the same business with this phone number, so the agent can pick up where it left off."""
+    phone = lead.get("phone") or ""
+    if not agent.get("memory", True) or not phone.startswith("+") or vapi.is_demo(lead) or lead.get("is_test"):
+        return lead
+    rows = await db.leads.find({"tenant_id": lead["tenant_id"], "phone": phone, "_id": {"$ne": lead["_id"]},
+                                "summary": {"$nin": ["", None]}},
+                               {"summary": 1, "created_at": 1, "status": 1, "name": 1, "agent_name": 1, "executive": 1}
+                               ).sort("created_at", -1).to_list(3)
+    if rows:
+        await db.leads.update_one({"_id": lead["_id"]}, {"$set": {"memory_calls": len(rows)}})
+    return {**lead, "history": rows}
+
+
 async def dial(agent: dict, lead: dict):
     lid = lead["_id"]
     country = agent.get("country", "ES")
@@ -177,7 +191,7 @@ async def dial(agent: dict, lead: dict):
     import plan_limits as PL
     agent = await PL.effective_agent(await pick_executive(agent))
     try:
-        call_id = await vapi.create_call(agent, lead, today_text(country), own)
+        call_id = await vapi.create_call(agent, await attach_history(agent, lead), today_text(country), own)
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",
                                                           "voice_provider": vapi.voice_provider(agent["voice"]),
                                                           "executive": agent.get("executive", ""),
@@ -211,7 +225,7 @@ async def language_handoff(msg: dict, lead) -> dict:
         return {"error": "No se pudo cambiar de idioma. Sigue atendiendo en español."}
     import plan_limits as PL
     agent = await PL.effective_agent(agent)
-    a = vapi.build_language_assistant(agent, lead, today_text(agent.get("country", "ES")), lang)
+    a = vapi.build_language_assistant(agent, await attach_history(agent, lead), today_text(agent.get("country", "ES")), lang)
     if not a:
         return {"error": "Ese idioma no está disponible. Sigue atendiendo en español."}
     voice = next(e["voice"] for e in agent["languages"] if e["lang"] == lang)

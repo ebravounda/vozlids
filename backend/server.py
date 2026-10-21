@@ -210,6 +210,7 @@ class AgentIn(BaseModel):
     extra_instructions: str = Field("", max_length=2000)
     executives: List[Executive] = Field(default=[], max_length=5)
     languages: List[LangExec] = Field(default=[], max_length=6)
+    memory: bool = True
     active: bool = True
 
 
@@ -355,8 +356,10 @@ async def public_lead(agent_id: str, body: PublicLeadIn, request: Request):
 # ---------- Leads ----------
 @api.get("/leads")
 async def list_leads(status: Optional[str] = None, q: Optional[str] = None, agent_id: Optional[str] = None,
-                     user=CurrentUser):
+                     language: Optional[str] = None, user=CurrentUser):
     flt = {"tenant_id": user["id"]}
+    if language:
+        flt["language"] = {"$in": [None, "", "es"]} if language == "es" else language
     if status:
         flt["status"] = status
     if agent_id:

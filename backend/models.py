@@ -43,6 +43,7 @@ class Agent(BaseDocument):
     extra_instructions: str = ""
     executives: List[dict] = []
     languages: List[dict] = []
+    memory: bool = True
     active: bool = True
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)
@@ -54,6 +55,8 @@ class Lead(BaseDocument):
     agent_id: str
     agent_name: str = ""
     executive: str = ""
+    language: str = ""
+    memory_calls: int = 0
     name: str
     phone: str
     email: str = ""
