@@ -104,9 +104,9 @@ export const LIB_ACCENTS = {
   es: [["", "España y Chile"], ["peninsular", "España"], ["chilean", "Chileno"], ["argentine", "Argentino"], ["mexican", "Mexicano"], ["colombian", "Colombiano"], ["peruvian", "Peruano"], ["venezuelan", "Venezolano"], ["latin american", "Latino neutro"]],
   en: [["", "Cualquiera"], ["american", "Americano"], ["british", "Británico"], ["australian", "Australiano"]],
   pt: [["", "Cualquiera"], ["brazilian", "Brasileño"], ["european", "Portugal"]],
-  fr: [["", "Cualquiera"]], it: [["", "Cualquiera"]], de: [["", "Cualquiera"]],
+  fr: [["", "Cualquiera"]], it: [["", "Cualquiera"]], de: [["", "Cualquiera"]], ca: [["", "Cualquiera"]],
 };
-const LIB_LANGS = [["es", "Español"], ["en", "Inglés"], ["pt", "Portugués"], ["fr", "Francés"], ["it", "Italiano"], ["de", "Alemán"]];
+const LIB_LANGS = [["es", "Español"], ["en", "Inglés"], ["pt", "Portugués"], ["fr", "Francés"], ["it", "Italiano"], ["de", "Alemán"], ["ca", "Catalán"]];
 
 function LibraryVoice({ v, f, onAdded, playing, setPlaying }) {
   const [name, setName] = useState(v.name.split(/[ -]/)[0].slice(0, 30));

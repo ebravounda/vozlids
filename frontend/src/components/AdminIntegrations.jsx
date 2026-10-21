@@ -223,7 +223,7 @@ export function GoogleSettings() {
 }
 
 const EMPTY = { name: "", gender: "Mujer", language: "es", accent: "", voice_id: "", tone: "" };
-export const VOICE_LANGS = [["es", "Español"], ["en", "Inglés"], ["pt", "Portugués"], ["fr", "Francés"], ["it", "Italiano"], ["de", "Alemán"]];
+export const VOICE_LANGS = [["es", "Español"], ["en", "Inglés"], ["pt", "Portugués"], ["fr", "Francés"], ["it", "Italiano"], ["de", "Alemán"], ["ca", "Catalán"]];
 
 export function CustomVoices() {
   const [items, setItems] = useState([]);

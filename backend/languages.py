@@ -32,8 +32,9 @@ LANG_VOICES = {
     "it_elsa": ("it", "it-IT-ElsaNeural", True), "it_diego": ("it", "it-IT-DiegoNeural", False),
     "de_katja": ("de", "de-DE-KatjaNeural", True), "de_conrad": ("de", "de-DE-ConradNeural", False),
 }
-# ElevenLabs Flash v2.5 does not speak Catalan.
-ELEVEN_LANGS = {"es", "en", "pt", "fr", "it", "de"}
+ELEVEN_LANGS = {"es", "en", "pt", "fr", "it", "de", "ca"}
+# Flash v2.5 does not speak Catalan: use the newer multilingual turbo model for it.
+ELEVEN_MODEL = {"ca": "eleven_v4_turbo"}
 
 
 def azure_fallback(lang: str, female: bool) -> str:

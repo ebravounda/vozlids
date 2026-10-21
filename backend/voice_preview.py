@@ -35,7 +35,7 @@ def eleven_voice_id(voice: str) -> str:
 
 
 async def eleven_tts(key: str, voice_id: str, text: str, lang: str = "es") -> bytes:
-    v = vapi.eleven_voice(voice_id)
+    v = vapi.eleven_voice(voice_id, lang)
     body = {"text": text, "model_id": v["model"], "language_code": lang,
             "voice_settings": {"stability": v["stability"], "similarity_boost": v["similarityBoost"], "style": v["style"],
                                "use_speaker_boost": v["useSpeakerBoost"], "speed": v["speed"]}}
@@ -332,7 +332,7 @@ class LibraryAddIn(BaseModel):
     gender: str = Field(pattern="^(Mujer|Hombre)$")
     country: str = Field("ES", pattern="^(ES|CL)$")
     tone: str = Field("", max_length=80)
-    language: str = Field("es", pattern=r"^(es|en|pt|fr|it|de)$")
+    language: str = Field("es", pattern=r"^(es|en|pt|fr|it|de|ca)$")
     accent: str = Field("", max_length=30)
 
 

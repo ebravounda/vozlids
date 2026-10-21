@@ -70,7 +70,7 @@ export const LANGUAGES = {
   it: { name: "Italiano", native: "Italiano", sample: "Ciao! Sono {n}. Come posso aiutarla?" },
   de: { name: "Alemán", native: "Deutsch", sample: "Hallo! Ich bin {n}. Wie kann ich Ihnen helfen?" },
 };
-export const ELEVEN_LANGS = ["es", "en", "pt", "fr", "it", "de"];
+export const ELEVEN_LANGS = ["es", "en", "pt", "fr", "it", "de", "ca"];
 
 const lv = (id, name, gender, accent, tone) => ({ id, name, gender, accent, tone, lang: id.slice(0, 2) });
 export const LANG_VOICES = [

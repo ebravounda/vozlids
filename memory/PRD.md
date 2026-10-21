@@ -345,3 +345,7 @@
 
 ## 2026-06 · Landing: sección multi-idioma
 - components/landing/Multilang.jsx (#idiomas, after Voces, nav link "Idiomas"): copy about native executives per language, 15 accent chips, interactive call mock with 6 language tabs (auto-rotates; click stops) showing ask → reply → handoff → native greeting. AgentTeam copy mentions accents + languages.
+
+## 2026-06 · Escuchar cada idioma + catalán HD
+- Landing Multilang demo: "Escuchar" button plays a mini call (Marta question es-ES → customer → native exec) from static files /frontend/public/demo/lang/{q,c,r}_{lang}.mp3 (generated once with edge-tts, free; no credits per play). Speaking bubble highlighted; tab change stops audio. English exec renamed Jenny.
+- Catalan HD: languages.ELEVEN_LANGS includes "ca"; ELEVEN_MODEL {"ca": "eleven_v4_turbo"} (Vapi supports it; preview verified via ElevenLabs API; NOT verified in a live call). Super admin custom voices + library search accept Catalán.

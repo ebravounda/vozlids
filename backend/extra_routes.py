@@ -115,7 +115,7 @@ class CustomVoiceIn(BaseModel):
     country: str = Field("ES", pattern=r"^(ES|CL)$")
     voice_id: str = Field(pattern=r"^[A-Za-z0-9]{10,40}$")
     tone: str = Field("", max_length=60)
-    language: str = Field("es", pattern=r"^(es|en|pt|fr|it|de)$")
+    language: str = Field("es", pattern=r"^(es|en|pt|fr|it|de|ca)$")
     accent: str = Field("", max_length=30)
 
 
