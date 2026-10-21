@@ -58,7 +58,9 @@ function Detail({ r, onClose, reload }) {
 
 export function AdminKyc() {
   const [rows, setRows] = useState([]);
-  const [open, setOpen] = useState(null);
+  const [openId, setOpenId] = useState(null);
+  const open = rows.find((r) => r.tenant_id === openId);
+  const setOpen = (r) => setOpenId(r ? r.tenant_id : null);
   const load = () => api.get("/admin/kyc").then((r) => setRows(r.data)).catch(() => {});
   useEffect(() => { load(); }, []);
   const pending = rows.filter((r) => r.status === "pendiente").length;
@@ -71,7 +73,7 @@ export function AdminKyc() {
       <p className="text-xs text-slate-400">Cada cliente sube sus datos y las fotos de su documento. Al aprobar, se crea su grupo de documentos en Zadarma y sus números se compran a su nombre. Sin documentos aprobados no se compran números nuevos.</p>
       {!rows.length && <p className="text-sm text-slate-500" data-testid="admin-kyc-empty">Aún no hay clientes con verificación.</p>}
       {rows.map((r) => {
-        const [l, c] = KYC_ST[r.status] || KYC_ST.sin_enviar;
+        const [l, c] = r.status === "error" ? ["Error con Zadarma", "bg-rose-100 text-rose-800"] : KYC_ST[r.status] || KYC_ST.sin_enviar;
         return (
           <button key={r.tenant_id} type="button" onClick={() => setOpen(r)} className="flex w-full flex-wrap items-center gap-3 rounded-xl border border-slate-800 p-3 text-left text-sm hover:border-slate-600" data-testid={`admin-kyc-row-${r.tenant_id}`}>
             <span className="min-w-0 flex-1"><span className="block text-white">{r.business}</span><span className="text-xs text-slate-500">{r.country} · {r.first_name ? `${r.first_name} ${r.last_name}` : "sin datos"}{r.submitted_at ? ` · enviado ${fmtDate(r.submitted_at)}` : ""}</span></span>

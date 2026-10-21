@@ -323,3 +323,14 @@
 - Custom voices: language + accent fields; ElevenLabs library search by language + accent (Argentino, Mexicano, Colombiano, Peruano, Venezolano, Americano, Británico, Brasileño…).
 - Voice preview supports ?lang=.
 - NOT verified with a real Vapi call (preview Vapi key is 401): handoff tool schema accepted only via docs.
+
+## 2026-06 · Idioma en leads + Memoria de llamadas (iteration_36 PASS)
+- Lead.language (set on handoff) + memory_calls. GET /api/leads?language=es|en|… filter; Leads table "Idioma" column with flag (LangFlag.jsx; ES/CL by phone prefix, Catalan CSS flag); LeadDetail shows language + "El agente recordó N llamadas anteriores".
+- Agent.memory (switch in tab Guion, default on). services.attach_history: last 3 leads of the same tenant + phone with a summary → vapi.memory_block in system prompt (dates, outcome, summary, known name; mention naturally). Applied to outbound dial, inbound assistant-request and language handoff. Skipped for demo/test calls.
+
+## 2026-06 · KYC: titular de cada línea (iteration_37 PASS 20/20)
+- kyc.py: client fills data (persona/empresa, ID type per country ES: DNI/NIE/PASSPORT, CL: NATIONAL_ID_CARD/PASSPORT, address, contact) and uploads photos (id_front/id_back or passport; company_cert for empresa) to object storage (client-side shrink to 1800px JPEG). Legal notice per country (ES Ley 11/2022, CL Ley 18.168/Subtel; orientative text). Submit → pendiente → admin email.
+- Super admin "Documentos de los titulares" (AdminKyc.jsx): view data + images, Approve → Zadarma documents group create + upload (only required files) → enviado_zadarma; Reject with reason → client email; "Comprobar en Zadarma" (groups/valid) → verificado.
+- Clients with an active line get 30-day deadline + banner (line keeps working). provision() for non-admin tenants without approved KYC → status pendiente_documentos (no purchase); approving KYC auto-provisions waiting numbers using the client's group.
+- Docs kept in VozLeads (admin + owner only); kyc deleted with account. Gateway errors now use 424 instead of 502 (ingress replaced 502 bodies).
+- Pending: WhatsApp follow-up after calls (explained to user: Meta WhatsApp Cloud API or Twilio, templates required).

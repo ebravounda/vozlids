@@ -59,9 +59,17 @@ export function KycPanel() {
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const run = async (key, fn) => { setBusy(key); try { const r = await fn(); setD(r.data); return true; } catch (e) { toast.error(errMsg(e)); return false; } finally { setBusy(""); } };
   const body = () => Object.fromEntries(["kind", "nationality", "id_type", "organization", "organization_reg_number", ...FIELDS.map(([k]) => k)].map((k) => [k, (f[k] || "").trim()]));
-  const save = () => run("save", () => api.put("/kyc", body())).then((ok) => ok && toast.success("Datos guardados"));
+  const missing = () => {
+    const b = body();
+    const miss = FIELDS.filter(([k]) => k !== "zip_code" && !b[k]).map(([, l]) => l);
+    if (!/^[A-Z]{2}$/.test(b.nationality)) miss.push("Nacionalidad (2 letras)");
+    if (b.kind === "empresa" && (!b.organization || !b.organization_reg_number)) miss.push("Empresa y su RUT/CIF");
+    if (miss.length) toast.error(`Completa: ${miss.join(", ")}`);
+    return miss.length > 0;
+  };
+  const save = () => !missing() && run("save", () => api.put("/kyc", body())).then((ok) => ok && toast.success("Datos guardados"));
   const upload = (type, file) => { const fd = new FormData(); fd.append("file", file); return run(type, () => api.post(`/kyc/files?type=${type}`, fd)); };
-  const submit = async () => { if (await run("save", () => api.put("/kyc", body())) && await run("submit", () => api.post("/kyc/submit"))) toast.success("Documentos enviados. Te avisaremos por email."); };
+  const submit = async () => { if (missing()) return; if (await run("save", () => api.put("/kyc", body())) && await run("submit", () => api.post("/kyc/submit"))) toast.success("Documentos enviados. Te avisaremos por email."); };
   const need = f.id_type === "PASSPORT" ? ["passport"] : ["id_front", "id_back"];
   const files = [...need, ...(f.kind === "empresa" ? ["company_cert"] : [])];
   return (

@@ -253,7 +253,7 @@ async def hangup(cid: str, user=Depends(require_admin)):
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(url, json={"type": "end-call"}, headers=vapi._headers())
     if r.status_code >= 400:
-        raise HTTPException(502, f"Vapi no pudo colgar la llamada ({r.status_code}).")
+        raise HTTPException(424, f"Vapi no pudo colgar la llamada ({r.status_code}).")
     await db.leads.update_one({"vapi_call_id": cid}, {"$set": {"ended_by_admin": True, "updated_at": now_iso()}})
     return {"ok": True}
 
@@ -288,7 +288,7 @@ async def _control(cid: str, payload: dict) -> None:
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(url, json=payload, headers=vapi._headers())
     if r.status_code >= 400:
-        raise HTTPException(502, f"Vapi rechazó la orden ({r.status_code}): {r.text[:160]}")
+        raise HTTPException(424, f"Vapi rechazó la orden ({r.status_code}): {r.text[:160]}")
 
 
 @router.post("/admin/monitor/calls/{cid}/say")

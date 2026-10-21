@@ -1,0 +1,43 @@
+{
+  "summary": "Tested KYC (identity documents for client lines) end to end. Backend: 20/20 pytest pass. This covers GET/PUT/upload/submit/lock, the admin list, files, reject, approve and check, the 403 for non-admins, the overdue flag, the ES/CL notices and ID types, the 30-day deadline, and the provisioning gate. UI was tested with Playwright on desktop and mobile. It covers the client panel, banner, save, uploads (images shrunk to 1800px JPEG), submit, the locked note, the rejected state with its reason and resubmit, and the passport switch. It also covers the admin panel: rows, pending count, a dialog with both images, reject validation and reject. Everything works except one integration problem. A Zadarma failure on approve returns HTTP 502, and the preview Cloudflare ingress replaces the 502 body with its own HTML page. So the admin sees a Cloudflare/English message instead of the Spanish detail ('Falta conectar la API de Zadarma en Super admin.').",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/admin/kyc/{tid}/approve and /check", "issue": "Uses HTTPException(502). The ingress swaps 502 bodies for a Cloudflare HTML page, so the detail is lost. The DB is updated correctly (status=error, zadarma_status set). Use a non-gateway code such as 400, 409 or 424 so the message reaches the UI. 8 other HTTPException(502) uses in the backend have the same problem."},
+      {"endpoint": "POST /api/admin/kyc/{tid}/approve", "issue": "Approve uploads ALL stored files to Zadarma, including stale ones. Example: a client resubmits with PASSPORT after a DNI attempt and still has id_front, id_back and passport stored. Upload only the files in required_files(doc), or delete files that are no longer needed when id_type or kind changes."},
+      {"endpoint": "PUT /api/kyc (and the submit button)", "issue": "Missing fields return raw English Pydantic messages ('String should have at least 1 character' repeated 8 times), which show up as the toast in the Spanish UI. Add client-side required-field checks or Spanish validation messages."},
+      {"endpoint": "GET /api/leads", "issue": "From iter36, still open: a lead with language=null makes the list return 500 (test_null_language_does_not_500 still fails)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Admin approve with Zadarma not connected", "issue": "The toast shows 'The origin web server returned an invalid or incomplete response to Cloudflare...' instead of the backend's Spanish detail, because of the 502 status code.", "affected_selectors": ["[data-testid='admin-kyc-approve']"]},
+      {"flow": "Admin dialog after approve error", "issue": "The Detail dialog keeps the stale `open` row after reload(), so the 'Zadarma' line does not show the new zadarma_status error until the dialog is closed and reopened. Minor.", "affected_selectors": ["[data-testid='admin-kyc-dialog']"]}
+    ],
+    "design_issues": [
+      {"screen": "Admin KYC list", "issues": ["Rows with status 'error' (Zadarma failed) show the same 'En revisión' badge as pending ones, so the admin can't tell which ones failed. Consider an 'Error Zadarma' badge."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter37_kyc.py", "/app/backend/tests/iter37_ui_setup.py", "/app/test_reports/pytest/iter37.xml"],
+  "action_items": [
+    "Change HTTPException(502) in kyc.py approve/check (and ideally the other 502 uses) to a non-gateway code, e.g. 424 or 400, so the Spanish error reaches the UI.",
+    "In approve, upload only the files in required_files(doc), so stale DNI photos are not sent after switching to passport.",
+    "Show Spanish validation errors for incomplete KYC data instead of raw Pydantic messages.",
+    "Optional: refresh the open admin dialog after actions; give status 'error' its own badge in the admin list; make Lead.language tolerate null (from iter36)."
+  ],
+  "critical_code_review_comments": [
+    "my_kyc stores `country` on the KYC doc when it is created. If the user later changes country via PUT /account/country before saving, the notice and id_types stay on the old country until the next PUT /kyc.",
+    "KycIn accepts NATIONAL_ID_CARD for ES and DNI/NIE for CL. id_type is not validated against ID_TYPES[country].",
+    "The deadline is only set when the KYC doc is first created and the tenant already has an active line. A doc created before the line is activated never gets a deadline.",
+    "Account delete removes the kyc Mongo docs but not the stored ID images in object storage. That is a GDPR retention concern for identity documents.",
+    "approve: if create_group returns '' (no group in the response), the empty gid is saved and the documents are uploaded to group ''. Raise a ZadarmaError when gid is empty."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter37_kyc.py", "/app/backend/tests/iter37_ui_setup.py"],
+  "success_rate": {"backend": "100% (20/20 KYC tests; iter36 regression 5/6, the only failure is the known null-language issue)", "frontend": "95% (all flows work; the approve error message is unreadable because of 502)"},
+  "seed_data_creation": "Temporary test_kyc_* users (ES, CL with a fake active tenant_numbers row, a free one) plus test_kyc_ui@example.com, each with a pendiente_documentos number. All were removed from users, kyc and tenant_numbers. Uploaded test images remain in object storage under kyc/<tid>/.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: export REACT_APP_BACKEND_URL=...; cd /app/backend; pytest tests/test_vozlead_iter37_kyc.py -n 0. register returns the user fields at the top level (r.json()['id']), not under 'user'. The gate test imports phone_numbers after load_dotenv. UI helper: python tests/iter37_ui_setup.py setup|cleanup creates or removes test_kyc_ui@example.com / TestPass123! with billing active and a pendiente_documentos number. Zadarma is not connected (platform_settings zadarma_api missing), so approve -> 502 and status error.",
+  "rca of the issue": "Approve error message: kyc.admin_kyc_approve raises HTTPException(502, detail). Cloudflare/ingress intercepts origin 502 responses and returns its own HTML page. errMsg() finds no response.data.detail and the toast shows the Cloudflare text. Reproduce: Super admin -> Documentos de los titulares -> open a pending row -> Aprobar. Fix: use status 424, 400 or 409 for upstream Zadarma failures."
+}

@@ -210,12 +210,12 @@ async def admin_kyc_approve(tid: str, user=Depends(require_admin)):
     try:
         gid = doc.get("zadarma_group_id") or await Z.create_group(_group_payload(doc))
         await db.kyc.update_one({"_id": doc["_id"]}, {"$set": {"zadarma_group_id": gid}})
-        for f in doc.get("files", []):
+        for f in [x for x in doc.get("files", []) if x["type"] in required_files(doc)]:
             data = await asyncio.to_thread(storage.get_object, f["path"])
             await Z.upload_doc(gid, ZADARMA_TYPE[f["type"]], data, f["name"], f["mime"])
     except Z.ZadarmaError as e:
         await db.kyc.update_one({"_id": doc["_id"]}, {"$set": {"status": "error", "zadarma_status": str(e)[:300]}})
-        raise HTTPException(502, str(e))
+        raise HTTPException(424, str(e))
     await db.kyc.update_one({"_id": doc["_id"]}, {"$set": {"status": "enviado_zadarma", "approved_at": now_iso(), "zadarma_status": ""}})
     u = await db.users.find_one({"_id": ObjectId(tid)}, {"email": 1})
     await emailer.send((u or {}).get("email", ""), "Tus documentos están aprobados", "Documentación aprobada", [
@@ -253,7 +253,7 @@ async def admin_kyc_check(tid: str, user=Depends(require_admin)):
     try:
         v = await Z.group_valid(doc["zadarma_group_id"], direction)
     except Z.ZadarmaError as e:
-        raise HTTPException(502, str(e))
+        raise HTTPException(424, str(e))
     ok = all(str(v.get(k)).lower() == "true" for k in ("is_information_match", "is_documents_uploaded", "is_documents_verified"))
     labels = {"is_information_match": "datos", "is_documents_uploaded": "documentos subidos", "is_documents_verified": "documentos verificados",
               "is_address_match": "dirección"}

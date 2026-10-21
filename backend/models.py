@@ -55,8 +55,8 @@ class Lead(BaseDocument):
     agent_id: str
     agent_name: str = ""
     executive: str = ""
-    language: str = ""
-    memory_calls: int = 0
+    language: Optional[str] = ""
+    memory_calls: Optional[int] = 0
     name: str
     phone: str
     email: str = ""

@@ -442,7 +442,7 @@ async def resend_test(user=Depends(require_admin)):
     err = await emailer.deliver(to, "Prueba de email de VozLeads", emailer._wrap(
         "Tus emails ya salen por Resend", [("Enviado a", to), ("Fecha", now_iso()[:16].replace("T", " "))]))
     if err:
-        raise HTTPException(502, err)
+        raise HTTPException(424, err)
     return {"ok": True, "to": to, "via": "resend" if (await emailer.resend_cfg()).get("api_key") else "emergent"}
 
 
