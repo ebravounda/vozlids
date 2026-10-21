@@ -8,7 +8,7 @@ import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 
 const STATUS = { activo: ["Activo", "bg-emerald-500/15 text-emerald-300"], comprando: ["Preparando", "bg-amber-500/15 text-amber-300"],
-  pendiente_aprobacion: ["Pendiente de aprobar", "bg-amber-500/15 text-amber-300"], pendiente: ["Preparando", "bg-amber-500/15 text-amber-300"],
+  pendiente_aprobacion: ["Pendiente de aprobar", "bg-amber-500/15 text-amber-300"], pendiente: ["Preparando", "bg-amber-500/15 text-amber-300"], pendiente_documentos: ["Falta verificar tus documentos", "bg-amber-500/15 text-amber-300"],
   error: ["Con incidencia", "bg-rose-500/15 text-rose-300"] };
 
 function Row({ n, agents, taken, onAssign, onRemove }) {

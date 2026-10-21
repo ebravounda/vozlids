@@ -5,6 +5,7 @@ import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature, usePlan } from "@/components/PlanGate";
+import { KycBanner } from "@/components/kyc/KycPanel";
 
 const NAV = [
   { to: "/app", label: "Leads y llamadas", icon: PhoneCall, id: "leads", end: true },
@@ -116,6 +117,7 @@ export default function DashboardLayout() {
         {user?.impersonating && <ImpersonationBar />}
         {tickets.human > 0 && <HumanAlert n={tickets.human} />}
         {user?.role !== "admin" && <ProvisioningBar />}
+        {user?.role !== "admin" && <KycBanner />}
         <UsageBanner />
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-5 py-3 backdrop-blur-xl md:px-10">
           <div className="flex items-center gap-3 md:hidden"><Logo /></div>

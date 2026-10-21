@@ -307,7 +307,7 @@ async def admin_delete_user(uid: str, user=Depends(require_admin)):
     if not (await db.users.delete_one({"_id": oid(uid), "role": {"$ne": "admin"}})).deleted_count:
         raise HTTPException(404, "Cuenta no encontrada")
     for col in ("agents", "leads", "appointments", "dnc", "availability", "call_templates", "scheduled_calls",
-                "support_tickets", "api_keys", "ambience_files"):
+                "support_tickets", "api_keys", "ambience_files", "kyc"):
         await db[col].delete_many({"tenant_id": uid})
     return {"ok": True}
 

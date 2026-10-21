@@ -37,6 +37,7 @@ import privacy  # noqa: E402
 import gcal  # noqa: E402
 import plan_limits as PL  # noqa: E402
 import languages as L  # noqa: E402
+import kyc  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
@@ -359,7 +360,7 @@ async def list_leads(status: Optional[str] = None, q: Optional[str] = None, agen
                      language: Optional[str] = None, user=CurrentUser):
     flt = {"tenant_id": user["id"]}
     if language:
-        flt["language"] = {"$in": [None, "", "es"]} if language == "es" else language
+        flt["language"] = {"$nin": list(L.LANGS)} if language == "es" else language
     if status:
         flt["status"] = status
     if agent_id:
@@ -630,6 +631,7 @@ app.include_router(SEC.router)
 app.include_router(reminders.router)
 app.include_router(callbacks.router)
 app.include_router(extra_numbers.router)
+app.include_router(kyc.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(

@@ -1,0 +1,25 @@
+{
+  "summary": "Tested lead language field/filter plus call memory: backend through pytest (direct calls to the services/vapi functions with leads inserted in Mongo, plus webhook handoff), frontend with Playwright (Leads language column and filter, lead detail language and memory note, agent memory switch). All requested features work. The iter35 regression passes (19/19). Found one minor robustness issue: a lead stored with language=null makes GET /api/leads return 500.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/leads (and GET /api/leads/{id})", "issue": "If a lead document has language=null (or memory_calls=null), Lead.from_mongo raises a pydantic ValidationError ('language Input should be a valid string') and the whole list returns 500. The app itself never writes null today (it is only $set to a lang string), but the filter explicitly matches None, which implies null is expected. Fix: make Lead.language Optional[str] with a validator that turns None into '' (same for memory_calls -> 0)."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter36_lang_memory.py", "/app/backend/tests/test_vozlead_iter35_multilang.py", "/app/test_reports/pytest/iter36.xml"],
+  "action_items": ["Make Lead.language and Lead.memory_calls tolerate null values from Mongo, so one bad document cannot 500 the leads list (minor)."],
+  "critical_code_review_comments": [
+    "services.language_handoff calls attach_history (a DB read plus a memory_calls write) before checking that the requested language is enabled. Minor: move it after the build_language_assistant/lang check, or check L.choices first.",
+    "attach_history only sets memory_calls when rows exist. A lead keeps its old count if it is re-dialed after history is deleted (for example after an RGPD erase of the earlier leads). Edge case only.",
+    "The memory block can include up to 3 full summaries with no length cap. Consider truncating each summary (for example to about 400 chars) to keep the prompt size bounded.",
+    "The language query param is not validated against L.LANGS. An unknown code just returns an empty list, which is acceptable."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter36_lang_memory.py"],
+  "success_rate": {"backend": "96% (24/25; the only failure is the null-language robustness test)", "frontend": "100%"},
+  "seed_data_creation": "Temporary TESTUI_* leads (en/ca/+56/memory_calls=2) inserted for the admin tenant for UI checks, then deleted. Pytest leads and agents are cleaned up in the fixture teardown. The admin agent 'Marta' memory was toggled OFF and back ON (it ends ON). 4 older TEST_*Rellamada leads from previous iterations were already in the DB and were left untouched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: export REACT_APP_BACKEND_URL=... ; pytest tests/test_vozlead_iter36_lang_memory.py tests/test_vozlead_iter35_multilang.py (pytest.ini forces -n 2 loadscope; use -n 0 for serial). Classes in the same module may land on different workers, each with its own ctx agent, so tests set agent.memory explicitly. Verified: ?language=es matches missing/''/'es', and ?language=en returns only 'en'. Verified attach_history: newest 3 calls with a summary, excludes self, excludes other tenants, and returns nothing when memory=False, the phone has no '+', the lead is_test, or the source is web_vozleads. The system_prompt memory block contains dates, executive, OUTCOME_ES text and the known name. The handoff webhook sets language=en and memory_calls, and its prompt contains the memory block (and no block when memory is off). UI: the Catalan striped CSS flag, the 🇨🇱 flag for +56, the language filter options and the memory note all work.",
+  "rca of the issue": "Null language 500: models.Lead.language is typed `str = ''`. Pydantic accepts a missing key but rejects an explicit None, so Lead.from_mongo fails for any doc with language: null. Reproduce: insert a lead with language=None and GET /api/leads?language=es returns 500. Mitigation: a field validator that coerces None to ''."
+}

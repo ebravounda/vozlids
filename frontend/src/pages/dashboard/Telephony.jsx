@@ -57,6 +57,7 @@ const STEPS = [
 
 const NUM = {
   activo: ["Conectado", "bg-emerald-500/15 text-emerald-300", "Tu línea funciona: tus agentes llaman desde este número y tu recepcionista contesta."],
+  pendiente_documentos: ["Falta verificar tus documentos", "bg-amber-500/15 text-amber-300", "Por ley, tu número se da de alta a tu nombre: sube tus documentos arriba y lo activaremos en cuanto estén aprobados."],
   pendiente: ["Aprovisionando línea", "bg-amber-500/15 text-amber-300", "Estamos preparando tu número. Recibirás un email cuando tu línea esté lista para operar."],
   comprando: ["Aprovisionando línea", "bg-amber-500/15 text-amber-300", "Estamos preparando tu número. Recibirás un email cuando tu línea esté lista para operar."],
   error: ["No conectado", "bg-rose-500/15 text-rose-300", "Hay un problema con tu línea y ya lo estamos revisando. Te avisaremos por email."],

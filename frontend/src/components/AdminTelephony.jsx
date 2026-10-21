@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 
-const NUM_ST = { activo: "Activo", comprando: "Comprando…", error: "Error", liberado: "Liberado", sin_numero: "Sin número" };
+const NUM_ST = { activo: "Activo", comprando: "Comprando…", pendiente_documentos: "Esperando documentos", error: "Error", liberado: "Liberado", sin_numero: "Sin número" };
 const sel = (value, onChange, opts, testid, placeholder = "Elegir") => (
   <Select value={value || "none"} onValueChange={(v) => onChange(v === "none" ? "" : v)}>
     <SelectTrigger className="bg-slate-950/60" data-testid={testid}><SelectValue placeholder={placeholder} /></SelectTrigger>

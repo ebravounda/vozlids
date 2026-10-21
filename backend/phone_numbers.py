@@ -61,12 +61,19 @@ async def provision(user_id: str, num_id=None) -> dict:
     cfg = await Z.creds()
     direction = cfg.get(f"direction_{country.lower()}")
     base = {"tenant_id": user_id, "country": country, "updated_at": now_iso()}
+    import kyc
+    group = await kyc.group_for(user_id)
+    if group is None and u.get("role") != "admin":
+        await db.tenant_numbers.update_one(filt, {"$set": {**base, "status": "pendiente_documentos",
+                                                           "error": "Falta que el cliente suba y apruebes sus documentos"},
+                                                  "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
+        return _out(await db.tenant_numbers.find_one(filt))
     await db.tenant_numbers.update_one(filt, {"$set": {**base, "status": "comprando", "error": ""},
                                               "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
     try:
         if not direction:
             raise Z.ZadarmaError(f"Falta elegir la ciudad/tipo de número de {COUNTRIES[country]['name']} en Super admin → Zadarma.")
-        number = await Z.order(direction, cfg.get(f"docs_{country.lower()}", ""))
+        number = await Z.order(direction, group or cfg.get(f"docs_{country.lower()}", ""))
         await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
         pwd = secrets.token_urlsafe(10) + "Vz7"
         sip = await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)

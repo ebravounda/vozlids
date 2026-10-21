@@ -66,6 +66,29 @@ async def document_groups() -> list:
     return d.get("groups") or d.get("info") or []
 
 
+async def create_group(data: dict) -> str:
+    res = await call("POST", "/v1/documents/groups/create/", data)
+    return str((res.get("group") or {}).get("id", ""))
+
+
+async def upload_doc(group_id: str, doc_type: str, content: bytes, filename: str, mime: str) -> None:
+    c = await creds()
+    params = {"document_type": doc_type, "group_id": group_id}
+    headers = {"Authorization": _sign("/v1/documents/upload/", params, c["key"], c["secret"])}
+    try:
+        async with httpx.AsyncClient(timeout=60) as x:
+            r = await x.post(f"{BASE}/v1/documents/upload/", data=params, files={"file": (filename, content, mime)}, headers=headers)
+        data = r.json()
+    except (httpx.HTTPError, ValueError) as e:
+        raise ZadarmaError(f"No se pudo subir el documento a Zadarma: {e.__class__.__name__}")
+    if data.get("status") != "success":
+        raise ZadarmaError(f"Zadarma: {data.get('message') or r.text[:200]}")
+
+
+async def group_valid(group_id: str, direction_id: str) -> dict:
+    return await call("GET", f"/v1/documents/groups/valid/{group_id}/", {"direction_id": direction_id})
+
+
 async def order(direction_id: str, documents_group_id: str = "") -> str:
     avail = (await call("GET", f"/v1/direct_numbers/available/{direction_id}/")).get("numbers") or []
     params = {"direction_id": direction_id, "documents_group_id": documents_group_id, "period": "month",

@@ -20,7 +20,7 @@ from models import now_iso
 log = logging.getLogger("vozlead.extra_numbers")
 router = APIRouter(prefix="/api")
 PRICE = {"ES": ("eur", 1000), "CL": ("clp", 13000)}
-OPEN = ["comprando", "activo", "pendiente_aprobacion", "error"]
+OPEN = ["comprando", "activo", "pendiente_aprobacion", "pendiente_documentos", "error"]
 
 
 def price_label(country: str) -> str:
