@@ -43,6 +43,7 @@ import reminders  # noqa: E402
 import callbacks  # noqa: E402
 import extra_numbers  # noqa: E402
 import asyncio  # noqa: E402
+import emailer  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
 from db import client, db  # noqa: E402
@@ -131,8 +132,23 @@ async def register(body: RegisterIn, response: Response, request: Request):
     res = await db.users.insert_one(doc)
     uid = str(res.inserted_id)
     await S.get_availability(uid)
+    asyncio.create_task(welcome_email(doc))
     token = A.set_auth_cookies(response, uid, email)
     return {**user_out({**doc, "_id": uid}), "access_token": token}
+
+
+async def welcome_email(u: dict) -> None:
+    cl = u.get("country") == "CL"
+    ids = "tu cédula de identidad (ambas caras) o pasaporte y tu RUT" if cl else "tu DNI o NIE (ambas caras) o pasaporte"
+    await emailer.send(u["email"], "Bienvenido a VozLeads: tus primeros pasos", f"¡Bienvenido, {u.get('name') or u['business_name']}!", [
+        ("1 · Sube tus documentos", f"Por ley, tu número va a tu nombre. En «Mi número» sube {ids}. Si eres empresa, también su certificado."),
+        ("2 · Tu número", "Ya estamos asignando tu número. Puede tardar de 1 a 24 horas, según las solicitudes en curso y la disponibilidad de números. Te avisaremos por email."),
+        ("3 · Crea tu agente IA", "Elige su voz y acento, cómo saluda y qué debe hacer: recepcionista, agendar citas o ventas. Escúchalo antes de activarlo."),
+        ("4 · Mira tus llamadas", "En «Leads y llamadas» verás cada llamada con su resumen, grabación y resultado. Las citas llegan a tu agenda."),
+        ("5 · ¿Dudas?", "Escríbenos desde «Asistencia técnica» o llámanos: Chile +56 2 3384 4477 · España +34 919 93 26 52."),
+    ], os.environ["APP_PUBLIC_URL"].rstrip("/") + "/app/numero",
+        f"Tu cuenta de {u['business_name']} ya está creada. Estos son los pasos para dejar tu asistente telefónico funcionando.",
+        "Subir mis documentos")
 
 
 @api.post("/auth/login")

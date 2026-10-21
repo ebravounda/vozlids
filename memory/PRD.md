@@ -339,3 +339,6 @@
 - components/Tour.jsx: 10-step spotlight tour over the real sidebar (welcome, agentes, mi número [1–24 h + KYC note], leads, agenda, salientes, botón web, asistencia, plan, final CTA → /app/agentes/nuevo). Arrows/Esc keys, progress dots, centered cards on mobile.
 - Auto-opens only for users registered after this release (users.tour_done False on register; user_out.tour_pending). Closing → POST /api/account/tour-done. Not auto-opened while impersonating. "Ver tutorial" button in sidebar + mobile nav reopens it.
 - KYC: panel always shown to clients; admin sees an explanatory note in Mi número.
+
+## 2026-06 · Email de bienvenida
+- server.welcome_email (fire-and-forget on /auth/register): 5 steps (documentos según país, número 1–24 h, crear agente, llamadas, dudas + centrales CL/ES), CTA "Subir mis documentos" → /app/numero. Verified 202 from email API.
