@@ -47,7 +47,7 @@ async def mark_pending(user_id: str) -> None:
     cur = await N.record(user_id)
     if cur and cur.get("status") in ("activo", "pendiente", "comprando"):
         return
-    await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {"status": "pendiente", "error": "", "updated_at": now_iso()},
+    await db.tenant_numbers.update_one({"tenant_id": user_id, "extra": {"$ne": True}}, {"$set": {"status": "pendiente", "error": "", "updated_at": now_iso()},
                                                                 "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
     u = await db.users.find_one({"_id": ObjectId(user_id)}) or {}
     import monitor
@@ -65,7 +65,7 @@ class AssignIn(BaseModel):
 
 @router.get("/admin/onboarding")
 async def pending(user=Depends(X.require_admin)):
-    nums = {n["tenant_id"]: n async for n in db.tenant_numbers.find({"platform": {"$ne": True}})}
+    nums = {n["tenant_id"]: n async for n in db.tenant_numbers.find({"platform": {"$ne": True}, "extra": {"$ne": True}})}
     out = []
     async for u in db.users.find({"role": "business"}, {"password_hash": 0}).sort("created_at", -1):
         n = nums.get(str(u["_id"]), {})
@@ -94,7 +94,7 @@ async def assign(uid: str, body: AssignIn, user=Depends(X.require_admin)):
     try:
         v = await vapi.connect_tenant_number(body.sip_login.strip(), body.sip_password, number, u.get("business_name") or u["email"])
     except vapi.VapiError as e:
-        await db.tenant_numbers.update_one({"tenant_id": uid}, {"$set": {"status": "error", "error": str(e)[:300], "number": number}}, upsert=True)
+        await db.tenant_numbers.update_one({"tenant_id": uid, "extra": {"$ne": True}}, {"$set": {"status": "error", "error": str(e)[:300], "number": number}}, upsert=True)
         raise HTTPException(400, f"No se pudo conectar la línea: {e}")
     uri = vapi.inbound_sip_uri(number, v["credential_id"])
     routed = ""
@@ -104,7 +104,7 @@ async def assign(uid: str, body: AssignIn, user=Depends(X.require_admin)):
         except Z.ZadarmaError as e:
             routed = str(e)
     country = u.get("country", "ES")
-    await db.tenant_numbers.update_one({"tenant_id": uid}, {"$set": {
+    await db.tenant_numbers.update_one({"tenant_id": uid, "extra": {"$ne": True}}, {"$set": {
         "tenant_id": uid, "country": country, "number": number, "status": "activo", "error": "", "sip_id": body.sip_login.strip(),
         **v, "activated_at": now_iso(), "inbound_agent_id": cur.get("inbound_agent_id") or await N._default_agent(uid, country)},
         "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
@@ -123,5 +123,5 @@ async def block(uid: str, blocked: bool = True, user=Depends(X.require_admin)):
     cur = await N.record(uid)
     if not cur or cur.get("status") not in ("activo", "pausado"):
         raise HTTPException(400, "Este cliente no tiene una línea activa.")
-    await db.tenant_numbers.update_one({"tenant_id": uid}, {"$set": {"status": "pausado" if blocked else "activo", "updated_at": now_iso()}})
+    await db.tenant_numbers.update_one({"tenant_id": uid, "extra": {"$ne": True}}, {"$set": {"status": "pausado" if blocked else "activo", "updated_at": now_iso()}})
     return {"ok": True, "status": "pausado" if blocked else "activo"}

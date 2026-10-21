@@ -300,3 +300,8 @@
 ## 2026-06 — Demo: número del dueño sin límites + voz Jessica
 - security_admin.OWNER_PHONES = {"34600850506"}: nunca bloqueado (blocked_phone/guard_public), sin límite por IP, sin "repetida", sin topes diarios/internacionales; info_requests.owner_test=True (no cuenta en topes ni envía email de solicitud).
 - Demo web: landing.demo_voice(phone): +34 → voz propia ElevenLabs ES de mujer (Carolina primero; si no hay, p_blanca); resto (Chile, LATAM, otros) → e_jessica. Sin rotación de ejecutivos; keep_voice evita la bajada por plan.
+
+## 2026-06 — Un número por agente (sucursal/empresa)
+- extra_numbers.py: tenant_numbers con extra=True + agent_id + stripe_item_id. Precio 10 €/mes (ES) y 13.000 CLP/mes (CL), añadido como subscription item de Stripe (metadata kind=extra_number, prorrateo always_invoice; producto "Número adicional VozLeads" cacheado en platform_settings.stripe). Activación: auto si Zadarma auto_provision+API key; si no, "pendiente_aprobacion" + email al admin → Super Admin "Números adicionales por aprobar" (approve → provision). Baja: libera Zadarma/Vapi y quita el item sin prorrateo. Borrar agente → número queda libre (agent_id=None, sigue cobrándose).
+- phone_numbers: PRIMARY filter, provision/release(user_id, num_id), phone_id_for(tenant, country, agent_id) → saliente desde el número del agente; entrante en número extra → su agente (o recepcionista del principal si está libre). billing change-plan ignora items de números; cancelación libera también los extra. onboarding/admin lists solo número principal. Costes: fee por cada número + ingresos de números extra.
+- UI: AgentNumbers (Mi número y Telefonía), PendingExtraNumbers (Super Admin). iteration_34: 100% + fixes de revisión.

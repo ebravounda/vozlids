@@ -1,0 +1,43 @@
+{
+  "summary": "Tested the new 'Números por agente' feature (extra numbers: 1 per agent/branch, 10 €/month ES and 13.000 CLP/month CL), backend and frontend. Backend: 16/16 pytest pass. Covered: GET /api/numbers (prices, primary number 'Incluido en tu plan'), POST /api/numbers/extra (admin skips Stripe and goes to pendiente_aprobacion because there are no Zadarma API creds; a duplicate gives 409; a bad agent gives 404/422), PUT /api/numbers/{id} (assign/unassign, wrong country 422, agent already has an extra 409, primary number sets inbound_agent_id), DELETE (primary 409, extra marked liberado and gone from the list), GET /api/admin/numbers/extra plus approve (no Zadarma, so status=error with a message), cross-tenant 404 / non-admin 403, a client without a plan gets 409, and deleting an agent unassigns its extra number. Frontend, as admin at /app/numero: the panel renders; the picker lists only agents without a number; the confirm dialog shows the price and proration text; the 'Pedido recibido' toast appears and the row shows 'Pendiente de aprobar'; changing the select to 'Sin agente (libre)' gives the 'Número asignado' toast; deleting the row through the confirm dialog removes it. The panel is also on /app/telefonia, and the pending-approval panel is on /app/admin. Mobile 390 has no horizontal overflow. No JS errors. The code review found integration gaps where other modules still assume one tenant_numbers doc per tenant.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "billing.py stripe webhook (customer.subscription.deleted/updated ended) ~L323", "issue": "Only N.release(user_id) runs, which releases just the PRIMARY number. Extra numbers stay 'activo' (the Zadarma number and Vapi keep running and incurring cost, and inbound/outbound still work) after the subscription is cancelled. They should loop over the tenant's extra numbers and release each one (N.release(uid, r['_id'])).", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "onboarding.py mark_pending L50, assign L97/L107, block L126", "issue": "update_one({'tenant_id': uid}) has no PRIMARY filter ({'extra': {'$ne': True}}). Once a tenant has extra numbers, these updates can hit an extra doc instead of the primary: admin pausing a line could pause an extra, and assigning a SIP line could overwrite an extra. Add **N.PRIMARY to these filters."},
+      {"endpoint": "GET /api/admin/onboarding (onboarding.py L68)", "issue": "The dict {tenant_id: n} over all tenant_numbers lets extra docs overwrite the primary, so 'Altas pendientes' can show the extra's number/status. Filter with extra != True."},
+      {"endpoint": "costs_real.numbers_by_tenant", "issue": "Keyed by tenant_id, so it counts only one number per tenant. Extra numbers' Zadarma costs are not included in the real-cost reports."},
+      {"endpoint": "GET /api/admin/numbers + POST /api/admin/numbers/{user_id}/release", "issue": "The list now includes extra docs, but _out() has no id/extra/agent flag, so the admin can't tell them apart. The release action is per-user and always releases the primary."},
+      {"endpoint": "DELETE /api/numbers/{id}", "issue": "If status is 'comprando' (provision in flight), the doc is marked liberado without a release, and the running provision() can later set it back to activo. That leaves a live, uncharged number (the Stripe item was already removed)."},
+      {"endpoint": "phone_numbers.provision (extra)", "issue": "Sets inbound_agent_id on extra docs (unused, since extras use agent_id). Also, a provision failure after the Stripe charge leaves the client charged with status=error until an admin approves a retry. The client email still says 'Tu número ... ya está activo' without naming the agent."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/app/numero Números por agente (desktop)", "issues": ["In extra rows the trash button wraps onto a second line under the phone icon (flex-wrap inside max-w-2xl with a w-56 select). It looks orphaned; consider a fixed row layout or a shorter select.", "The extra-row select lists every agent of the same country, including ones that already have an extra. Picking one gives a 409 toast; those could be filtered or disabled the way the add-picker does."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter34_extra_numbers.py", "/app/test_reports/pytest/pytest_iter34.xml"],
+  "action_items": [
+    "HIGH: on subscription cancel (billing webhook), also release every extra number of the tenant (and the Stripe items go with the subscription).",
+    "Add the PRIMARY filter (extra != True) to the onboarding.py updates (mark_pending, assign, block) and to the /admin/onboarding nums map.",
+    "Include extra numbers in costs_real (count per tenant/country, not a dict keyed by tenant).",
+    "Super admin /admin/numbers: expose id/extra/agent and make release per number.",
+    "DELETE extra while 'comprando': block it (409) or have provision() re-check status before setting activo.",
+    "UI: keep the trash button inline in extra rows; filter the extra-row select to agents without another extra."
+  ],
+  "critical_code_review_comments": [
+    "Several modules still assume one tenant_numbers doc per tenant (onboarding.py, costs_real, billing cancel, admin numbers list). Audit every db.tenant_numbers query by tenant_id.",
+    "add_extra charges Stripe before the insert and provision. A crash in between leaves an orphan subscription item; consider inserting first and charging after, or a compensating uncharge on exception."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter34_extra_numbers.py"],
+  "success_rate": {"backend": "100% (16/16 tests); 1 HIGH + 6 minor code-review issues", "frontend": "100% of tested flows"},
+  "test_credentials": "admin@vozlead.es / VozLead2026!",
+  "seed_data_creation": "Tests create TEST_Num_* agents and extra numbers and clean them up (extras end up status=liberado, agents deleted), plus registered test_num_*@example.com client users. One pre-existing extra (pendiente_aprobacion, agent Marta, id 6ad88c23ee6f15ae5bbe9321) was created by the main agent and left untouched.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "There are no Zadarma API creds in platform_settings 'zadarma_api', so POST /numbers/extra goes to pendiente_aprobacion and approve sets status=error. No real numbers get bought. The admin role skips the Stripe charge in _charge. The UI panel testids are agent-numbers-panel, agent-numbers-pick, agent-numbers-add-button, agent-numbers-confirm(-button), agent-number-assign-{id}, agent-number-remove-{id}, and pending-extra-numbers on /app/admin."
+}

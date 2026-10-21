@@ -323,6 +323,8 @@ async def webhook(request: Request):
             if ended:
                 import phone_numbers as N
                 await N.release(str(u["_id"]))
+                async for x in db.tenant_numbers.find({"tenant_id": str(u["_id"]), "extra": True, "status": {"$in": ["activo", "error"]}}):
+                    await N.release(str(u["_id"]), x["_id"])
     elif t == "invoice.payment_failed":
         u = await db.users.find_one({"stripe_customer_id": obj.get("customer")})
         if u:

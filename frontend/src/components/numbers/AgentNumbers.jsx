@@ -11,25 +11,25 @@ const STATUS = { activo: ["Activo", "bg-emerald-500/15 text-emerald-300"], compr
   pendiente_aprobacion: ["Pendiente de aprobar", "bg-amber-500/15 text-amber-300"], pendiente: ["Preparando", "bg-amber-500/15 text-amber-300"],
   error: ["Con incidencia", "bg-rose-500/15 text-rose-300"] };
 
-function Row({ n, agents, onAssign, onRemove }) {
+function Row({ n, agents, taken, onAssign, onRemove }) {
   const [label, cls] = STATUS[n.status] || [n.status, "bg-slate-500/20 text-slate-300"];
-  const mine = agents.filter((a) => (a.country || "ES") === n.country);
+  const mine = agents.filter((a) => (a.country || "ES") === n.country && (!n.extra || a.id === n.agent_id || !taken.has(a.id)));
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3" data-testid={`agent-number-${n.id}`}>
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 sm:grid-cols-[auto_1fr_auto_14rem_2.25rem]" data-testid={`agent-number-${n.id}`}>
       <Phone className="h-4 w-4 text-slate-500" />
-      <div className="min-w-[150px] flex-1">
-        <p className="font-mono text-white">{n.number || "Número en camino"}</p>
+      <div className="min-w-0">
+        <p className={n.number ? "font-mono text-white" : "text-sm font-medium text-slate-300"}>{n.number || "Número en camino"}</p>
         <p className="text-xs text-slate-500">{n.extra ? `Adicional · ${n.price}/mes` : "Incluido en tu plan"}</p>
       </div>
       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{label}</span>
       <Select value={n.agent_id || "none"} onValueChange={(v) => onAssign(n, v === "none" ? "" : v)}>
-        <SelectTrigger className="w-56 bg-slate-950/60" data-testid={`agent-number-assign-${n.id}`}><SelectValue /></SelectTrigger>
+        <SelectTrigger className="col-span-2 bg-slate-950/60 sm:col-span-1" data-testid={`agent-number-assign-${n.id}`}><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="none">{n.extra ? "Sin agente (libre)" : "Nadie contesta"}</SelectItem>
           {mine.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
         </SelectContent>
       </Select>
-      {n.extra && <Button variant="ghost" size="icon" onClick={() => onRemove(n)} data-testid={`agent-number-remove-${n.id}`}><Trash2 className="h-4 w-4" /></Button>}
+      {n.extra ? <Button variant="ghost" size="icon" onClick={() => onRemove(n)} data-testid={`agent-number-remove-${n.id}`}><Trash2 className="h-4 w-4" /></Button> : <span />}
     </div>
   );
 }
@@ -57,7 +57,7 @@ export function AgentNumbers() {
     <Panel className="space-y-4" data-testid="agent-numbers-panel">
       <div><h3 className="text-lg font-semibold text-white">Números por agente</h3>
         <p className="text-sm text-slate-400">Cada agente puede ser una sucursal o una empresa con su propio número: llama desde él y contesta las llamadas que entren. Tu plan incluye 1 número; cada número adicional cuesta {d.prices.ES}/mes en España y {d.prices.CL}/mes en Chile.</p></div>
-      <div className="space-y-2">{d.numbers.map((n) => <Row key={n.id} n={n} agents={agents} onAssign={assign} onRemove={(x) => setConfirm({ ...x, remove: true })} />)}</div>
+      <div className="space-y-2">{d.numbers.map((n) => <Row key={n.id} n={n} agents={agents} taken={taken} onAssign={assign} onRemove={(x) => setConfirm({ ...x, remove: true })} />)}</div>
       <div className="flex flex-wrap gap-2 border-t border-slate-800 pt-4">
         <Select value={pick} onValueChange={setPick}>
           <SelectTrigger className="w-64 bg-slate-950/60" data-testid="agent-numbers-pick"><SelectValue placeholder="Elige el agente o sucursal" /></SelectTrigger>

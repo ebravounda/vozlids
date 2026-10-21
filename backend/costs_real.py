@@ -129,5 +129,8 @@ async def tenant_revenue(pricing: dict) -> dict:
 
 
 async def numbers_by_tenant() -> dict:
-    return {n["tenant_id"]: n.get("country", "ES") async for n in
-            db.tenant_numbers.find({"status": "activo", "platform": {"$ne": True}}, {"tenant_id": 1, "country": 1})}
+    """tenant_id -> list of (country, is_extra) for every active number."""
+    out: dict = {}
+    async for n in db.tenant_numbers.find({"status": "activo", "platform": {"$ne": True}}, {"tenant_id": 1, "country": 1, "extra": 1}):
+        out.setdefault(n["tenant_id"], []).append((n.get("country", "ES"), bool(n.get("extra"))))
+    return out

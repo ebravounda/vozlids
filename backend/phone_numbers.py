@@ -246,7 +246,7 @@ async def zadarma_options(country: str, user=Depends(X.require_admin)):
 @router.get("/admin/numbers")
 async def admin_numbers(user=Depends(X.require_admin)):
     out = []
-    async for r in db.tenant_numbers.find({}).sort("updated_at", -1):
+    async for r in db.tenant_numbers.find(PRIMARY).sort("updated_at", -1):
         u = await db.users.find_one({"_id": ObjectId(r["tenant_id"])}, {"email": 1, "business_name": 1})
         out.append({**_out(r), "email": (u or {}).get("email"), "business_name": (u or {}).get("business_name")})
     return out

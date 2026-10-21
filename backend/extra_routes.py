@@ -270,6 +270,7 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
                           "country": country, "currency": currency, "phone": ld.get("phone"),
                           "tenant_id": ld["tenant_id"], "ended_reason": ld.get("ended_reason"), "error": ld.get("error"),
                           "direction": "entrante" if vapi.inbound(ld) else "saliente", **p})
+    import extra_numbers as EN
     scale = max(1, min(days, 365)) / 30
     revenue, numbers = await CR.tenant_revenue(pricing), await CR.numbers_by_tenant()
     if tenant_id:
@@ -286,8 +287,11 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
         t["plan"] = (r["plan"] + (" (prueba Stripe)" if r["test"] else "")) if r else None
         r = r if r and not r["test"] else None
         t["revenue"] = r["price_usd"] * scale if r else 0.0
-        num = numbers.get(tid)
-        t["number_fee"] = (pricing["number_cl_usd_month"] if num == "CL" else pricing["number_es_usd_month"]) * scale if num else 0.0
+        nums = numbers.get(tid, [])
+        t["number_fee"] = sum(pricing["number_cl_usd_month"] if c == "CL" else pricing["number_es_usd_month"] for c, _ in nums) * scale
+        t["extra_numbers"] = sum(1 for _, x in nums if x)
+        t["revenue"] += sum(CR.to_usd(EN.PRICE[c][1] / (1 if EN.PRICE[c][0] == "clp" else 100), EN.PRICE[c][0].upper(), pricing)
+                            for c, x in nums if x and c in EN.PRICE) * scale
         t["stripe_fee"] = (t["revenue"] * pricing["stripe_pct"] / 100 + pricing["stripe_fixed_eur"] / pricing["usd_eur"] * scale) if r else 0.0
         t["profit"] = t["revenue"] - t["total"] - t["number_fee"] - t["stripe_fee"]
         t["margin_pct"] = t["profit"] / t["revenue"] * 100 if t["revenue"] else None

@@ -146,6 +146,8 @@ async def remove_extra(num_id: str, user=CurrentUser):
     r = await _mine(user, num_id)
     if not r.get("extra"):
         raise HTTPException(409, "El número incluido en tu plan no se puede dar de baja aquí.")
+    if r.get("status") in ("comprando", "pendiente"):
+        raise HTTPException(409, "El número se está preparando. Espera un par de minutos y vuelve a intentarlo.")
     if r.get("status") == "activo" or r.get("status") == "error":
         await N.release(user["id"], r["_id"])
     await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {"status": "liberado", "released_at": now_iso()}})
