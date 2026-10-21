@@ -139,3 +139,8 @@ code, .font-mono {
 .vl-reveal.is-in { animation: vl-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
 .vl-type { animation: vl-type 1.2s steps(40, end) both; }
 @media (prefers-reduced-motion: reduce) { .vl-wave, .vl-pulse, .vl-float, .vl-type { animation: none; } .vl-reveal { opacity: 1; } .vl-reveal.is-in { animation: none; } }
+
+@keyframes tour-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+.tour-pop:not(.-translate-x-1\/2) { animation: tour-pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.tour-pop.-translate-x-1\/2 { animation: tour-pop-center 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes tour-pop-center { from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%); } }

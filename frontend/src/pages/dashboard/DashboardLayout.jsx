@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Shield } from "lucide-react";
+import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Shield, Sparkles } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature, usePlan } from "@/components/PlanGate";
 import { KycBanner } from "@/components/kyc/KycPanel";
+import { Tour } from "@/components/Tour";
 
 const NAV = [
   { to: "/app", label: "Leads y llamadas", icon: PhoneCall, id: "leads", end: true },
@@ -86,8 +87,14 @@ function ImpersonationBar() {
 }
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const [tel, setTel] = useState(null);
+  const [tour, setTour] = useState(false);
+  useEffect(() => { if (user?.tour_pending && !user?.impersonating) setTour(true); }, [user?.tour_pending, user?.impersonating]);
+  const closeTour = () => {
+    setTour(false);
+    if (user?.tour_pending && !user?.impersonating) { api.post("/account/tour-done").catch(() => {}); setUser({ ...user, tour_pending: false }); }
+  };
   const location = useLocation();
   const tickets = useOpenTickets(location.pathname);
 
@@ -104,6 +111,7 @@ export default function DashboardLayout() {
         <nav className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-2 pb-3 [scrollbar-width:thin]" data-testid="sidebar-nav">
           {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => <NavItem key={n.to} n={n} tickets={tickets} path={location.pathname} />)}
         </nav>
+        <button onClick={() => setTour(true)} className="mb-2 flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50" data-testid="sidebar-tour-button"><Sparkles className="h-4 w-4" /> Ver tutorial</button>
         <UsageMeter />
         <div className="mt-3 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-business-name">{user?.business_name}</p>
@@ -132,12 +140,14 @@ export default function DashboardLayout() {
           {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} data-testid={`mobile-nav-${n.id}`} className={({ isActive }) => `whitespace-nowrap rounded-lg px-3 py-1.5 text-xs ${isActive ? "bg-blue-50 text-blue-700" : "text-slate-500"}`}>{n.label}</NavLink>
           ))}
+          <button onClick={() => setTour(true)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600" data-testid="mobile-tour-button">Ver tutorial</button>
         </nav>
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 md:px-10">
           {user?.role === "admin" && ADMIN_PATHS.includes(location.pathname) && <AdminTabs />}
           <div key={location.pathname} className="fade-up"><Outlet /></div>
         </main>
       </div>
+    {tour && <Tour onClose={closeTour} />}
     </div>
     </PlanProvider>
   );

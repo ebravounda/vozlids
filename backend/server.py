@@ -68,7 +68,7 @@ def oid(v: str) -> ObjectId:
 def user_out(u: dict) -> dict:
     return {"id": str(u.get("id") or u.get("_id")), "email": u["email"], "name": u.get("name", ""),
             "business_name": u.get("business_name", ""), "role": u.get("role", "business"),
-            "country": u.get("country", "ES"), "billing_status": u.get("billing_status")}
+            "country": u.get("country", "ES"), "billing_status": u.get("billing_status"), "tour_pending": u.get("tour_done") is False}
 
 
 def ago(minutes: int) -> str:
@@ -118,7 +118,7 @@ async def register(body: RegisterIn, response: Response, request: Request):
         raise HTTPException(422, "Indica tu nombre")
     doc = {"email": email, "password_hash": A.hash_password(body.password), "name": name,
            "business_name": body.business_name.strip(), "role": "business", "country": body.country,
-           "created_at": now_iso()}
+           "created_at": now_iso(), "tour_done": False}
     if body.doc_number:
         try:
             doc["doc_number"] = onboarding.valid_doc(body.country, body.doc_type, body.doc_number)
@@ -183,6 +183,12 @@ class CountryIn(BaseModel):
 async def set_country(body: CountryIn, user=CurrentUser):
     await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"country": body.country}})
     return user_out({**user, "country": body.country})
+
+
+@api.post("/account/tour-done")
+async def tour_done(user=CurrentUser):
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"tour_done": True}})
+    return {"ok": True}
 
 
 # ---------- Agents ----------
