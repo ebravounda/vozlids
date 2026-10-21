@@ -42,6 +42,7 @@ class Agent(BaseDocument):
     greeting: str
     extra_instructions: str = ""
     executives: List[dict] = []
+    languages: List[dict] = []
     active: bool = True
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)

@@ -15,11 +15,11 @@ import { AdminOnboarding } from "@/components/AdminOnboarding";
 import { EditBusinessButton } from "@/components/AdminBusinessEdit";
 import { api, errMsg } from "@/lib/api";
 
-const LIM = { max_agents: 0, max_concurrent: 0, recording_days: 0, outbound: true, api: true, widget: true, agenda_pro: true, premium_voices: true, ambience: true };
+const LIM = { max_agents: 0, max_concurrent: 0, recording_days: 0, outbound: true, api: true, widget: true, agenda_pro: true, multilang: false, ambience: true };
 const EMPTY = { name: "", minutes: 100, price_eur: 49, price_clp: 49000, overage_eur: 0.45, overage_clp: 450, features: "", public: true,
   recommended: false, promo_active: false, promo_label: "PROMOCIÓN", promo_price_eur: 0, promo_price_clp: 0, promo_months: 3, limits: LIM };
 const NUMS = ["minutes", "price_eur", "price_clp", "overage_eur", "overage_clp", "promo_price_eur", "promo_price_clp", "promo_months"];
-const FEATS = [["outbound", "Llamadas salientes"], ["api", "API para desarrolladores"], ["widget", "Botón para su web"], ["agenda_pro", "Agenda avanzada (Google + recordatorios)"], ["premium_voices", "Voces ultra naturales HD"], ["ambience", "Ambiente de oficina"]];
+const FEATS = [["outbound", "Llamadas salientes"], ["api", "API para desarrolladores"], ["widget", "Botón para su web"], ["agenda_pro", "Agenda avanzada (Google + recordatorios)"], ["multilang", "Atención en varios idiomas"], ["ambience", "Ambiente de oficina"]];
 const NUM_LIMITS = [["max_agents", "Máx. agentes", "0 = sin límite"], ["max_concurrent", "Llamadas a la vez", "0 = sin límite"], ["recording_days", "Días que se guardan grabaciones", "0 = sin límite"]];
 
 const Field = ({ label, hint, children }) => (

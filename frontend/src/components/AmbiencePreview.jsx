@@ -6,12 +6,12 @@ import { api, errMsg } from "@/lib/api";
 const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 const blobCache = new Map();
 
-const fetchAudio = async ({ demo, ambience, volume, voice, text }) => {
-  const key = JSON.stringify([demo, ambience, volume, voice, text]);
+const fetchAudio = async ({ demo, ambience, volume, voice, text, lang }) => {
+  const key = JSON.stringify([demo, ambience, volume, voice, text, lang]);
   if (blobCache.has(key)) return blobCache.get(key);
   try {
     const r = await api.get(demo ? "/voice-preview/demo.wav" : "/voice-preview", {
-      params: demo ? undefined : { voice, text, ambience_id: ambience, volume }, responseType: "blob", timeout: 90000 });
+      params: demo ? undefined : { voice, text, ambience_id: ambience, volume, lang }, responseType: "blob", timeout: 90000 });
     const url = URL.createObjectURL(r.data);
     blobCache.set(key, url);
     return url;
@@ -23,7 +23,7 @@ const fetchAudio = async ({ demo, ambience, volume, voice, text }) => {
   }
 };
 
-export const AmbiencePreview = ({ demo = false, ambience = "none", volume = 35, text = "", voice = "", label = "Escuchar ejemplo", testid = "audio-preview-play-button", className = "" }) => {
+export const AmbiencePreview = ({ demo = false, ambience = "none", volume = 35, text = "", voice = "", lang = "es", label = "Escuchar ejemplo", testid = "audio-preview-play-button", className = "" }) => {
   const [state, setState] = useState("idle");
   const audioRef = useRef(null);
 
@@ -46,7 +46,7 @@ export const AmbiencePreview = ({ demo = false, ambience = "none", volume = 35, 
     audioRef.current = a;
     setState("loading");
     try {
-      const url = await fetchAudio({ demo, ambience, volume, voice, text });
+      const url = await fetchAudio({ demo, ambience, volume, voice, text, lang });
       if (audioRef.current !== a) return;
       a.onplaying = () => setState("playing");
       a.onended = stop;

@@ -112,9 +112,11 @@ async def custom_wav(token: str, volume: int):
 class CustomVoiceIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     gender: str = Field(pattern=r"^(Mujer|Hombre)$")
-    country: str = Field(pattern=r"^(ES|CL)$")
+    country: str = Field("ES", pattern=r"^(ES|CL)$")
     voice_id: str = Field(pattern=r"^[A-Za-z0-9]{10,40}$")
     tone: str = Field("", max_length=60)
+    language: str = Field("es", pattern=r"^(es|en|pt|fr|it|de)$")
+    accent: str = Field("", max_length=30)
 
 
 async def load_custom_voices():

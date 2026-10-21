@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel } from "@/components/Common";
+import { TIER, TIER_NAME } from "@/lib/constants";
 
 const MAX = 5;
 
@@ -24,7 +25,7 @@ export function ExecutivesPanel({ agent, update, voices }) {
       {team.length > 0 && team.length < MAX && (
         <Select value="" onValueChange={add}>
           <SelectTrigger className="w-full sm:w-80" data-testid="executives-add-select"><Plus className="mr-2 h-4 w-4" /><SelectValue placeholder={`Añadir ejecutivo (${team.length}/${MAX})`} /></SelectTrigger>
-          <SelectContent>{free.map((v) => <SelectItem key={v.id} value={v.id} data-testid={`executives-add-${v.id}`}>{v.name} · {v.gender}</SelectItem>)}</SelectContent>
+          <SelectContent>{free.map((v) => <SelectItem key={v.id} value={v.id} data-testid={`executives-add-${v.id}`}>{v.name} · {v.gender} · {v.accent} · {TIER_NAME[TIER(v)]}</SelectItem>)}</SelectContent>
         </Select>
       )}
     </Panel>
@@ -35,7 +36,7 @@ function ExecRow({ e, i, v, onName, onRemove }) {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 p-3" data-testid={`executive-row-${i}`}>
       <span className="w-6 text-center font-mono text-sm text-slate-400">{i + 1}</span>
-      <div className="min-w-[140px] flex-1"><p className="text-sm font-semibold">Voz {v?.name || e.voice}</p><p className="text-xs text-slate-500">{v?.gender || ""}{i === 0 ? " · principal" : ""}</p></div>
+      <div className="min-w-[140px] flex-1"><p className="text-sm font-semibold">Voz {v?.name || e.voice}</p><p className="text-xs text-slate-500">{[v?.gender, v?.accent].filter(Boolean).join(" · ")}{i === 0 ? " · principal" : ""}</p></div>
       <Input value={e.name} maxLength={40} onChange={(ev) => onName(ev.target.value)} placeholder={v?.gender === "Hombre" ? "Nombre de hombre" : "Nombre de mujer"} className="w-48" data-testid={`executive-name-${i}`} />
       <Button variant="ghost" size="icon" onClick={onRemove} data-testid={`executive-remove-${i}`}><Trash2 className="h-4 w-4" /></Button>
     </div>

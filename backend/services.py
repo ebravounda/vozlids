@@ -204,6 +204,21 @@ async def find_lead_for_call(call: dict):
     return None
 
 
+async def language_handoff(msg: dict, lead) -> dict:
+    lang = (msg.get("parameters") or {}).get("language", "")
+    agent = await db.agents.find_one({"_id": ObjectId(lead["agent_id"])}) if lead and ObjectId.is_valid(lead.get("agent_id", "")) else None
+    if not agent:
+        return {"error": "No se pudo cambiar de idioma. Sigue atendiendo en español."}
+    import plan_limits as PL
+    agent = await PL.effective_agent(agent)
+    a = vapi.build_language_assistant(agent, lead, today_text(agent.get("country", "ES")), lang)
+    if not a:
+        return {"error": "Ese idioma no está disponible. Sigue atendiendo en español."}
+    voice = next(e["voice"] for e in agent["languages"] if e["lang"] == lang)
+    await db.leads.update_one({"_id": lead["_id"]}, {"$set": {"language": lang, "voice_provider": vapi.voice_provider(voice)}})
+    return {"destination": {"type": "assistant", "assistant": a, "contextEngineeringPlan": {"type": "all"}}}
+
+
 async def handle_tool_calls(msg: dict, lead) -> dict:
     results = []
     for tc in msg.get("toolCallList") or msg.get("toolCalls") or []:

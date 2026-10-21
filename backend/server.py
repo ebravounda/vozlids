@@ -36,6 +36,7 @@ import apiv1  # noqa: E402
 import privacy  # noqa: E402
 import gcal  # noqa: E402
 import plan_limits as PL  # noqa: E402
+import languages as L  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
@@ -189,6 +190,12 @@ class Executive(BaseModel):
     name: str = Field(min_length=1, max_length=40)
 
 
+class LangExec(BaseModel):
+    lang: Literal["en", "pt", "fr", "ca", "it", "de"]
+    voice: str = Field(min_length=1, max_length=40)
+    name: str = Field(min_length=1, max_length=40)
+
+
 class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     business_name: str = Field(min_length=1, max_length=120)
@@ -202,6 +209,7 @@ class AgentIn(BaseModel):
     greeting: str = Field(min_length=1, max_length=600)
     extra_instructions: str = Field("", max_length=2000)
     executives: List[Executive] = Field(default=[], max_length=5)
+    languages: List[LangExec] = Field(default=[], max_length=6)
     active: bool = True
 
 
@@ -220,8 +228,15 @@ async def list_agents(user=CurrentUser):
 
 async def check_ambience(user: dict, body: AgentIn):
     for v in [body.voice] + [e.voice for e in body.executives]:
-        if not vapi.voice_allowed(v, body.country):
-            raise HTTPException(422, f"Esa voz no está disponible para {COUNTRIES[body.country]['name']}.")
+        if not vapi.voice_ok(v, "es"):
+            raise HTTPException(422, "Esa voz no habla español.")
+    for e in body.languages:
+        if not vapi.voice_ok(e.voice, e.lang):
+            raise HTTPException(422, f"La voz de {e.name} no habla {L.LANGS[e.lang]['name']}.")
+    if len({e.lang for e in body.languages}) < len(body.languages):
+        raise HTTPException(422, "Cada idioma solo puede tener un ejecutivo.")
+    if body.languages:
+        await PL.require(user["id"], "multilang")
     if len({e.voice for e in body.executives}) < len(body.executives):
         raise HTTPException(422, "Cada ejecutivo debe tener una voz distinta.")
     if body.ambience.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], body.ambience[7:]):
@@ -574,6 +589,8 @@ async def vapi_webhook(request: Request):
     lead = await S.find_lead_for_call(msg.get("call") or {})
     if typ == "tool-calls":
         return await S.handle_tool_calls(msg, lead)
+    if typ == "handoff-destination-request":
+        return await S.language_handoff(msg, lead)
     if not lead:
         return {"ok": True}
     if typ == "status-update" and lead.get("call_phase") != "ended":

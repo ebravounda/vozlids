@@ -34,9 +34,9 @@ def eleven_voice_id(voice: str) -> str:
     return custom["voice_id"] if custom else vapi.ELEVEN.get(voice, "")
 
 
-async def eleven_tts(key: str, voice_id: str, text: str) -> bytes:
+async def eleven_tts(key: str, voice_id: str, text: str, lang: str = "es") -> bytes:
     v = vapi.eleven_voice(voice_id)
-    body = {"text": text, "model_id": v["model"], "language_code": "es",
+    body = {"text": text, "model_id": v["model"], "language_code": lang,
             "voice_settings": {"stability": v["stability"], "similarity_boost": v["similarityBoost"], "style": v["style"],
                                "use_speaker_boost": v["useSpeakerBoost"], "speed": v["speed"]}}
     async with httpx.AsyncClient(timeout=40) as x:
@@ -89,18 +89,18 @@ async def azure_tts(voice_name: str, text: str) -> bytes:
     return bytes(out)
 
 
-async def tts(voice: str, text: str) -> tuple:
+async def tts(voice: str, text: str, lang: str = "es") -> tuple:
     key = await eleven_key()
     vid = eleven_voice_id(voice)
     premium = {**vapi.PREMIUM, **vapi.PREMIUM_LATAM}
-    standard = {**vapi.STANDARD, **vapi.STANDARD_CL}
+    standard = {**vapi.STANDARD, **vapi.STANDARD_CL, **{k: v[1] for k, v in vapi.L.LANG_VOICES.items()}}
     if vid:
         source, ref = ("elevenlabs" if key else "openai"), f"{vid}|{vapi.eleven_voice(vid)['model']}"
     elif voice in premium:
         source, ref = "cartesia", premium[voice]
     else:
         source, ref = "azure", standard[voice]
-    h = hashlib.sha256(f"{source}|{ref}|{text}".encode()).hexdigest()
+    h = hashlib.sha256(f"{source}|{ref}|{text}{'' if lang == 'es' else '|' + lang}".encode()).hexdigest()
     cached = await db.tts_cache.find_one({"hash": h})
     if cached:
         try:
@@ -114,7 +114,7 @@ async def tts(voice: str, text: str) -> tuple:
         audio = await azure_tts(standard[voice], text)
     elif source == "elevenlabs":
         try:
-            audio = await eleven_tts(key, vid, text)
+            audio = await eleven_tts(key, vid, text, lang)
         except Exception as e:  # noqa: BLE001
             log.warning("ElevenLabs falló (%s); uso la voz de respaldo", getattr(e, "detail", e))
             source = "openai"
@@ -177,11 +177,11 @@ def mix(voice_audio: bytes, bg) -> bytes:
     return buf.getvalue()
 
 
-async def preview(voice: str, text: str, amb: str, volume: int) -> Response:
+async def preview(voice: str, text: str, amb: str, volume: int, lang: str = "es") -> Response:
     vol = max(0, min(100, round(volume / 5) * 5))
-    key = hashlib.sha256(f"{voice}|{text}|{amb}|{vol}|{bool(await eleven_key())}".encode()).hexdigest()
+    key = hashlib.sha256(f"{voice}|{text}|{amb}|{vol}|{lang}|{bool(await eleven_key())}".encode()).hexdigest()
     if key not in _mix_cache:
-        audio, source = await tts(voice, text)
+        audio, source = await tts(voice, text, lang)
         wav = await asyncio.to_thread(mix, audio, await ambience_samples(amb, vol))
         _mix_cache[key] = (wav, source)
         if len(_mix_cache) > 40:
@@ -201,15 +201,16 @@ async def demo_preview():
 
 
 @router.get("/voice-preview")
-async def agent_preview(voice: str, text: str, ambience_id: str = "none", volume: int = 35, user=Depends(A.get_current_user)):
+async def agent_preview(voice: str, text: str, ambience_id: str = "none", volume: int = 35, lang: str = "es",
+                        user=Depends(A.get_current_user)):
     text = text.strip()[:600]
     if not text:
         raise HTTPException(422, "Falta el texto del saludo")
-    if voice not in vapi.VOICES and voice not in vapi.STATE["custom_voices"]:
-        raise HTTPException(422, "Voz no válida")
+    if not vapi.voice_ok(voice, lang):
+        raise HTTPException(422, "Voz no válida para ese idioma")
     if ambience_id.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], ambience_id[7:]):
         raise HTTPException(404, "Ambiente no encontrado")
-    return await preview(voice, text, ambience_id, volume)
+    return await preview(voice, text, ambience_id, volume, lang)
 
 
 # ---------- Admin: Cartesia key (Premium voice previews) ----------
@@ -304,10 +305,13 @@ async def _eleven_get(path: str, params: dict) -> dict:
 
 
 @router.get("/admin/elevenlabs/library")
-async def eleven_library(country: str = "ES", gender: str = "", user=Depends(X.require_admin)):
+async def eleven_library(country: str = "ES", gender: str = "", language: str = "es", accent: str = "",
+                         user=Depends(X.require_admin)):
     seen, out = set(), []
-    for accent in ACCENTS.get(country, ACCENTS["ES"])[:2]:
-        params = {"language": "es", "accent": accent, "page_size": 24, "sort": "cloned_by_count"}
+    if language not in vapi.L.ELEVEN_LANGS:
+        raise HTTPException(422, "Idioma no disponible")
+    for acc in ([accent[:30]] if accent else ACCENTS.get(country, ACCENTS["ES"])[:2] if language == "es" else [""]):
+        params = {"language": language, "page_size": 24, "sort": "cloned_by_count", **({"accent": acc} if acc else {})}
         if gender in ("female", "male"):
             params["gender"] = gender
         for v in (await _eleven_get("/shared-voices", params)).get("voices", []):
@@ -326,8 +330,10 @@ class LibraryAddIn(BaseModel):
     voice_id: str = Field(min_length=10, max_length=60)
     name: str = Field(min_length=1, max_length=30)
     gender: str = Field(pattern="^(Mujer|Hombre)$")
-    country: str = Field(pattern="^(ES|CL)$")
+    country: str = Field("ES", pattern="^(ES|CL)$")
     tone: str = Field("", max_length=80)
+    language: str = Field("es", pattern=r"^(es|en|pt|fr|it|de)$")
+    accent: str = Field("", max_length=30)
 
 
 @router.post("/admin/elevenlabs/library/add")
@@ -340,7 +346,8 @@ async def eleven_library_add(body: LibraryAddIn, user=Depends(X.require_admin)):
         raise HTTPException(400, f"ElevenLabs no permitió añadir la voz ({r.status_code}): {r.text[:160]}")
     vid = r.json().get("voice_id") or body.voice_id
     return await X.add_custom_voice(X.CustomVoiceIn(name=body.name, gender=body.gender, country=body.country,
-                                                    voice_id=vid, tone=body.tone or "Acento nativo"), user)
+                                                    voice_id=vid, tone=body.tone or "Acento nativo",
+                                                    language=body.language, accent=body.accent), user)
 
 
 @router.delete("/admin/elevenlabs")

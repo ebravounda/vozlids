@@ -100,14 +100,24 @@ function NumbersList({ connected }) {
   );
 }
 
-function LibraryVoice({ v, country, onAdded, playing, setPlaying }) {
+export const LIB_ACCENTS = {
+  es: [["", "España y Chile"], ["peninsular", "España"], ["chilean", "Chileno"], ["argentine", "Argentino"], ["mexican", "Mexicano"], ["colombian", "Colombiano"], ["peruvian", "Peruano"], ["venezuelan", "Venezolano"], ["latin american", "Latino neutro"]],
+  en: [["", "Cualquiera"], ["american", "Americano"], ["british", "Británico"], ["australian", "Australiano"]],
+  pt: [["", "Cualquiera"], ["brazilian", "Brasileño"], ["european", "Portugal"]],
+  fr: [["", "Cualquiera"]], it: [["", "Cualquiera"]], de: [["", "Cualquiera"]],
+};
+const LIB_LANGS = [["es", "Español"], ["en", "Inglés"], ["pt", "Portugués"], ["fr", "Francés"], ["it", "Italiano"], ["de", "Alemán"]];
+
+function LibraryVoice({ v, f, onAdded, playing, setPlaying }) {
   const [name, setName] = useState(v.name.split(/[ -]/)[0].slice(0, 30));
   const [busy, setBusy] = useState(false);
   const add = async () => {
     setBusy(true);
     try {
-      await api.post("/admin/elevenlabs/library/add", { public_owner_id: v.public_owner_id, voice_id: v.voice_id, name, gender: v.gender === "male" ? "Hombre" : "Mujer", country, tone: [v.accent, v.age].filter(Boolean).join(", ").slice(0, 80) });
-      toast.success(`Voz ${name} añadida para ${country === "CL" ? "Chile" : "España"}`); onAdded();
+      const label = (LIB_ACCENTS[f.language].find(([k]) => k === f.accent) || [])[1];
+      const accent = f.accent ? label : (v.accent ? v.accent.charAt(0).toUpperCase() + v.accent.slice(1) : "");
+      await api.post("/admin/elevenlabs/library/add", { public_owner_id: v.public_owner_id, voice_id: v.voice_id, name, gender: v.gender === "male" ? "Hombre" : "Mujer", country: /chile/i.test(v.accent || "") ? "CL" : "ES", language: f.language, accent: accent.slice(0, 30), tone: [v.accent, v.age].filter(Boolean).join(", ").slice(0, 80) });
+      toast.success(`Voz ${name} añadida`); onAdded();
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
   return (
@@ -121,7 +131,7 @@ function LibraryVoice({ v, country, onAdded, playing, setPlaying }) {
 }
 
 export function VoiceLibrary({ onAdded }) {
-  const [f, setF] = useState({ country: "ES", gender: "" });
+  const [f, setF] = useState({ language: "es", accent: "", gender: "" });
   const [list, setList] = useState(null);
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState("");
@@ -133,18 +143,19 @@ export function VoiceLibrary({ onAdded }) {
   }, [playing]); // eslint-disable-line react-hooks/exhaustive-deps
   const search = async () => {
     setBusy(true);
-    try { setList((await api.get(`/admin/elevenlabs/library?country=${f.country}&gender=${f.gender}`)).data); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+    try { setList((await api.get(`/admin/elevenlabs/library?language=${f.language}&accent=${encodeURIComponent(f.accent)}&gender=${f.gender}`)).data); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
   return (
     <div className="space-y-3 border-t border-slate-800 pt-4" data-testid="voice-library-panel">
       <p className="text-sm font-semibold text-white">Buscar voces con acento nativo</p>
       <div className="flex flex-wrap gap-2">
-        <div className="w-36">{sel(f.country, (v) => setF({ ...f, country: v || "ES" }), [["ES", "España"], ["CL", "Chile"]], "voice-library-country", "País")}</div>
+        <div className="w-36">{sel(f.language, (v) => setF({ ...f, language: v || "es", accent: "" }), LIB_LANGS, "voice-library-language", "Idioma")}</div>
+        <div className="w-40">{sel(f.accent || "any", (v) => setF({ ...f, accent: v === "any" ? "" : v }), LIB_ACCENTS[f.language].map(([k, l]) => [k || "any", l]), "voice-library-accent", "Acento")}</div>
         <div className="w-36">{sel(f.gender, (v) => setF({ ...f, gender: v }), [["female", "Mujer"], ["male", "Hombre"]], "voice-library-gender", "Cualquiera")}</div>
         <Button onClick={search} disabled={busy} variant="outline" data-testid="voice-library-search">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Buscar</Button>
       </div>
       {list && list.length === 0 && <p className="text-xs text-slate-500">No hay resultados con ese filtro.</p>}
-      <div className="max-h-96 space-y-2 overflow-y-auto">{(list || []).map((v) => <LibraryVoice key={v.voice_id} v={v} country={f.country} onAdded={onAdded} playing={playing} setPlaying={setPlaying} />)}</div>
+      <div className="max-h-96 space-y-2 overflow-y-auto">{(list || []).map((v) => <LibraryVoice key={v.voice_id} v={v} f={f} onAdded={onAdded} playing={playing} setPlaying={setPlaying} />)}</div>
     </div>
   );
 }

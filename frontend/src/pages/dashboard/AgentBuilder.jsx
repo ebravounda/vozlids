@@ -26,16 +26,14 @@ export default function AgentBuilder() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState(agentId ? null : blank(user?.business_name, user?.country || "ES"));
   const [saving, setSaving] = useState(false);
-  const hd = useFeature("premium_voices");
   const ambOk = useFeature("ambience");
   useEffect(() => {
     if (agentId) return;
     setAgent((a) => a && {
       ...a,
-      voice: !hd && a.voice === DEFAULT_VOICE[a.country] ? (a.country === "CL" ? "l_fernanda" : "p_marta") : a.voice,
       ambience: !ambOk && a.ambience !== "none" ? "none" : a.ambience,
     });
-  }, [hd, ambOk, agentId]);
+  }, [ambOk, agentId]);
   const [tab, setTab] = useState("general");
 
   useEffect(() => {

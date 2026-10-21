@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Panel } from "@/components/Common";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { CustomAmbiences } from "@/components/CustomAmbiences";
-import { AMBIENCES, COUNTRIES, DEFAULT_VOICE, OBJECTIVES, TIER, VOICES } from "@/lib/constants";
+import { AMBIENCES, COUNTRIES, OBJECTIVES, TIER, customVoice, voicesForLang } from "@/lib/constants";
 import { ExecutivesPanel } from "@/components/agent/Executives";
+import { LanguagesPanel } from "@/components/agent/Languages";
 
 const GROUPS = [
   ["eleven", "Ultra natural HD · las más humanas", "Recomendado · algo más caro por minuto", "text-emerald-300"],
@@ -34,7 +35,7 @@ const CountryPick = ({ agent, update }) => (
     <div className="grid gap-3 sm:grid-cols-2">
       {Object.entries(COUNTRIES).map(([code, c]) => (
         <Choice key={code} active={(agent.country || "ES") === code} testid={`agent-country-${code}`}
-          onClick={() => code !== (agent.country || "ES") && update({ country: code, voice: DEFAULT_VOICE[code], executives: [] })}
+          onClick={() => update({ country: code })}
           title={`${c.name} (${c.prefix})`} desc={`Hora de ${c.city} · teléfonos ${c.example}`} />
       ))}
     </div>
@@ -73,29 +74,36 @@ const PlanLockNote = ({ f }) => (
 );
 
 export const VoiceTab = ({ agent, update }) => {
-  const hd = useFeature("premium_voices");
   const ambOk = useFeature("ambience");
   const amb = agent.ambience.startsWith("custom:") ? { volume: true } : AMBIENCES.find((a) => a.id === agent.ambience);
   const [custom, setCustom] = useState([]);
-  useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map((v) => ({ ...v, eleven: true, tone: v.tone || "Voz ultra natural con acento nativo" })))).catch(() => {}); }, []);
-  const country = agent.country || "ES";
-  const list = [...custom, ...VOICES].filter((v) => v.country === country || v.country === "ALL");
+  const [accent, setAccent] = useState("");
+  useEffect(() => { api.get("/voices/custom").then((r) => setCustom(r.data.map(customVoice))).catch(() => {}); }, []);
+  const list = voicesForLang("es", custom);
+  const accents = [...new Set(list.map((v) => v.accent))];
   const team = agent.executives || [];
   const pickVoice = (id) => update(team.length ? { voice: id, executives: [{ voice: id, name: list.find((v) => v.id === id)?.name || team[0].name }, ...team.slice(1).filter((e) => e.voice !== id)] } : { voice: id });
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <ExecutivesPanel agent={agent} update={update} voices={list.filter((v) => hd || TIER(v) !== "eleven")} />
+      <ExecutivesPanel agent={agent} update={update} voices={list} />
+      <LanguagesPanel agent={agent} update={update} custom={custom} />
       <Panel className="space-y-5">
-        <Label>Voz ({(agent.country || "ES") === "CL" ? "español latino y chileno" : "español de España"})</Label>
+        <Label>Voz principal (español, todos los acentos)</Label>
+        <div className="flex flex-wrap gap-2" data-testid="voice-accent-filter">
+          {["", ...accents].map((a) => (
+            <button key={a || "all"} type="button" onClick={() => setAccent(a)} data-testid={`voice-accent-${a || "todos"}`}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${accent === a ? "border-emerald-500 bg-emerald-500/10 text-emerald-700" : "border-slate-300 text-slate-600 hover:border-slate-400"}`}>{a ? `Acento ${a.toLowerCase()}` : "Todos"}</button>
+          ))}
+        </div>
         {GROUPS.map(([tier, title, note, color]) => (
           <div key={tier} className="space-y-3" data-testid={`voice-group-${tier}`}>
             <div className="flex items-baseline justify-between">
               <p className={`text-xs font-semibold uppercase tracking-widest ${color}`}>{title}</p>
               <p className="text-xs text-slate-500">{note}</p>
             </div>
-            {tier === "eleven" && !hd ? <PlanLockNote f="premium_voices" /> : <div className="grid grid-cols-2 gap-3">
-              {list.filter((v) => TIER(v) === tier).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => pickVoice(v.id)} title={v.name} desc={`${v.gender} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
-            </div>}
+            <div className="grid grid-cols-2 gap-3">
+              {list.filter((v) => TIER(v) === tier && (!accent || v.accent === accent)).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => pickVoice(v.id)} title={v.name} desc={`${v.gender} · Acento ${v.accent.toLowerCase()} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
+            </div>
           </div>
         ))}
       </Panel>

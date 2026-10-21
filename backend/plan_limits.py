@@ -11,7 +11,7 @@ FEATURES = {
     "api": "la API para desarrolladores",
     "widget": "el botón para tu web",
     "agenda_pro": "Google Calendar y los recordatorios de citas",
-    "premium_voices": "las voces ultra naturales HD",
+    "multilang": "la atención en varios idiomas",
     "ambience": "el ambiente de oficina de fondo",
 }
 DEFAULT = {"max_agents": 0, "max_concurrent": 0, "recording_days": 0, **{k: True for k in FEATURES}}
@@ -26,7 +26,7 @@ class LimitsIn(BaseModel):
     api: bool = True
     widget: bool = True
     agenda_pro: bool = True
-    premium_voices: bool = True
+    multilang: bool = False
     ambience: bool = True
 
 
@@ -35,7 +35,7 @@ async def for_tenant(tid: str) -> dict:
     if not u or u.get("role") == "admin" or not u.get("plan_id") or not ObjectId.is_valid(u["plan_id"]):
         return dict(DEFAULT)
     plan = await db.plans.find_one({"_id": ObjectId(u["plan_id"])}, {"limits": 1}) or {}
-    return {**DEFAULT, **(plan.get("limits") or {})}
+    return {**DEFAULT, "multilang": False, **(plan.get("limits") or {})}
 
 
 def locked(feature: str) -> HTTPException:
@@ -66,8 +66,6 @@ async def check_agent(tid: str, voice: str, ambience: str, new: bool) -> None:
     if new and lim["max_agents"] and await db.agents.count_documents({"tenant_id": tid}) >= lim["max_agents"]:
         n = lim["max_agents"]
         raise HTTPException(403, f"Tu plan permite {n} {'agente' if n == 1 else 'agentes'}. Mejora tu plan en «Mi plan» para crear más.")
-    if not lim["premium_voices"] and (voice in vapi.ELEVEN or voice in vapi.STATE["custom_voices"]):
-        raise locked("premium_voices")
     if not lim["ambience"] and ambience != "none":
         raise locked("ambience")
 
@@ -77,12 +75,8 @@ async def effective_agent(agent: dict) -> dict:
     import vapi
     lim = await for_tenant(agent["tenant_id"])
     out = dict(agent)
-    v = agent.get("voice", "")
-    if not lim["premium_voices"] and not agent.get("keep_voice") and (v in vapi.ELEVEN or v in vapi.STATE["custom_voices"]):
-        custom = vapi.STATE["custom_voices"].get(v)
-        female = custom["gender"] == "Mujer" if custom else v in vapi.FEMALE
-        cl = agent.get("country") == "CL"
-        out["voice"] = ("l_fernanda" if cl else "p_marta") if female else ("l_mateo" if cl else "p_gonzalo")
+    if not lim["multilang"]:
+        out["languages"] = []
     if not lim["ambience"]:
         out["ambience"] = "none"
     return out

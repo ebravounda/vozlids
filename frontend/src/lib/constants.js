@@ -57,6 +57,41 @@ VOICES.unshift(
 
 export const DEFAULT_VOICE = { ES: "e_sarah", CL: "e_sarah" };
 
+VOICES.forEach((v) => {
+  v.accent = v.eleven ? "Neutro" : v.id.startsWith("cl_") ? "Chileno" : v.id.startsWith("l_") ? "Latino" : "España";
+  v.lang = v.eleven ? "multi" : "es";
+});
+
+export const LANGUAGES = {
+  en: { name: "Inglés", native: "English", sample: "Hi! I'm {n}. How can I help you today?" },
+  pt: { name: "Portugués", native: "Português", sample: "Olá! Sou {n}. Em que posso ajudar?" },
+  fr: { name: "Francés", native: "Français", sample: "Bonjour ! Je suis {n}. Comment puis-je vous aider ?" },
+  ca: { name: "Catalán", native: "Català", sample: "Hola! Sóc {n}. En què et puc ajudar?" },
+  it: { name: "Italiano", native: "Italiano", sample: "Ciao! Sono {n}. Come posso aiutarla?" },
+  de: { name: "Alemán", native: "Deutsch", sample: "Hallo! Ich bin {n}. Wie kann ich Ihnen helfen?" },
+};
+export const ELEVEN_LANGS = ["es", "en", "pt", "fr", "it", "de"];
+
+const lv = (id, name, gender, accent, tone) => ({ id, name, gender, accent, tone, lang: id.slice(0, 2) });
+export const LANG_VOICES = [
+  lv("en_jenny", "Jenny", "Mujer", "Americano", "Clara y cercana"), lv("en_guy", "Guy", "Hombre", "Americano", "Natural y profesional"),
+  lv("en_sonia", "Sonia", "Mujer", "Británico", "Elegante y amable"), lv("en_ryan", "Ryan", "Hombre", "Británico", "Sereno"),
+  lv("pt_francisca", "Francisca", "Mujer", "Brasileño", "Cálida"), lv("pt_antonio", "Antônio", "Hombre", "Brasileño", "Cercano"),
+  lv("pt_raquel", "Raquel", "Mujer", "Portugal", "Profesional"), lv("pt_duarte", "Duarte", "Hombre", "Portugal", "Tranquilo"),
+  lv("fr_denise", "Denise", "Mujer", "Francia", "Amable"), lv("fr_henri", "Henri", "Hombre", "Francia", "Profesional"),
+  lv("ca_joana", "Joana", "Mujer", "Catalán", "Cercana"), lv("ca_enric", "Enric", "Hombre", "Catalán", "Natural"),
+  lv("it_elsa", "Elsa", "Mujer", "Italia", "Cálida"), lv("it_diego", "Diego", "Hombre", "Italia", "Seguro"),
+  lv("de_katja", "Katja", "Mujer", "Alemania", "Clara"), lv("de_conrad", "Conrad", "Hombre", "Alemania", "Profesional"),
+];
+
+export const customVoice = (v) => ({ ...v, eleven: true, lang: v.language || "es", accent: v.accent || (v.country === "CL" ? "Chileno" : "España"), tone: v.tone || "Voz ultra natural con acento nativo" });
+
+export const voicesForLang = (lang, custom = []) => (lang === "es"
+  ? [...custom.filter((c) => c.lang === "es"), ...VOICES]
+  : [...custom.filter((c) => c.lang === lang), ...LANG_VOICES.filter((v) => v.lang === lang), ...(ELEVEN_LANGS.includes(lang) ? VOICES.filter((v) => v.eleven) : [])]);
+
+export const TIER_NAME = { eleven: "HD", premium: "Premium", standard: "Estándar" };
+
 export const AMBIENCES = [
   { id: "oficina_real", name: "Oficina real (grabación)", desc: "Oficina real grabada con tecleo bien presente", volume: true, real: true },
   { id: "teclado_real", name: "Teclado real (grabación)", desc: "Tecleo grabado de un portátil a ratos, sin voces", volume: true, real: true },

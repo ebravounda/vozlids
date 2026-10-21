@@ -222,7 +222,8 @@ export function GoogleSettings() {
   );
 }
 
-const EMPTY = { name: "", gender: "Mujer", country: "ES", voice_id: "", tone: "" };
+const EMPTY = { name: "", gender: "Mujer", language: "es", accent: "", voice_id: "", tone: "" };
+export const VOICE_LANGS = [["es", "Español"], ["en", "Inglés"], ["pt", "Portugués"], ["fr", "Francés"], ["it", "Italiano"], ["de", "Alemán"]];
 
 export function CustomVoices() {
   const [items, setItems] = useState([]);
@@ -240,10 +241,10 @@ export function CustomVoices() {
   return (
     <Panel className="space-y-4" data-testid="custom-voices-panel">
       <div className="flex items-center gap-2"><Mic className="h-5 w-5 text-emerald-300" /><h3 className="text-lg font-semibold text-white">Voces ElevenLabs con acento nativo</h3></div>
-      <p className="text-xs text-slate-400">Añade voces de la biblioteca de ElevenLabs con acento de España o de Chile. Necesitas tu clave de ElevenLabs conectada en Vapi (Integraciones → ElevenLabs). Si la voz falla, la llamada usa una voz premium de respaldo.</p>
+      <p className="text-xs text-slate-400">Añade voces de la biblioteca de ElevenLabs en cualquier idioma y con su acento (chileno, argentino, mexicano…). Tus clientes las verán todas al elegir voz. Necesitas tu clave de ElevenLabs conectada en Vapi (Integraciones → ElevenLabs). Si la voz falla, la llamada usa una voz premium de respaldo.</p>
       {items.map((v) => (
         <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-800 p-3 text-sm" data-testid={`custom-voice-${v.id}`}>
-          <span className="text-white">{v.name} <span className="text-xs text-slate-500">· {v.gender} · {v.country === "CL" ? "Chile" : "España"} · {v.voice_id}</span></span>
+          <span className="text-white">{v.name} <span className="text-xs text-slate-500">· {v.gender} · {(VOICE_LANGS.find(([c]) => c === (v.language || "es")) || [])[1]} · Acento {v.accent || (v.country === "CL" ? "chileno" : "España")} · {v.voice_id}</span></span>
           <button onClick={() => del(v.id)} className="text-slate-500 hover:text-rose-300" data-testid={`custom-voice-delete-${v.id}`}><Trash2 className="h-4 w-4" /></button>
         </div>
       ))}
@@ -251,7 +252,8 @@ export function CustomVoices() {
         <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Nombre (ej. Carmen)" className="bg-slate-950/60" data-testid="voice-name-input" />
         <Input value={f.voice_id} onChange={(e) => setF({ ...f, voice_id: e.target.value.trim() })} placeholder="ID de voz ElevenLabs" className="bg-slate-950/60 font-mono" data-testid="voice-id-input" />
         {sel("gender", [["Mujer", "Mujer"], ["Hombre", "Hombre"]])}
-        {sel("country", [["ES", "España"], ["CL", "Chile"]])}
+        {sel("language", VOICE_LANGS)}
+        <Input value={f.accent} onChange={(e) => setF({ ...f, accent: e.target.value })} placeholder="Acento (ej. Argentino)" maxLength={30} className="bg-slate-950/60" data-testid="voice-accent-input" />
         <Input value={f.tone} onChange={(e) => setF({ ...f, tone: e.target.value })} placeholder="Tono (opcional)" className="col-span-2 bg-slate-950/60" data-testid="voice-tone-input" />
       </div>
       <Button onClick={add} disabled={!f.name || f.voice_id.length < 10} className="rounded-full" data-testid="voice-add-button"><Plus className="mr-2 h-4 w-4" /> Añadir voz</Button>

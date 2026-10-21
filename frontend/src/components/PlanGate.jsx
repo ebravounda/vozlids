@@ -11,6 +11,7 @@ export const FEATURE_INFO = {
   widget: ["Botón para tu web", "Un botón en tu web para que tus visitantes reciban una llamada en segundos."],
   agenda_pro: ["Agenda avanzada", "Sincroniza Google Calendar y envía recordatorios automáticos de cita."],
   premium_voices: ["Voces ultra naturales HD", "Las voces más humanas, casi imposibles de distinguir de una persona."],
+  multilang: ["Atención en varios idiomas", "El agente pregunta el idioma y pasa la llamada a un ejecutivo nativo: inglés, portugués, francés, catalán, italiano o alemán."],
   ambience: ["Ambiente de oficina", "Sonido de oficina de fondo para que la llamada suene más real."],
 };
 

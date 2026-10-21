@@ -40,8 +40,8 @@ export function limitLines(p) {
   const l = p.limits || {};
   const out = [l.max_agents ? `${l.max_agents} ${l.max_agents === 1 ? "agente IA" : "agentes IA"}` : "Agentes IA ilimitados"];
   if (l.max_concurrent) out.push(`${l.max_concurrent} ${l.max_concurrent === 1 ? "llamada" : "llamadas"} a la vez`);
-  [["outbound", "Llamadas salientes"], ["widget", "Botón para tu web"], ["agenda_pro", "Google Calendar y recordatorios"], ["premium_voices", "Voces ultra naturales HD"], ["ambience", "Ambiente de oficina"], ["api", "API y webhooks"]]
-    .forEach(([k, t]) => { if (l[k] !== false) out.push(t); });
+  [["outbound", "Llamadas salientes"], ["widget", "Botón para tu web"], ["agenda_pro", "Google Calendar y recordatorios"], ["multilang", "Atención en varios idiomas"], ["ambience", "Ambiente de oficina"], ["api", "API y webhooks"]]
+    .forEach(([k, t]) => { if (k === "multilang" ? l[k] : l[k] !== false) out.push(t); });
   if (l.recording_days) out.push(`Grabaciones guardadas ${l.recording_days} días`);
   return out;
 }
