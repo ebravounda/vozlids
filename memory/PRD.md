@@ -342,3 +342,6 @@
 
 ## 2026-06 · Email de bienvenida
 - server.welcome_email (fire-and-forget on /auth/register): 5 steps (documentos según país, número 1–24 h, crear agente, llamadas, dudas + centrales CL/ES), CTA "Subir mis documentos" → /app/numero. Verified 202 from email API.
+
+## 2026-06 · Landing: sección multi-idioma
+- components/landing/Multilang.jsx (#idiomas, after Voces, nav link "Idiomas"): copy about native executives per language, 15 accent chips, interactive call mock with 6 language tabs (auto-rotates; click stops) showing ask → reply → handoff → native greeting. AgentTeam copy mentions accents + languages.

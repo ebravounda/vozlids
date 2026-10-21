@@ -19,7 +19,7 @@ export const AgentTeam = () => (
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Voces 100% realistas</p>
         <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Un equipo de agentes, no un robot</h2>
-        <p className="mt-4 text-lg leading-relaxed text-slate-600">Elige a tus ejecutivos entre decenas de voces con acento de España y de Latinoamérica. Respiran, hacen pausas y cambian de tono como una persona: tus clientes no notan la diferencia.</p>
+        <p className="mt-4 text-lg leading-relaxed text-slate-600">Elige a tus ejecutivos entre decenas de voces con acento de España, Chile, Argentina, México y más, y también en inglés, portugués, francés, catalán, italiano y alemán. Respiran, hacen pausas y cambian de tono como una persona: tus clientes no notan la diferencia.</p>
         <ul className="mt-6 space-y-3 text-slate-700">
           {[[Users, "Hasta 5 ejecutivos por agente, cada uno con su nombre y su voz"], [Repeat2, "Se turnan solos en cada llamada: Blanca, Octavio, Lucía…"], [Sparkles, "Voces HD de última generación y ambiente de oficina real"]].map(([I, t]) => (
             <li key={t} className="flex items-start gap-3"><span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700"><I className="h-4 w-4" /></span>{t}</li>

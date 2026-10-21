@@ -8,7 +8,7 @@ import { SEO_PAGES } from "@/components/Seo";
 import { COMPANY } from "@/pages/Legal";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
-const LINKS = [["#plataforma", "Plataforma"], ["#citas", "Citas"], ["#voces", "Voces"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"]];
+const LINKS = [["#plataforma", "Plataforma"], ["#citas", "Citas"], ["#voces", "Voces"], ["#idiomas", "Idiomas"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"]];
 
 export const CENTRALES = [["CL", "Central Chile", "+56233844477", "+56 2 3384 4477"], ["ES", "Central España", "+34919932652", "+34 919 93 26 52"]];
 

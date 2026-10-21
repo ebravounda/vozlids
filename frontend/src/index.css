@@ -144,3 +144,6 @@ code, .font-mono {
 .tour-pop:not(.-translate-x-1\/2) { animation: tour-pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .tour-pop.-translate-x-1\/2 { animation: tour-pop-center 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes tour-pop-center { from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
+
+@keyframes ml-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ml-fade { animation: ml-fade 0.45s ease-out both; }
