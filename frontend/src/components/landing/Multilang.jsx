@@ -36,7 +36,7 @@ function CallMock() {
   useEffect(() => stop, []);
   const play = (code) => {
     stop(); setAuto(false);
-    const seq = ["q", "c", "r"].map((p) => `/demo/lang/${p}_${code}.mp3`);
+    const seq = [`/demo/lang/q_${code}.wav`, `/demo/lang/c_${code}.mp3`, `/demo/lang/r_${code}.mp3`];
     const run = (k) => {
       if (k >= seq.length) return setPart(-1);
       const a = new Audio(seq[k]);

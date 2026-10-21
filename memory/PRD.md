@@ -349,3 +349,4 @@
 ## 2026-06 · Escuchar cada idioma + catalán HD
 - Landing Multilang demo: "Escuchar" button plays a mini call (Marta question es-ES → customer → native exec) from static files /frontend/public/demo/lang/{q,c,r}_{lang}.mp3 (generated once with edge-tts, free; no credits per play). Speaking bubble highlighted; tab change stops audio. English exec renamed Jenny.
 - Catalan HD: languages.ELEVEN_LANGS includes "ca"; ELEVEN_MODEL {"ca": "eleven_v4_turbo"} (Vapi supports it; preview verified via ElevenLabs API; NOT verified in a live call). Super admin custom voices + library search accept Catalán.
+- 2026-06: demo re-recorded with real call voices: Marta = Cartesia Premium p_marta (q_*.wav), customer + native exec = ElevenLabs HD with language code (c_/r_*.mp3; Catalan via eleven_v4_turbo). Script /tmp/hd.py pattern: voice_preview.tts(voice, text, lang). One-time cost, static files.
