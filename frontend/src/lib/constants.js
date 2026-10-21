@@ -40,8 +40,8 @@ VOICES.push(
   { id: "l_veronica", name: "Verónica", gender: "Mujer", tone: "Latina cálida, ventas", premium: true, country: "CL" },
   { id: "l_rodrigo", name: "Rodrigo", gender: "Hombre", tone: "Latino tranquilo, atención al cliente", premium: true, country: "CL" },
   { id: "l_santiago", name: "Santiago", gender: "Hombre", tone: "Latino moderno y cercano", premium: true, country: "CL" },
-  { id: "cl_catalina", name: "Catalina", gender: "Mujer", tone: "Acento chileno", country: "CL" },
-  { id: "cl_lorenzo", name: "Lorenzo", gender: "Hombre", tone: "Acento chileno", country: "CL" },
+  { id: "cl_catalina", name: "Catalina", gender: "Mujer", tone: "Natural y cercana", country: "CL" },
+  { id: "cl_lorenzo", name: "Lorenzo", gender: "Hombre", tone: "Natural y cercano", country: "CL" },
 );
 
 VOICES.unshift(

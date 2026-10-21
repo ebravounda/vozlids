@@ -235,8 +235,8 @@ async def check_ambience(user: dict, body: AgentIn):
             raise HTTPException(422, f"La voz de {e.name} no habla {L.LANGS[e.lang]['name']}.")
     if len({e.lang for e in body.languages}) < len(body.languages):
         raise HTTPException(422, "Cada idioma solo puede tener un ejecutivo.")
-    if body.languages:
-        await PL.require(user["id"], "multilang")
+    if body.languages and not await PL.has(user["id"], "multilang"):
+        body.languages = []
     if len({e.voice for e in body.executives}) < len(body.executives):
         raise HTTPException(422, "Cada ejecutivo debe tener una voz distinta.")
     if body.ambience.startswith("custom:") and not await X.custom_ambience_allowed(user["id"], body.ambience[7:]):

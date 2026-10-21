@@ -1,0 +1,42 @@
+{
+  "summary": "Tested multi-language executives plus the fix that shows all voices in rotation, backend and frontend. Backend: 19/19 pytest pass (tests/test_vozlead_iter35_multilang.py). Covered: PUT /agents with languages persists. Wrong-language voices get 422 (e_sarah→ca gives 'no habla catalán'; p_marta→en and en_jenny→fr are also rejected). A duplicate language gives 422, a bad lang code gives 422, and a non-Spanish main/executive voice gives 422. Cross-accent executives (p_marta, l_mateo, cl_catalina, e_sarah) save fine for both ES and CL. A new plan defaults to multilang off and premium_voices is gone. A client on a plan without multilang gets 403 for languages but can use HD voices; enabling multilang allows it. Webhook handoff-destination-request: en gives an azure en-US-JennyNeural assistant with an English firstMessage, en transcriber, no handoff tool, and lead.language=en. ca gives JoanaNeural with a català greeting. de with e_sarah gives 11labs language=de with a Katja fallback. A language not enabled or an unknown lead gives {error}, and a bad secret gives 401. Voice preview: en_jenny/en and e_sarah/fr return audio; wrong-language voices give 422. Frontend: the voice tab shows all 46 Spanish voices (3 custom + 8 HD Neutro + España/Latino/Chileno premium/standard). The accent chips filter correctly (España 26, Neutro 8, Latino 10, Chileno 2). The executives add-select lists 45 voices of every accent and tier with the label 'Name · Gender · Accent · Tier'. Adding l_mateo, cl_catalina and e_sarah works. Changing the country ES→CL keeps the voice and executives, and saving works. The languages panel works: en lists Jenny/Guy/Sonia/Ryan plus 8 HD voices, ca lists only Joana/Enric, and pt lists 4 PT/BR voices plus HD. Picking a voice auto-fills the name, the name is editable, preview plays (200), save shows the 'Agente guardado' toast, and the state persists after reload. A client on a plan without multilang sees locked-multilang and no toggles. Super admin: the plan form has the 'Atención en varios idiomas' switch (off by default) and no 'Voces ultra naturales HD'. The custom voices form has the language select (6 languages, no ca) and the accent input. Library search with language en and accent Británico returns results; language=ca gives 422. Found 1 functional bug, plus minor design issues.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "PUT /api/agents/{id} (server.py check_ambience L238-239) + Languages.jsx", "issue": "Downgrade lock-in. If a tenant's agent already has languages and the plan then loses multilang (downgrade, or the admin turns the feature off), EVERY save of that agent returns 403 'Tu plan no incluye la atención en varios idiomas', even when only the name or greeting changes. The UI shows LockedCard instead of the toggles, so the user cannot remove the languages, and the agent becomes uneditable. Reproduced: test_enable_multilang_allows logs 'downgrade save status 403'. Fix: on the server, when the plan lacks multilang, either strip body.languages silently (effective_agent already ignores them at call time) or only 403 when the languages differ from prev. Or let the frontend send languages: [] when the feature is locked.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "plan_limits.check_agent / effective_agent", "issue": "These still do 'import vapi' and take a voice param that is now unused (premium gating was removed). This is dead code."},
+      {"endpoint": "plan_limits.for_tenant", "issue": "A tenant with no plan_id gets DEFAULT (multilang=True). A tenant with a plan gets multilang=False unless it is set. A newly registered user without a plan can therefore use multilang. Confirm this is intended."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/app/agentes/:id Voz tab (mobile 390px)", "issues": ["Horizontal overflow: documentElement.scrollWidth is 400 > 390. executives-panel, languages-panel and the voice/ambience panels extend to right=400. The General tab is fine (390). It is likely a grid child missing min-w-0, or the lg:col-span-2 grid on the voice tab."]},
+      {"screen": "Voice cards (Chileno)", "issues": ["The cl_catalina/cl_lorenzo desc reads 'Mujer · Acento chileno · Acento chileno' because tone duplicates the accent. Change the tone text or skip the tone when it equals the accent."]},
+      {"screen": "Accent chips / card desc", "issues": ["The chip label and desc use toLowerCase(), so the text shows 'Acento españa'. España is a proper noun and should stay capitalised. Lowercase only the adjectives, or store the accent label as is."]},
+      {"screen": "Languages panel (desktop)", "issues": ["The language voice select (w-64) truncates 'Estándar' ('Guy · Hombre · Americano · Están…').", "In the 2-column grid, a disabled language card next to an enabled one stretches to the same height and looks empty (e.g. Portugués next to an active Inglés). Add items-start to the grid."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter35_multilang.py", "/app/test_reports/pytest/pytest_iter35.xml"],
+  "action_items": [
+    "HIGH: fix the downgrade lock-in. Saving an agent with stored languages on a plan without multilang must not 403 forever. Strip/ignore languages server-side, only enforce on change, or send [] from the UI when locked.",
+    "Fix the 10px horizontal overflow on the Voz tab on mobile (390px).",
+    "Fix the duplicated 'Acento chileno · Acento chileno' desc and the lowercased 'españa' in the accent labels.",
+    "Languages panel: widen the select or shorten the label; use items-start on the grid."
+  ],
+  "critical_code_review_comments": [
+    "check_ambience now does much more than ambience (voice language, duplicates, multilang gating). Rename it to validate_agent for clarity.",
+    "voice_config(lang!='es') with a voice that is not in ELEVEN, custom or LANG_VOICES would KeyError. Today voice_ok guards every path, but the function should defend against it itself.",
+    "language_handoff uses next(...) on agent['languages'] after build_language_assistant succeeded. That is safe today, but it relies on choices() and languages staying in sync."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter35_multilang.py"],
+  "success_rate": {"backend": "100% (19/19); 1 HIGH logic bug found via the downgrade scenario", "frontend": "100% of tested flows; minor design issues"},
+  "test_credentials": "admin@vozlead.es / VozLead2026!",
+  "seed_data_creation": "Tests create a TEST_Ana agent (admin), test_iter35_* client users, TEST_NoMultilang/TEST_UI_NoML plans, and 'TEST Lead' leads inserted directly into Mongo for the webhook. All of it was cleaned up. The admin's agent 'Marta' was left untouched (languages en/e_sarah 'Emma', ca/ca_joana 'Joana'; executives l_mateo, cl_catalina). The leftover TEST_Num_cli agent is from iter34.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Webhook tests insert leads directly into Mongo (there is no POST /leads endpoint) and send call.metadata.lead_id with the x-vapi-secret header. Testids: voice-accent-<todos|España|Neutro|Latino|Chileno>, agent-voice-<id>, executives-enable-button, executives-add-select, executives-add-<id>, executive-row-<i>, language-toggle/voice/name/preview-<code>, locked-multilang, plan-feature-multilang, voice-language-select, voice-accent-input, voice-library-language/accent/search. Rerun test_enable_multilang_allows with -n0 -s to see the downgrade status; after the fix, assert it is 200.",
+  "rca of the issue": "Downgrade lock-in. The server's check_ambience calls PL.require('multilang') whenever body.languages is non-empty. The frontend always sends agent.languages (loaded from the DB), and Languages.jsx renders LockedCard instead of the toggles when useFeature('multilang') is false. Repro: plan with multilang on → create an agent with en → set the plan to multilang off → PUT the same agent (any field) → 403. Mitigation: in update_agent, if the plan lacks multilang, either set body.languages = [] or allow it unchanged when body.languages == prev.languages."
+}

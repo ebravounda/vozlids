@@ -315,3 +315,11 @@
 - New section "Agrega todos los números que desees para tu empresa" (#numeros, after Voces; no price): Recepción / Atención al cliente / Ventas / Soporte técnico
 - "¿Tienes dudas? Llámanos" box before the final CTA + "¿Dudas? Llámanos" button in the top menu (popover) and in the mobile menu
 - Central lines in Chrome.jsx CENTRALES: Chile +56233844477, España +34919932652 (tel: links)
+
+## 2026-06 · Todas las voces + atención multi-idioma (iteration_35 PASS 19/19)
+- Voices: every Spanish voice is available to every agent regardless of country (España/Latino/Chileno/Neutro HD + custom) with an accent label and accent filter chips; executives rotation lists every voice/tier. Changing country no longer resets voices. premium_voices gating removed (all plans include all voices).
+- Plan feature `multilang` (Super admin → plan, default off). Agent field `languages: [{lang, voice, name}]` (en, pt, fr, ca, it, de). Without the feature, languages are silently removed on save and ignored at call time.
+- Call flow: the Spanish assistant asks for the language (inbound greeting / prompt), transcriber deepgram nova-3 "multi"; handoff tool `cambiar_idioma` (dynamic) → webhook `handoff-destination-request` → services.language_handoff returns a transient native assistant (languages.py: greeting, style, STT; Azure native voices LANG_VOICES or ElevenLabs HD with language=lang; Catalan Azure only). lead.language saved.
+- Custom voices: language + accent fields; ElevenLabs library search by language + accent (Argentino, Mexicano, Colombiano, Peruano, Venezolano, Americano, Británico, Brasileño…).
+- Voice preview supports ?lang=.
+- NOT verified with a real Vapi call (preview Vapi key is 401): handoff tool schema accepted only via docs.

@@ -84,7 +84,7 @@ export const VoiceTab = ({ agent, update }) => {
   const team = agent.executives || [];
   const pickVoice = (id) => update(team.length ? { voice: id, executives: [{ voice: id, name: list.find((v) => v.id === id)?.name || team[0].name }, ...team.slice(1).filter((e) => e.voice !== id)] } : { voice: id });
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
       <ExecutivesPanel agent={agent} update={update} voices={list} />
       <LanguagesPanel agent={agent} update={update} custom={custom} />
       <Panel className="space-y-5">
@@ -92,7 +92,7 @@ export const VoiceTab = ({ agent, update }) => {
         <div className="flex flex-wrap gap-2" data-testid="voice-accent-filter">
           {["", ...accents].map((a) => (
             <button key={a || "all"} type="button" onClick={() => setAccent(a)} data-testid={`voice-accent-${a || "todos"}`}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${accent === a ? "border-emerald-500 bg-emerald-500/10 text-emerald-700" : "border-slate-300 text-slate-600 hover:border-slate-400"}`}>{a ? `Acento ${a.toLowerCase()}` : "Todos"}</button>
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${accent === a ? "border-emerald-500 bg-emerald-500/10 text-emerald-700" : "border-slate-300 text-slate-600 hover:border-slate-400"}`}>{a ? `Acento ${a}` : "Todos"}</button>
           ))}
         </div>
         {GROUPS.map(([tier, title, note, color]) => (
@@ -102,7 +102,7 @@ export const VoiceTab = ({ agent, update }) => {
               <p className="text-xs text-slate-500">{note}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {list.filter((v) => TIER(v) === tier && (!accent || v.accent === accent)).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => pickVoice(v.id)} title={v.name} desc={`${v.gender} · Acento ${v.accent.toLowerCase()} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
+              {list.filter((v) => TIER(v) === tier && (!accent || v.accent === accent)).map((v) => <Choice key={v.id} active={agent.voice === v.id} onClick={() => pickVoice(v.id)} title={v.name} desc={`${v.gender} · Acento ${v.accent} · ${v.tone}`} testid={`agent-voice-${v.id}`} />)}
             </div>
           </div>
         ))}
