@@ -130,7 +130,7 @@ export function PendingExtraNumbers() {
     <Panel className="space-y-3" id="pending-extra-numbers" data-testid="pending-extra-numbers">
       <h3 className="text-lg font-semibold text-white">Números adicionales por aprobar</h3>
       {rows.length ? rows.map((n) => <PendingRow key={n.id} n={n} onAct={act} busy={busy} />)
-        : <p className="text-sm text-slate-500" data-testid="pending-extra-empty">No hay solicitudes pendientes. Si la compra automática de Zadarma está activada, los números se compran solos y no pasan por aquí.</p>}
+        : <p className="text-sm text-slate-500" data-testid="pending-extra-empty">No hay solicitudes pendientes. Cuando un cliente pida un número adicional aparecerá aquí y te llegará un email.</p>}
     </Panel>
   );
 }
