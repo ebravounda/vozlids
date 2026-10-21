@@ -71,15 +71,22 @@ async def sync_zadarma(pricing: dict, force: bool = False) -> dict:
             rows = []
         by_num: dict = {}
         for r in rows:
-            t = datetime.strptime(r["callstart"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=MADRID) if r.get("callstart") else None
-            for n in {_digits(r.get("to")), _digits(r.get("from"))} - {""}:
+            try:
+                t = datetime.strptime(str(r["callstart"])[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=MADRID)
+            except (KeyError, ValueError, TypeError):
+                continue
+            for n in {_digits(str(r.get("to") or "")), _digits(str(r.get("from") or ""))} - {""}:
                 by_num.setdefault(n[-9:], []).append((t, r))
         used = set()
         for ld in leads:
-            start = _parse(ld.get("started_at") or ld["created_at"])
+            start = _parse(ld.get("started_at") or ld.get("created_at"))
+            if start is None:
+                continue
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
             best = None
-            for t, r in by_num.get(_digits(ld.get("phone"))[-9:], []):
-                if t is None or r.get("id") in used:
+            for t, r in by_num.get(_digits(ld.get("phone") or "")[-9:], []):
+                if r.get("id") in used:
                     continue
                 gap = abs((t - start).total_seconds())
                 if gap <= 600 and (best is None or gap < best[0]):
@@ -87,7 +94,10 @@ async def sync_zadarma(pricing: dict, force: bool = False) -> dict:
             if best:
                 r = best[1]
                 used.add(r.get("id"))
-                usd = to_usd(float(r.get("billcost") or 0), r.get("currency"), pricing)
+                try:
+                    usd = to_usd(float(str(r.get("billcost") or 0).replace(",", ".")), r.get("currency"), pricing)
+                except ValueError:
+                    continue
                 await db.leads.update_one({"_id": ld["_id"]}, {"$set": {"line_cost_usd": round(usd, 5),
                                                                          "line_currency": r.get("currency")}})
                 out["matched"] += 1
