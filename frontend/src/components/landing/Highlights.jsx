@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BellRing, CalendarCheck, CalendarClock, Check, Repeat2, Sparkles, Users } from "lucide-react";
+import { ArrowRight, BellRing, CalendarCheck, CalendarClock, Check, Headphones, Headset, PhoneCall, Repeat2, ShoppingBag, Sparkles, Users, Wrench } from "lucide-react";
+import { CENTRALES } from "@/components/landing/Chrome";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
@@ -66,6 +67,56 @@ export const OnlineBooking = () => (
           <span className="inline-flex items-center gap-2 text-slate-600"><BellRing className="h-4 w-4 text-blue-600" /> Menos ausencias</span>
         </div>
         <Link to="/registro" className="group mt-8 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" data-testid="online-booking-register-button">Quiero mi agenda automática <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
+      </div>
+    </div>
+  </section>
+);
+
+const LINES = [[Headset, "Recepción", "Atiende y deriva todas las llamadas", "Marta"], [Headphones, "Atención al cliente", "Resuelve dudas y reclamaciones", "Rodrigo"],
+  [ShoppingBag, "Ventas", "Cualifica y cierra oportunidades", "Lucía"], [Wrench, "Soporte técnico", "Guía paso a paso y abre incidencias", "Rafael"]];
+
+export const MultiNumbers = () => (
+  <section id="numeros" className="vl-reveal scroll-mt-20 border-b border-slate-200 bg-slate-50" data-testid="multi-numbers">
+    <div className="mx-auto max-w-6xl px-6 py-24">
+      <div className="max-w-2xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Un número para cada área</p>
+        <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl" style={H}>Agrega todos los números que desees para tu empresa</h2>
+        <p className="mt-4 text-lg leading-relaxed text-slate-600">Uno para recepción, otro para atención al cliente, otro para ventas… Cada número tiene su propio agente, con su voz, su guion y su horario. Tus clientes llaman directo al área que necesitan.</p>
+      </div>
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {LINES.map(([I, t, d, who], i) => (
+          <div key={t} className="rounded-2xl border border-slate-200 bg-white p-5 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" data-testid={`multi-numbers-line-${i}`}>
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><I className="h-5 w-5" /></span>
+            <p className="mt-4 font-semibold text-slate-900" style={H}>{t}</p>
+            <p className="mt-1 text-sm text-slate-500">{d}</p>
+            <p className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500"><PhoneCall className="h-3.5 w-3.5 text-blue-600" />Línea propia · agente {who}</p>
+          </div>
+        ))}
+      </div>
+      <Link to="/registro" className="group mt-10 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700" data-testid="multi-numbers-register-button">Quiero mis números <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link>
+    </div>
+  </section>
+);
+
+export const CallUs = () => (
+  <section className="vl-reveal border-b border-slate-200 bg-white" data-testid="call-us">
+    <div className="mx-auto max-w-6xl px-6 py-16">
+      <div className="flex flex-col gap-8 rounded-2xl border border-blue-100 bg-blue-50/60 p-8 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-600 text-white"><Headset className="h-6 w-6" /></span>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900" style={H}>¿Tienes dudas? Llámanos</h2>
+            <p className="mt-1 text-slate-600">Te atendemos y te explicamos cómo funciona para tu negocio.</p>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {CENTRALES.map(([c, l, tel, show]) => (
+            <a key={c} href={`tel:${tel}`} className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" data-testid={`call-us-${c.toLowerCase()}`}>
+              <PhoneCall className="h-5 w-5 text-blue-600" />
+              <span><span className="block text-xs text-slate-500">{l}</span><span className="font-semibold text-slate-900">{show}</span></span>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   </section>

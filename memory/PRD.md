@@ -310,3 +310,8 @@
 - Amber banner at the top of Super admin showing the count of pending numbers (click scrolls to the panel)
 - "Números adicionales por aprobar" panel always visible (empty-state text), shows agent + date
 - New POST /api/admin/numbers/extra/{id}/reject: cancels the Stripe item (credit on next invoice) + email to the customer
+
+## 2026-06 · Landing: varios números + "¿Tienes dudas? Llámanos"
+- New section "Agrega todos los números que desees para tu empresa" (#numeros, after Voces; no price): Recepción / Atención al cliente / Ventas / Soporte técnico
+- "¿Tienes dudas? Llámanos" box before the final CTA + "¿Dudas? Llámanos" button in the top menu (popover) and in the mobile menu
+- Central lines in Chrome.jsx CENTRALES: Chile +56233844477, España +34919932652 (tel: links)

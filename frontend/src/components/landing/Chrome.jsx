@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Menu, PhoneCall } from "lucide-react";
+import { Headset, Menu, PhoneCall } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/Common";
 import { SEO_PAGES } from "@/components/Seo";
@@ -8,6 +9,26 @@ import { COMPANY } from "@/pages/Legal";
 
 const H = { fontFamily: "Plus Jakarta Sans" };
 const LINKS = [["#plataforma", "Plataforma"], ["#citas", "Citas"], ["#voces", "Voces"], ["#funciones", "Funciones"], ["#sectores", "Sectores"], ["#clientes", "Clientes"], ["#precios", "Precios"]];
+
+export const CENTRALES = [["CL", "Central Chile", "+56233844477", "+56 2 3384 4477"], ["ES", "Central España", "+34919932652", "+34 919 93 26 52"]];
+
+export const PhoneLinks = ({ prefix, className = "" }) => CENTRALES.map(([c, l, tel, show]) => (
+  <a key={c} href={`tel:${tel}`} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50 ${className}`} data-testid={`${prefix}-call-${c.toLowerCase()}`}>
+    <PhoneCall className="h-4 w-4 shrink-0 text-blue-600" /><span><span className="block text-xs text-slate-500">{l}</span><span className="font-semibold text-slate-900">{show}</span></span>
+  </a>
+));
+
+const CallMenu = () => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button type="button" className="hidden items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 md:flex" data-testid="landing-nav-call-button"><Headset className="h-4 w-4 text-blue-600" />¿Dudas? Llámanos</button>
+    </PopoverTrigger>
+    <PopoverContent align="end" className="w-64 bg-white p-2" data-testid="landing-nav-call-menu">
+      <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-slate-400">¿Tienes dudas? Llámanos</p>
+      <PhoneLinks prefix="landing-nav" />
+    </PopoverContent>
+  </Popover>
+);
 
 export const Brand = () => (
   <Link to="/" className="flex shrink-0 items-center" data-testid="landing-brand"><Logo /></Link>
@@ -22,6 +43,7 @@ export const Nav = ({ home = false }) => (
         <Link to="/desarrolladores" className="hover:text-slate-900" data-testid="landing-nav-api-link">API</Link>
       </nav>
       <div className="flex items-center gap-2">
+        <CallMenu />
         <Link to="/login" data-testid="landing-nav-login-button" className="hidden whitespace-nowrap rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:block">Acceder</Link>
         <MobileMenu home={home} />
       </div>
@@ -43,7 +65,11 @@ function MobileMenu({ home }) {
           {LINKS.map(([h, l]) => <a key={h} href={home ? `/${h}` : h} onClick={() => setOpen(false)} className={item} data-testid={`landing-mobile-nav-${h.slice(1)}-link`}>{l}</a>)}
           <Link to="/desarrolladores" className={item} data-testid="landing-mobile-nav-api-link">API</Link>
         </nav>
-        <div className="mt-6 space-y-2 border-t border-slate-200 pt-6">
+        <div className="mt-6 border-t border-slate-200 pt-4" data-testid="landing-mobile-call">
+          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">¿Tienes dudas? Llámanos</p>
+          <PhoneLinks prefix="landing-mobile" />
+        </div>
+        <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
           <Link to="/login" className={item} data-testid="landing-mobile-login-link">Acceder</Link>
           <a href={home ? "/#solicitar" : "#solicitar"} onClick={() => setOpen(false)} className="flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800" data-testid="landing-mobile-demo-link"><PhoneCall className="h-4 w-4" /> Llamada demo</a>
           <Link to="/registro" className="flex h-12 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white" data-testid="landing-mobile-register-link">Empezar ahora</Link>
