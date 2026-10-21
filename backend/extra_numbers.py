@@ -72,12 +72,12 @@ async def _charge(user: dict, country: str) -> str:
     return item["id"]
 
 
-async def _uncharge(user: dict, item_id: str):
+async def _uncharge(user: dict, item_id: str, proration: str = "none"):
     if not item_id:
         return
     c, _, _ = await B.client(user.get("stripe_mode", "live"))
     try:
-        await asyncio.to_thread(c.v1.subscription_items.delete, item_id, {"proration_behavior": "none"})
+        await asyncio.to_thread(c.v1.subscription_items.delete, item_id, {"proration_behavior": proration})
     except stripe.error.StripeError as e:
         log.warning("Could not remove extra number item %s: %s", item_id, e)
 
@@ -159,7 +159,9 @@ async def remove_extra(num_id: str, user=CurrentUser):
 async def pending_extra(user=Depends(require_admin)):
     rows = await db.tenant_numbers.find({"extra": True, "status": {"$in": ["pendiente_aprobacion", "error"]}}).to_list(200)
     users = {str(u["_id"]): u async for u in db.users.find({"_id": {"$in": [ObjectId(r["tenant_id"]) for r in rows]}}, {"business_name": 1, "email": 1})}
-    return [{**_out(r), "business": (users.get(r["tenant_id"]) or {}).get("business_name") or (users.get(r["tenant_id"]) or {}).get("email")} for r in rows]
+    agents = {str(a["_id"]): a["name"] async for a in db.agents.find({"_id": {"$in": [ObjectId(r["agent_id"]) for r in rows if ObjectId.is_valid(r.get("agent_id") or "")]}}, {"name": 1})}
+    return [{**_out(r), "business": (users.get(r["tenant_id"]) or {}).get("business_name") or (users.get(r["tenant_id"]) or {}).get("email"),
+             "agent_name": agents.get(r.get("agent_id"), ""), "created_at": r.get("created_at")} for r in rows]
 
 
 @router.post("/admin/numbers/extra/{num_id}/approve")
@@ -172,3 +174,21 @@ async def approve_extra(num_id: str, user=Depends(require_admin)):
     await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {"status": "pendiente"}})
     await N.provision(r["tenant_id"], r["_id"])
     return _out(await db.tenant_numbers.find_one({"_id": r["_id"]}))
+
+
+@router.post("/admin/numbers/extra/{num_id}/reject")
+async def reject_extra(num_id: str, user=Depends(require_admin)):
+    r = await db.tenant_numbers.find_one({"_id": ObjectId(num_id), "extra": True}) if ObjectId.is_valid(num_id) else None
+    if not r:
+        raise HTTPException(404, "Número no encontrado")
+    if r["status"] not in ("pendiente_aprobacion", "error"):
+        raise HTTPException(409, "Este número ya está activo o en compra.")
+    if r["status"] == "error":
+        await N.release(r["tenant_id"], r["_id"])
+    await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {"status": "rechazado", "updated_at": now_iso()}})
+    tenant = await db.users.find_one({"_id": ObjectId(r["tenant_id"])}) or {}
+    await _uncharge(tenant, r.get("stripe_item_id", ""), "always_invoice")
+    await emailer.send(tenant.get("email", ""), "Tu número adicional no se ha podido activar", "Número adicional cancelado", [
+        ("País", r.get("country", "")), ("Cobro", "Se ha anulado y el importe se descuenta de tu próxima factura")],
+        os.environ["APP_PUBLIC_URL"] + "/app")
+    return {"ok": True}

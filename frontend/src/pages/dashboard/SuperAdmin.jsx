@@ -10,7 +10,7 @@ import { ProviderAlerts } from "@/components/VoiceBalanceAlert";
 import { PageHeader, Panel } from "@/components/Common";
 import { CartesiaSettings, CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
-import { PendingExtraNumbers } from "@/components/numbers/AgentNumbers";
+import { PendingExtraBanner, PendingExtraNumbers } from "@/components/numbers/AgentNumbers";
 import { AdminOnboarding } from "@/components/AdminOnboarding";
 import { EditBusinessButton } from "@/components/AdminBusinessEdit";
 import { api, errMsg } from "@/lib/api";
@@ -162,6 +162,7 @@ export default function SuperAdmin() {
     <div className="fade-up">
       <PageHeader eyebrow="Super admin" title="Cuentas y planes" desc="Gestiona clientes, asigna planes con límite de minutos, permite exceso, suspende cuentas o entra en ellas para dar soporte." />
       <ProviderAlerts />
+      <PendingExtraBanner />
       <div className="mb-6 grid grid-cols-3 gap-4">
         {[["Cuentas", totals.accounts], ["Minutos este mes", totals.minutes.toFixed(1)], ["Llamadas totales", totals.calls]].map(([l, v]) => (
           <Panel key={l} className="p-5"><p className="text-xs uppercase tracking-widest text-slate-500">{l}</p><p className="mt-2 font-display text-3xl font-bold text-white">{v}</p></Panel>

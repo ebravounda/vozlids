@@ -83,22 +83,54 @@ export function AgentNumbers() {
   );
 }
 
+export function PendingExtraBanner() {
+  const [n, setN] = useState(0);
+  useEffect(() => { api.get("/admin/numbers/extra").then((r) => setN(r.data.length)).catch(() => {}); }, []);
+  if (!n) return null;
+  const go = () => document.getElementById("pending-extra-numbers")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  return (
+    <button onClick={go} className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-900 transition-colors hover:bg-amber-100" data-testid="pending-extra-banner">
+      <Phone className="h-4 w-4 shrink-0" />
+      <span className="flex-1 font-semibold" data-testid="pending-extra-banner-count">{n === 1 ? "1 número adicional pendiente de aprobar" : `${n} números adicionales pendientes de aprobar`}</span>
+      <span className="text-xs underline">Revisar</span>
+    </button>
+  );
+}
+
+function PendingRow({ n, onAct, busy }) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 p-3 text-sm" data-testid={`pending-extra-${n.id}`}>
+      <div className="min-w-0 flex-1">
+        <p className="text-white">{n.business} · {n.country} · {n.price}/mes</p>
+        <p className="text-xs text-slate-500">{n.agent_name && `Agente: ${n.agent_name} · `}{n.created_at && new Date(n.created_at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}</p>
+        {n.error && <p className="text-xs text-rose-300">{n.error}</p>}
+      </div>
+      <Button size="sm" disabled={!!busy} onClick={() => onAct(n.id, "approve")} className="rounded-full" data-testid={`pending-extra-approve-${n.id}`}>{busy === `${n.id}approve` && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}Aprobar y comprar</Button>
+      <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => onAct(n.id, "reject")} className="rounded-full text-rose-300" data-testid={`pending-extra-reject-${n.id}`}>{busy === `${n.id}reject` && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}Rechazar</Button>
+    </div>
+  );
+}
+
 export function PendingExtraNumbers() {
   const [rows, setRows] = useState([]);
+  const [busy, setBusy] = useState("");
   const load = () => api.get("/admin/numbers/extra").then((r) => setRows(r.data));
   useEffect(() => { load(); }, []);
-  const approve = async (id) => { try { const r = await api.post(`/admin/numbers/extra/${id}/approve`); toast[r.data.status === "activo" ? "success" : "warning"](r.data.status === "activo" ? "Número activado" : r.data.error || "No se pudo activar"); load(); } catch (e) { toast.error(errMsg(e)); } };
-  if (!rows.length) return null;
+  const act = async (id, kind) => {
+    if (kind === "reject" && !window.confirm("¿Rechazar la solicitud? Se anulará el cobro al cliente y se le avisará por email.")) return;
+    setBusy(id + kind);
+    try {
+      const r = await api.post(`/admin/numbers/extra/${id}/${kind}`);
+      if (kind === "reject") toast.success("Solicitud rechazada y cobro anulado");
+      else toast[r.data.status === "activo" ? "success" : "warning"](r.data.status === "activo" ? "Número activado" : r.data.error || "No se pudo activar");
+      load();
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(""); }
+  };
   return (
-    <Panel className="space-y-3" data-testid="pending-extra-numbers">
+    <Panel className="space-y-3" id="pending-extra-numbers" data-testid="pending-extra-numbers">
       <h3 className="text-lg font-semibold text-white">Números adicionales por aprobar</h3>
-      {rows.map((n) => (
-        <div key={n.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 p-3 text-sm" data-testid={`pending-extra-${n.id}`}>
-          <span className="flex-1 text-white">{n.business} · {n.country} · {n.price}/mes</span>
-          {n.error && <span className="text-xs text-rose-300">{n.error}</span>}
-          <Button size="sm" onClick={() => approve(n.id)} className="rounded-full" data-testid={`pending-extra-approve-${n.id}`}>Aprobar y comprar</Button>
-        </div>
-      ))}
+      {rows.length ? rows.map((n) => <PendingRow key={n.id} n={n} onAct={act} busy={busy} />)
+        : <p className="text-sm text-slate-500" data-testid="pending-extra-empty">No hay solicitudes pendientes. Si la compra automática de Zadarma está activada, los números se compran solos y no pasan por aquí.</p>}
     </Panel>
   );
 }

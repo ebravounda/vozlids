@@ -305,3 +305,8 @@
 - extra_numbers.py: tenant_numbers con extra=True + agent_id + stripe_item_id. Precio 10 €/mes (ES) y 13.000 CLP/mes (CL), añadido como subscription item de Stripe (metadata kind=extra_number, prorrateo always_invoice; producto "Número adicional VozLeads" cacheado en platform_settings.stripe). Activación: auto si Zadarma auto_provision+API key; si no, "pendiente_aprobacion" + email al admin → Super Admin "Números adicionales por aprobar" (approve → provision). Baja: libera Zadarma/Vapi y quita el item sin prorrateo. Borrar agente → número queda libre (agent_id=None, sigue cobrándose).
 - phone_numbers: PRIMARY filter, provision/release(user_id, num_id), phone_id_for(tenant, country, agent_id) → saliente desde el número del agente; entrante en número extra → su agente (o recepcionista del principal si está libre). billing change-plan ignora items de números; cancelación libera también los extra. onboarding/admin lists solo número principal. Costes: fee por cada número + ingresos de números extra.
 - UI: AgentNumbers (Mi número y Telefonía), PendingExtraNumbers (Super Admin). iteration_34: 100% + fixes de revisión.
+
+## 2026-06 · SuperAdmin approval of extra numbers made more visible
+- Amber banner at the top of Super admin showing the count of pending numbers (click scrolls to the panel)
+- "Números adicionales por aprobar" panel always visible (empty-state text), shows agent + date
+- New POST /api/admin/numbers/extra/{id}/reject: cancels the Stripe item (credit on next invoice) + email to the customer
