@@ -10,6 +10,7 @@ import { ProviderAlerts } from "@/components/VoiceBalanceAlert";
 import { PageHeader, Panel } from "@/components/Common";
 import { CartesiaSettings, CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
+import { PendingExtraNumbers } from "@/components/numbers/AgentNumbers";
 import { AdminOnboarding } from "@/components/AdminOnboarding";
 import { EditBusinessButton } from "@/components/AdminBusinessEdit";
 import { api, errMsg } from "@/lib/api";
@@ -179,6 +180,7 @@ export default function SuperAdmin() {
       <p className="mt-4 text-xs text-slate-500">Con "Exceso" activo la cuenta sigue llamando al agotar el plan. Los clientes contratan su plan desde "Mi plan" y Stripe les cobra la cuota mensual.</p>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <ZadarmaSettings />
+        <PendingExtraNumbers />
         <LandingSettings />
         <StripeSettings />
         <ElevenLabsSettings />

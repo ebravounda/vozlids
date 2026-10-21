@@ -39,6 +39,7 @@ import plan_limits as PL  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
+import extra_numbers  # noqa: E402
 import asyncio  # noqa: E402
 import storage  # noqa: E402
 import threading  # noqa: E402
@@ -260,6 +261,7 @@ async def update_agent(agent_id: str, body: AgentIn, user=CurrentUser):
 async def delete_agent(agent_id: str, user=CurrentUser):
     await get_agent(user["id"], agent_id)
     await db.agents.delete_one({"_id": oid(agent_id)})
+    await db.tenant_numbers.update_many({"tenant_id": user["id"], "extra": True, "agent_id": agent_id}, {"$set": {"agent_id": None}})
     return {"ok": True}
 
 
@@ -607,6 +609,7 @@ app.include_router(gcal.router)
 app.include_router(SEC.router)
 app.include_router(reminders.router)
 app.include_router(callbacks.router)
+app.include_router(extra_numbers.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(

@@ -365,7 +365,7 @@ async def _change_ctx(user: dict, plan_id: str) -> dict:
         sub = await asyncio.to_thread(c.v1.subscriptions.retrieve, user["stripe_subscription_id"])
     except stripe.error.StripeError as e:
         raise HTTPException(400, f"No se pudo leer tu suscripción: {e.user_message or str(e)[:160]}")
-    item = sub["items"]["data"][0]
+    item = next((i for i in sub["items"]["data"] if (i.get("metadata") or {}).get("kind") != "extra_number"), sub["items"]["data"][0])
     current = int(item["price"]["unit_amount"] or 0)
     end = item.get("current_period_end") or sub.get("current_period_end")
     return {"c": c, "sub": sub, "item": item, "new": new, "old": old, "currency": currency, "amount": amount,

@@ -20,11 +20,19 @@ CurrentUser = Depends(get_current_user)
 BUSY = {"comprando"}
 
 
+PRIMARY = {"extra": {"$ne": True}}
+
+
 async def record(tenant_id: str):
-    return await db.tenant_numbers.find_one({"tenant_id": tenant_id})
+    return await db.tenant_numbers.find_one({"tenant_id": tenant_id, **PRIMARY})
 
 
-async def phone_id_for(tenant_id: str, country: str):
+async def phone_id_for(tenant_id: str, country: str, agent_id: str = ""):
+    if agent_id:
+        own = await db.tenant_numbers.find_one({"tenant_id": tenant_id, "extra": True, "agent_id": agent_id,
+                                                "status": "activo", "country": country})
+        if own:
+            return own["phone_number_id"]
     r = await record(tenant_id)
     return r["phone_number_id"] if r and r.get("status") == "activo" and r.get("country") == country else None
 
@@ -42,27 +50,29 @@ async def _default_agent(tenant_id: str, country: str):
     return str(a["_id"]) if a else ""
 
 
-async def provision(user_id: str) -> dict:
+async def provision(user_id: str, num_id=None) -> dict:
+    """Buy a Zadarma number and connect it to Vapi: the tenant's main number, or an extra one (num_id) for one agent."""
     u = await db.users.find_one({"_id": ObjectId(user_id)})
-    cur = await record(user_id)
+    filt = {"_id": num_id} if num_id else {"tenant_id": user_id, **PRIMARY}
+    cur = await db.tenant_numbers.find_one(filt)
     if not u or (cur and cur.get("status") in ("activo", *BUSY)):
         return _out(cur)
-    country = u.get("country", "ES")
+    country = (cur or {}).get("country") if num_id else u.get("country", "ES")
     cfg = await Z.creds()
     direction = cfg.get(f"direction_{country.lower()}")
     base = {"tenant_id": user_id, "country": country, "updated_at": now_iso()}
-    await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {**base, "status": "comprando", "error": ""},
-                                                                 "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
+    await db.tenant_numbers.update_one(filt, {"$set": {**base, "status": "comprando", "error": ""},
+                                              "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
     try:
         if not direction:
             raise Z.ZadarmaError(f"Falta elegir la ciudad/tipo de número de {COUNTRIES[country]['name']} en Super admin → Zadarma.")
         number = await Z.order(direction, cfg.get(f"docs_{country.lower()}", ""))
-        await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {"number": number}})
+        await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
         pwd = secrets.token_urlsafe(10) + "Vz7"
         sip = await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)
         v = await vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"])
         await Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"]))
-        await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {
+        await db.tenant_numbers.update_one(filt, {"$set": {
             "status": "activo", "sip_id": sip, **v, "activated_at": now_iso(),
             "inbound_agent_id": (cur or {}).get("inbound_agent_id") or await _default_agent(user_id, country)}})
         await emailer.send(u["email"], f"Tu número {number} ya está activo", "¡Tu número de VozLeads está listo!", [
@@ -70,17 +80,17 @@ async def provision(user_id: str) -> dict:
             ("Llamadas entrantes", "Tu recepcionista IA contesta cuando te llamen")], os.environ["APP_PUBLIC_URL"] + "/app/telefonia")
     except (Z.ZadarmaError, vapi.VapiError) as e:
         log.warning("Provision failed for %s: %s", user_id, e)
-        await db.tenant_numbers.update_one({"tenant_id": user_id}, {"$set": {"status": "error", "error": str(e)[:300]}})
+        await db.tenant_numbers.update_one(filt, {"$set": {"status": "error", "error": str(e)[:300]}})
         admin = await db.users.find_one({"role": "admin"}, {"email": 1})
         if admin:
             await emailer.send(admin["email"], "No se pudo asignar un número", "Error al comprar número en Zadarma", [
                 ("Cliente", u["email"]), ("País", COUNTRIES[country]["name"]), ("Error", str(e)[:300])],
                 os.environ["APP_PUBLIC_URL"] + "/app/admin")
-    return _out(await record(user_id))
+    return _out(await db.tenant_numbers.find_one(filt))
 
 
-async def release(user_id: str) -> dict:
-    r = await record(user_id)
+async def release(user_id: str, num_id=None) -> dict:
+    r = await db.tenant_numbers.find_one({"_id": num_id}) if num_id else await record(user_id)
     if not r or r.get("platform") or r.get("status") not in ("activo", "error"):
         return _out(r)
     errors = []
@@ -94,7 +104,7 @@ async def release(user_id: str) -> dict:
             await vapi.delete(path)
     await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {
         "status": "liberado", "released_at": now_iso(), "error": "; ".join(errors)[:300], "phone_number_id": None}})
-    return _out(await record(user_id))
+    return _out(await db.tenant_numbers.find_one({"_id": r["_id"]}))
 
 
 async def auto_provision(user_id: str, test_payment: bool):
@@ -129,8 +139,11 @@ async def assistant_request(msg: dict) -> dict:
     if await SEC.blocked_phone((call.get("customer") or {}).get("number") or ""):
         return {"error": "Número bloqueado"}
     agent = None
-    if r.get("inbound_agent_id") and ObjectId.is_valid(r["inbound_agent_id"]):
-        agent = await db.agents.find_one({"_id": ObjectId(r["inbound_agent_id"]), "tenant_id": r["tenant_id"]})
+    aid = r.get("agent_id") if r.get("extra") else r.get("inbound_agent_id")
+    if not aid and r.get("extra"):
+        aid = (await record(r["tenant_id"]) or {}).get("inbound_agent_id")
+    if aid and ObjectId.is_valid(aid):
+        agent = await db.agents.find_one({"_id": ObjectId(aid), "tenant_id": r["tenant_id"]})
     if not agent or await saas.quota_error(r["tenant_id"]):
         return _short(UNAVAILABLE)
     phone = (call.get("customer") or {}).get("number") or "oculto"

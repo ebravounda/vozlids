@@ -10,6 +10,7 @@ import { api, errMsg } from "@/lib/api";
 import { AmbiencePreview } from "@/components/AmbiencePreview";
 import { COUNTRIES } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
+import { AgentNumbers } from "@/components/numbers/AgentNumbers";
 
 function ConnectZadarma({ onDone, country, prefix }) {
   const [f, setF] = useState({ sip_login: "", sip_password: "", number: "", country });
@@ -199,6 +200,7 @@ export default function Telephony() {
         <div className="space-y-6">
         <PlatformInbound />
         <MyNumber />
+        <AgentNumbers />
         <BusinessCountry />
         <Panel className="space-y-4">
           <h3 className="text-xl font-semibold text-white">Cómo conectarlo</h3>

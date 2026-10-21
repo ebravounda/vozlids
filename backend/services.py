@@ -167,7 +167,7 @@ async def dial(agent: dict, lead: dict):
         await db.leads.update_one({"_id": lid}, {"$set": {"status": "fallida", "error": err, "updated_at": now_iso()}})
         return
     import phone_numbers as N
-    own = await N.phone_id_for(agent["tenant_id"], country)
+    own = await N.phone_id_for(agent["tenant_id"], country, str(agent["_id"]))
     if not own and not vapi.configured(country):
         await db.leads.update_one({"_id": lid}, {"$set": {
             "status": "fallida", "updated_at": now_iso(),
