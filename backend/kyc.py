@@ -68,7 +68,7 @@ async def my_kyc(user=CurrentUser):
                "deadline": (datetime.now(timezone.utc) + timedelta(days=GRACE_DAYS)).isoformat() if has_line else ""}
         await db.kyc.insert_one(doc)
     country = doc.get("country") or user.get("country", "ES")
-    return {**_out(doc, needed), "country": country, "notice": NOTICE.get(country, NOTICE["ES"]), "id_types": ID_TYPES.get(country, ID_TYPES["ES"])}
+    return {**_out(doc, needed), "country": country, "is_admin": user.get("role") == "admin", "notice": NOTICE.get(country, NOTICE["ES"]), "id_types": ID_TYPES.get(country, ID_TYPES["ES"])}
 
 
 class KycIn(BaseModel):

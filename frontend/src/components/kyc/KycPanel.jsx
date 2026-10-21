@@ -53,7 +53,13 @@ export function KycPanel() {
   const [busy, setBusy] = useState("");
   const apply = (data) => { setD(data); setF((cur) => cur || { ...data, kind: data.kind || "persona", nationality: data.nationality || data.country, id_type: data.id_type || data.id_types[0] }); };
   useEffect(() => { api.get("/kyc").then((r) => apply(r.data)).catch(() => {}); }, []);
-  if (!d || !f || (!d.required && d.status === "sin_enviar" && !d.first_name)) return null;
+  if (!d || !f) return null;
+  if (d.is_admin) return (
+    <Panel className="flex items-start gap-3" data-testid="kyc-admin-note">
+      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+      <p className="text-sm text-slate-600">Como administrador no necesitas verificar tu identidad aquí. Tus clientes ven en esta página el formulario <b>«Titular de tus líneas»</b> para subir sus documentos, y tú los revisas en <a href="/app/admin" className="font-semibold text-blue-600 underline">Super admin → Documentos de los titulares</a>. Para verlo como lo ve un cliente, usa «Entrar como» en un cliente.</p>
+    </Panel>
+  );
   const locked = ["pendiente", "enviado_zadarma", "verificado", "error"].includes(d.status);
   const [label, cls] = KYC_ST[d.status] || KYC_ST.sin_enviar;
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
