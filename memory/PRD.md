@@ -386,3 +386,9 @@
 
 ## 2026-06 Web scan: bot-protection message
 - webscan.read_site now detects Cloudflare/anti-bot challenges (403/429/503 + cf headers/challenge page) and returns a clear message telling the owner to disable Under Attack mode or allow "VozLeadsBot". Also specific messages for timeout and HTTP errors. Failed reads do not consume daily quota. (User chose: only show error, no manual paste fallback.)
+
+## 2026-06 Per-agent receptionist on own number
+- Agent fields: address, hours, notify_email, receptionist, reception_book, reception_message, transfer_number (E.164).
+- Inbound on an extra (own) number: receptionist ON -> reception objective (book / take message / transferCall to transfer_number); OFF -> agent own objective. Main number always receptionist. Lead doc gets `reception` flag in phone_numbers.assistant_request.
+- Emails for appointments/request_human go to agent.notify_email if set, else owner.
+- UI: components/agent/Reception.jsx in GeneralTab (toggle only shown if agent has own number). Tested iteration_40 (100%).

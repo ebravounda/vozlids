@@ -1,0 +1,19 @@
+{
+  "summary": "Iter40: per-agent receptionist on own extra number + per-agent business facts (address/hours/notify_email). Backend API + unit tests 10/10 pass; notify_to unit check pass; UI flows (no-number note, own-number panel default ON, sub-toggles, transfer validation/normalization, OFF hides options, persistence after reload, invalid notify email toast) all pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter40_reception.py", "/app/test_reports/pytest/iter40.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Reception.jsx useOwnNumber matches any extra number with status != 'liberado' (GET /numbers), so a 'pendiente'/failed extra number also shows the receptionist panel; phone_numbers.assistant_request only routes status 'activo'. Consider filtering by status==='activo' or labelling pending numbers.",
+    "vapi.human_rule: when reception ON, reception_message OFF and no transfer_number, the prompt still instructs request_human (and the tool remains available) - acceptable fallback but contradicts the 'Tomar recado' toggle being off.",
+    "ReceptionPanel renders null until /numbers resolves (no loading state) - fine, but tests must wait for the selector.",
+    "Agent objective 'recepcion' still exists alongside the new receptionist toggle; may confuse users (two ways to be receptionist)."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter40_reception.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Temporarily inserted tenant_numbers {extra:true, agent_id Marta, +34900000001, TEST_iter40:true} - deleted. Marta fields restored (address/hours/notify_email empty, receptionist/reception_book/reception_message true, transfer_number empty).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Save button testid: agent-builder-save-button. Errors are shown as sonner toasts ([data-sonner-toast]). Switches expose data-state checked/unchecked. Objective key list in vapi.OBJECTIVES: agendar, calificar, vender, recepcion (no 'captar'). pytest.ini adds xdist flags."
+}
