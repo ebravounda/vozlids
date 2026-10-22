@@ -59,54 +59,70 @@ async def dialer_session(body: SessionIn, user=CurrentUser):
             key = cached["key"]
         else:
             key = (await Z.call("GET", "/v1/webrtc/get_key/", {"sip": sip}))["key"]
-            await db.dialer_keys.update_one({"_id": sip}, {"$set": {"key": key, "at": datetime.now(timezone.utc).isoformat()}}, upsert=True)
+            now = datetime.now(timezone.utc).isoformat()
+            await db.dialer_keys.update_one({"_id": sip}, {"$set": {"key": key, "at": now}, "$setOnInsert": {"first_at": now}}, upsert=True)
     except Z.ZadarmaError as e:
         raise HTTPException(400, f"No se pudo preparar el teléfono: {e}")
     return {"key": key, "sip": sip, "number": line["number"]}
 
 
+def _ai_call(r: dict, vapi_calls: list) -> bool:
+    """True if Vapi placed this Zadarma call (same customer number, started within 3 min)."""
+    when, to = CR._row_time(r), CR._digits(str(r.get("to") or ""))[-9:]
+    for c in vapi_calls:
+        if c.get("type") == "inboundPhoneCall" or CR._digits((c.get("customer") or {}).get("number") or "")[-9:] != to:
+            continue
+        at = CR._parse(c.get("createdAt") or "")
+        if not at or abs((when - at).total_seconds()) > 180:
+            continue
+        a, b = CR._parse(c.get("startedAt") or ""), CR._parse(c.get("endedAt") or "")
+        if not (a and b) or abs((b - a).total_seconds() - CR._num(r.get("billseconds"))) <= max(15, CR._num(r.get("billseconds")) * 0.2):
+            return True
+    return False
+
+
 async def sync_calls(force: bool = False) -> str:
-    """Pair the calls the browser reported with Zadarma's records and store them in dialer_calls (they count as plan minutes)."""
+    """Every call on a keypad-enabled line that Vapi did not place is a keypad call: store it so it counts as plan minutes."""
+    import monitor
     st = await db.platform_settings.find_one({"_id": "dialer_sync"}) or {}
     at = CR._parse(st.get("tried_at", ""))
     if not force and at and datetime.now(timezone.utc) - at < HISTORY_TTL:
         return st.get("error", "")
-    pending = await db.dialer_pending.find({"zadarma_id": None}).to_list(2000)
-    error = ""
-    if pending:
-        since = min(CR._parse(p["created_at"]) for p in pending) - timedelta(minutes=10)
+    enabled = {d["_id"]: CR._parse(d.get("first_at") or d.get("at") or "") async for d in db.dialer_keys.find({})}
+    lines = {d["sip_id"]: d async for d in db.tenant_numbers.find({"sip_id": {"$in": list(enabled)}, "status": {"$ne": "liberado"}},
+                                                                  {"sip_id": 1, "tenant_id": 1, "number": 1})}
+    error, now = "", datetime.now(timezone.utc)
+    if lines:
+        ok_at = CR._parse(st.get("ok_at", "")) or now
+        since = max(min(enabled[s] for s in lines), min(ok_at, now) - timedelta(days=1), now - timedelta(days=13))
         try:
             rows = await CR._stats(since)
+            vapi_calls = await monitor.vapi_calls(since - timedelta(minutes=10), limit=1000)
         except Z.ZadarmaError as e:
             rows, error = [], ("Zadarma está ocupado, el historial se actualizará en un minuto." if "limit" in str(e).lower() else str(e))
+        except Exception as e:  # noqa: BLE001  (Vapi down: classify later, never guess)
+            rows, error = [], f"No se pudo consultar Vapi: {e.__class__.__name__}"
         taken = await manual_ids()
-        sips: dict = {}
-        for p in pending:
-            if p["tenant_id"] not in sips:
-                sips[p["tenant_id"]] = {ln["sip_id"]: ln["number"] for ln in await _lines(p["tenant_id"]) if ln.get("sip_id")}
-            start, best = CR._parse(p["created_at"]), None
-            for r in rows:
-                when, rid = CR._row_time(r), str(r.get("id"))
-                if rid in taken or str(r.get("sip")) not in sips[p["tenant_id"]] or not when or \
-                        CR._digits(str(r.get("to") or ""))[-9:] != CR._digits(p.get("to") or "")[-9:]:
-                    continue
-                gap = abs((when - start).total_seconds())
-                if gap <= 180 and (best is None or gap < best[0]):
-                    best = (gap, r)
-            if not best:
+        for r in rows:
+            sip, when, rid = str(r.get("sip")), CR._row_time(r), str(r.get("id"))
+            line = lines.get(sip)
+            if not line or not when or rid in taken or when < enabled[sip] or now - when < timedelta(minutes=3) \
+                    or CR._num(r.get("billseconds")) <= 0 or _ai_call(r, vapi_calls):
                 continue
-            r = best[1]
-            rid = str(r.get("id"))
-            taken.add(rid)
             await db.dialer_calls.update_one({"_id": rid}, {"$set": {
-                "tenant_id": p["tenant_id"], "from_number": sips[p["tenant_id"]].get(str(r.get("sip")), ""), "sip": str(r.get("sip")),
-                "created_at": CR._row_time(r).astimezone(timezone.utc).isoformat(), "start": r.get("callstart"), "to": r.get("to"),
+                "tenant_id": line["tenant_id"], "from_number": line["number"], "sip": sip,
+                "created_at": when.astimezone(timezone.utc).isoformat(), "start": r.get("callstart"), "to": r.get("to"),
                 "destination": r.get("description"), "status": r.get("disposition"),
                 "duration_seconds": int(CR._num(r.get("billseconds"))), "cost": round(CR._num(r.get("billcost")), 4),
                 "currency": r.get("currency")}}, upsert=True)
-            await db.dialer_pending.update_one({"_id": p["_id"]}, {"$set": {"zadarma_id": rid}})
-    now = datetime.now(timezone.utc).isoformat()
-    await db.platform_settings.update_one({"_id": "dialer_sync"}, {"$set": {"error": error, "tried_at": now}}, upsert=True)
+            await db.dialer_pending.update_many({"tenant_id": line["tenant_id"], "zadarma_id": None,
+                                                 "created_at": {"$gte": (when - timedelta(minutes=5)).isoformat(),
+                                                                "$lte": (when + timedelta(minutes=5)).isoformat()}},
+                                                {"$set": {"zadarma_id": rid}})
+        if not error:
+            await db.dialer_pending.delete_many({"zadarma_id": None, "created_at": {"$lt": (now - timedelta(hours=6)).isoformat()}})
+    await db.platform_settings.update_one({"_id": "dialer_sync"}, {"$set": {"error": error, "tried_at": now.isoformat(),
+                                                                            **({} if error else {"ok_at": now.isoformat()})}}, upsert=True)
     return error
 
 
