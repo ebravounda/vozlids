@@ -1,4 +1,6 @@
 """Browser phone: tenants call from their own number through a dedicated Zadarma SIP (WebRTC widget)."""
+import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,6 +12,7 @@ import plan_limits as PL
 import zadarma as Z
 from db import db
 
+log = logging.getLogger("vozlead.dialer")
 router = APIRouter(prefix="/api")
 CurrentUser = Depends(A.get_current_user)
 KEY_TTL = timedelta(hours=48)
@@ -37,6 +40,9 @@ class SessionIn(BaseModel):
 @router.post("/dialer/session")
 async def dialer_session(body: SessionIn, user=CurrentUser):
     await PL.require(user["id"], "dialer")
+    import saas
+    if err := await saas._quota_error(user["id"]):
+        raise HTTPException(400, err)
     lines = await _lines(user["id"])
     line = next((ln for ln in lines if ln["number"] == body.number), lines[0] if lines else None)
     if not line:
@@ -58,30 +64,53 @@ async def dialer_session(body: SessionIn, user=CurrentUser):
     return {"key": key, "sip": sip, "number": line["number"]}
 
 
+async def sync_calls(force: bool = False) -> str:
+    """Copy this month's keypad calls from Zadarma into dialer_calls so they count towards plan minutes."""
+    st = await db.platform_settings.find_one({"_id": "dialer_sync"}) or {}
+    at = CR._parse(st.get("at", ""))
+    if not force and at and datetime.now(timezone.utc) - at < HISTORY_TTL:
+        return st.get("error", "")
+    owners = {d["dialer_sip_id"]: d async for d in db.tenant_numbers.find({"dialer_sip_id": {"$nin": [None, ""]}},
+                                                                         {"dialer_sip_id": 1, "tenant_id": 1, "number": 1})}
+    error = ""
+    if owners:
+        start = datetime.now(CR.MADRID).replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+        try:
+            rows = await CR._stats(start)
+        except Z.ZadarmaError as e:
+            rows, error = [], ("Zadarma está ocupado, el historial se actualizará en un minuto." if "limit" in str(e).lower() else str(e))
+        for r in rows:
+            line = owners.get(str(r.get("sip")))
+            when = CR._row_time(r)
+            if not line or not when:
+                continue
+            await db.dialer_calls.update_one({"_id": str(r.get("id"))}, {"$set": {
+                "tenant_id": line["tenant_id"], "from_number": line["number"], "sip": str(r.get("sip")),
+                "created_at": when.astimezone(timezone.utc).isoformat(), "start": r.get("callstart"), "to": r.get("to"),
+                "destination": r.get("description"), "status": r.get("disposition"),
+                "duration_seconds": int(CR._num(r.get("billseconds"))), "cost": round(CR._num(r.get("billcost")), 4),
+                "currency": r.get("currency")}}, upsert=True)
+    await db.platform_settings.update_one({"_id": "dialer_sync"}, {"$set": {"at": datetime.now(timezone.utc).isoformat(), "error": error}}, upsert=True)
+    return error
+
+
 @router.get("/dialer/history")
 async def dialer_history(user=CurrentUser):
     await PL.require(user["id"], "dialer")
-    sips = {ln["dialer_sip_id"]: ln["number"] for ln in await _lines(user["id"]) if ln.get("dialer_sip_id")}
-    if not sips:
-        return {"calls": [], "minutes": 0, "error": ""}
-    cache = await db.dialer_history.find_one({"_id": user["id"]}) or {}
-    at = CR._parse(cache.get("at", ""))
-    rows, error = cache.get("rows") or [], ""
-    if not at or datetime.now(timezone.utc) - at > HISTORY_TTL:
-        start = datetime.now(CR.MADRID).replace(day=1, hour=0, minute=0, second=0)
-        try:
-            rows = []
-            for sip in sips:
-                rows += (await Z.call("GET", "/v1/statistics/", {"start": start.strftime("%Y-%m-%d %H:%M:%S"),
-                                                                 "end": datetime.now(CR.MADRID).strftime("%Y-%m-%d %H:%M:%S"),
-                                                                 "sip": sip, "limit": 1000})).get("stats") or []
-            await db.dialer_history.update_one({"_id": user["id"]}, {"$set": {"rows": rows, "at": datetime.now(timezone.utc).isoformat()}}, upsert=True)
-        except Z.ZadarmaError as e:
-            error = "Zadarma está ocupado, el historial se actualizará en un minuto." if "limit" in str(e).lower() else str(e)
+    import saas
+    error = await sync_calls()
     admin = user.get("role") == "admin"
-    calls = [{"id": str(r.get("id")), "start": r.get("callstart"), "to": r.get("to"), "destination": r.get("description"),
-              "status": r.get("disposition"), "seconds": int(CR._num(r.get("billseconds"))),
-              "from_number": sips.get(str(r.get("sip")), ""),
-              **({"cost": round(CR._num(r.get("billcost")), 4), "currency": r.get("currency")} if admin else {})}
-             for r in sorted(rows, key=lambda x: x.get("callstart") or "", reverse=True)]
+    docs = await db.dialer_calls.find({"tenant_id": user["id"], "created_at": {"$gte": saas.month_start()}}).sort("created_at", -1).to_list(2000)
+    calls = [{"id": d["_id"], **{k: d.get(k) for k in ("start", "to", "destination", "status", "from_number")},
+              "seconds": d.get("duration_seconds", 0), **({"cost": d.get("cost"), "currency": d.get("currency")} if admin else {})}
+             for d in docs]
     return {"calls": calls, "minutes": round(sum(c["seconds"] for c in calls) / 60, 1), "error": error}
+
+
+async def loop() -> None:
+    while True:
+        await asyncio.sleep(600)
+        try:
+            await sync_calls(force=True)
+        except Exception as e:  # noqa: BLE001
+            log.warning("Dialer sync failed: %s", e)

@@ -98,7 +98,7 @@ export default function Dialer() {
     <div className="space-y-6" data-testid="dialer-page">
       <div>
         <h1 className="font-display text-3xl font-semibold text-white">Teléfono</h1>
-        <p className="mt-1 text-sm text-slate-400">Llama tú mismo a tus clientes desde el navegador, con tu número de empresa.</p>
+        <p className="mt-1 text-sm text-slate-400">Llama tú mismo a tus clientes desde el navegador, con tu número de empresa. Los minutos se descuentan de tu plan.</p>
       </div>
       {info && <PhoneCard numbers={info.numbers} />}
       <History />

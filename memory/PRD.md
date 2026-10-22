@@ -439,3 +439,4 @@
 - Función del plan «dialer» (por defecto desactivada; también para los usuarios sin plan). Se activa en el editor de planes del Super admin. Página /app/telefono (Dialer.jsx) que carga el widget v9 de Zadarma.
 - Las llamadas manuales se excluyen de la comparación y de la sincronización con Zadarma (totals.manual_calls/manual_cost). Las llamadas manuales NO descuentan minutos del plan.
 - Probado: iteration_43. El WebRTC real no se pudo probar en preview porque no hay API de Zadarma.
+- 2026-06 (cambio): las llamadas del teclado SÍ descuentan minutos del plan. dialer.sync_calls hace una sola consulta mensual a Zadarma, filtrada por los SIP del teclado, cada 10 min (y al abrir el historial si los datos tienen más de 2 min). Las guarda en la colección dialer_calls (tenant_id, created_at, duration_seconds), que se suma en saas.minutes_used. Si el plan está agotado, POST /dialer/session lo bloquea.

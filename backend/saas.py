@@ -44,7 +44,7 @@ async def minutes_used(tenant_id: str) -> float:
     q = [{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}, "source": {"$ne": "web_vozleads"}}},
          {"$group": {"_id": None, "s": {"$sum": {"$ifNull": ["$duration_seconds", 0]}}}}]
     secs = 0
-    for col in (db.leads, db.usage_archive):
+    for col in (db.leads, db.usage_archive, db.dialer_calls):
         rows = await col.aggregate(q).to_list(1)
         secs += rows[0]["s"] if rows else 0
     return round(secs / 60, 1)
