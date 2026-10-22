@@ -16,7 +16,6 @@ from db import db
 log = logging.getLogger("vozlead.dialer")
 router = APIRouter(prefix="/api")
 CurrentUser = Depends(A.get_current_user)
-KEY_TTL = timedelta(hours=48)
 HISTORY_TTL = timedelta(minutes=2)
 
 
@@ -53,14 +52,9 @@ async def dialer_session(body: SessionIn, user=CurrentUser):
     if not sip:
         raise HTTPException(400, "Tu número aún no tiene línea conectada. Escríbenos y la activamos.")
     try:
-        cached = await db.dialer_keys.find_one({"_id": sip}) or {}
-        at = CR._parse(cached.get("at", ""))
-        if cached.get("key") and at and datetime.now(timezone.utc) - at < KEY_TTL:
-            key = cached["key"]
-        else:
-            key = (await Z.call("GET", "/v1/webrtc/get_key/", {"sip": sip}))["key"]
-            now = datetime.now(timezone.utc).isoformat()
-            await db.dialer_keys.update_one({"_id": sip}, {"$set": {"key": key, "at": now}, "$setOnInsert": {"first_at": now}}, upsert=True)
+        key = (await Z.call("GET", "/v1/webrtc/get_key/", {"sip": sip}))["key"]
+        now = datetime.now(timezone.utc).isoformat()
+        await db.dialer_keys.update_one({"_id": sip}, {"$set": {"at": now}, "$setOnInsert": {"first_at": now}}, upsert=True)
     except Z.ZadarmaError as e:
         raise HTTPException(400, f"No se pudo preparar el teléfono: {e}")
     return {"key": key, "sip": sip, "number": line["number"]}
