@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import httpx
+import phonenumbers
 
 import zadarma as Z
 from db import db
@@ -22,6 +23,54 @@ def _parse(ts: str):
         return datetime.fromisoformat((ts or "").replace("Z", "+00:00"))
     except ValueError:
         return None
+
+
+def region(phone: str) -> str | None:
+    raw = (phone or "").strip()
+    if not (raw.startswith("+") or raw.startswith("00") or len(_digits(raw)) > 9):
+        return None
+    try:
+        return phonenumbers.region_code_for_number(phonenumbers.parse("+" + _digits(raw).removeprefix("00")))
+    except phonenumbers.NumberParseException:
+        return None
+
+
+def line_rate(phone: str, agent_country: str, pricing: dict) -> float:
+    """Per-minute line cost: own tariff for ES/CL, learned Zadarma tariff for other destinations."""
+    base = {"ES": pricing["line_rate_usd_min"], "CL": pricing["line_rate_cl_usd_min"]}
+    reg = region(phone)
+    if reg in base:
+        return base[reg]
+    learned = (pricing.get("dest_rates") or {}).get(reg or "")
+    return learned["usd_min"] if learned else base.get(agent_country, base["ES"])
+
+
+async def learn_rates(rows: list, pricing: dict) -> int:
+    """Store the per-minute price Zadarma charged for each foreign destination (manual values are kept)."""
+    doc = await db.platform_settings.find_one({"_id": "dest_rates"}) or {}
+    known, upd = doc.get("rates") or {}, {}
+    for r in rows:
+        secs = _num(r.get("billseconds"))
+        cost = _num(r.get("billcost"))
+        reg = region("+" + _digits(str(r.get("to") or "")))
+        if not reg or reg in ("ES", "CL") or secs <= 0 or cost <= 0 or (known.get(reg) or {}).get("manual"):
+            continue
+        per_min = _num(r.get("cost")) or cost / secs * 60
+        usd = round(to_usd(per_min, r.get("currency"), pricing), 4)
+        if (known.get(reg) or {}).get("usd_min") != usd:
+            upd[f"rates.{reg}"] = {"usd_min": usd, "name": str(r.get("description") or reg)[:60], "manual": False,
+                                   "learned_at": datetime.now(timezone.utc).isoformat()}
+            known[reg] = upd[f"rates.{reg}"]
+    if upd:
+        await db.platform_settings.update_one({"_id": "dest_rates"}, {"$set": upd}, upsert=True)
+    return len(upd)
+
+
+def _num(v) -> float:
+    try:
+        return float(str(v or 0).replace(",", "."))
+    except ValueError:
+        return 0.0
 
 
 def to_usd(amount: float, currency: str, pricing: dict) -> float:
@@ -69,6 +118,7 @@ async def sync_zadarma(pricing: dict, force: bool = False) -> dict:
         except Z.ZadarmaError as e:
             out["error"] = str(e)
             rows = []
+        await learn_rates(rows, pricing)
         by_num: dict = {}
         for r in rows:
             try:

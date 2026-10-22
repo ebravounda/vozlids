@@ -63,6 +63,14 @@ export function ZadarmaCompare({ days }) {
     try { const { data } = await api.get("/admin/costs/zadarma-compare", { params: { days } }); setD(data); }
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
+  const weekly = async () => {
+    try {
+      const { data } = await api.post("/admin/costs/zadarma-weekly");
+      if (data.error) toast.error(data.error);
+      else if (data.sent) toast.success("Aviso enviado a tu email de alertas");
+      else toast.success("Los últimos 7 días cuadran: no hace falta aviso");
+    } catch (e) { toast.error(errMsg(e)); }
+  };
   return (
     <>
       <Button variant="outline" onClick={run} className="rounded-full border-slate-700 bg-transparent" data-testid="zadarma-compare-button">
@@ -79,6 +87,7 @@ export function ZadarmaCompare({ days }) {
           {d && !d.error && (
             <div className="space-y-4">
               <Summary t={d.totals} />
+              <p className="text-xs text-slate-500">Cada lunes a las 9:00 te enviamos un email si Zadarma cobró más de lo que cuenta el panel en los últimos 7 días. <button type="button" onClick={weekly} className="text-emerald-300 underline" data-testid="zadarma-weekly-test-button">Comprobar ahora</button></p>
               {d.rows.length ? (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[820px] text-sm" data-testid="zadarma-compare-table">

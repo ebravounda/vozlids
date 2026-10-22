@@ -7,6 +7,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 import billing
+import costs_real as CR
 import emailer
 import vapi
 import zadarma
@@ -261,7 +262,6 @@ async def margins(user=Depends(require_admin)):
     since = month_start().isoformat()
     plans = {str(p["_id"]): p async for p in db.plans.find({})}
     agent_country = {str(a["_id"]): a.get("country", "ES") async for a in db.agents.find({}, {"country": 1})}
-    rates = {"ES": pricing["line_rate_usd_min"], "CL": pricing["line_rate_cl_usd_min"]}
     rows = []
     async for u in db.users.find({}, {"business_name": 1, "email": 1, "country": 1, "plan_id": 1,
                                       "stripe_subscription_id": 1, "allow_overage": 1, "billing_test": 1}):
@@ -269,7 +269,7 @@ async def margins(user=Depends(require_admin)):
         cost, minutes, calls = 0.0, 0.0, 0
         async for ld in db.leads.find({"tenant_id": uid, "vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}},
                                       {"messages": 0, "transcript": 0}):
-            p = _parts(ld, rates.get(agent_country.get(ld["agent_id"], "ES"), rates["ES"]), pricing)
+            p = _parts(ld, CR.line_rate(ld.get("phone"), agent_country.get(ld["agent_id"], "ES"), pricing), pricing)
             cost += p["total"]
             minutes += p["minutes"]
             calls += 1
@@ -390,6 +390,7 @@ async def save_limits(lim: dict | None) -> None:
 
 
 async def loop() -> None:
+    await db.platform_settings.update_one({"_id": "pricing", "number_cl_usd_month": 8.0}, {"$set": {"number_cl_usd_month": 6.0}})
     await db.platform_settings.update_one({"_id": "alerts", "voice_min_pct": 2.0}, {"$set": {"voice_min_pct": 20.0, "ai_min_usd": 10.0}})
     await asyncio.sleep(60)
     while True:

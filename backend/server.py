@@ -749,6 +749,7 @@ async def startup():
     asyncio.create_task(monitor.loop())
     asyncio.create_task(linehealth.loop())
     asyncio.create_task(daily_jobs.loop())
+    asyncio.create_task(costs_compare.loop())
     await api_core.ensure_indexes()
     await privacy.ensure_indexes()
     await gcal.ensure_indexes()

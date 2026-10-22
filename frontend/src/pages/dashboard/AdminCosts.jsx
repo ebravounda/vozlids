@@ -10,6 +10,7 @@ import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 import { FixedCostsEditor, ProfitSummary } from "@/components/costs/ProfitParts";
 import { ZadarmaCompare } from "@/components/costs/ZadarmaCompare";
+import { DestRates } from "@/components/costs/DestRates";
 
 const PARTS = [["voz", "Voz"], ["transcripcion", "Transcripción"], ["ia", "IA (GPT-4.1)"], ["vapi", "Vapi plataforma"], ["analisis", "Resumen/análisis"], ["linea", "Línea Zadarma"], ["otros", "Otros"]];
 const eur = (usd, fx, d = 3) => (usd == null ? "—" : `${(usd * fx).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} €`);
@@ -214,6 +215,7 @@ export default function AdminCosts() {
         <PricingForm pricing={d.pricing} onSaved={load} />
         <VoiceCompare d={d} />
       </div>
+      <DestRates reload={d} />
       <TenantsTable d={d} />
       <Panel className="overflow-x-auto p-0">
         <h3 className="p-5 pb-2 text-lg font-semibold text-white">Cada llamada</h3>

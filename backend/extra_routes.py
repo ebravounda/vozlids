@@ -21,7 +21,7 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 DEFAULT_PRICING = {"line_rate_usd_min": 0.025, "line_rate_cl_usd_min": 0.05, "usd_eur": 0.92, "usd_clp": 950,
                    "margin_pct": 150, "voice_11labs_usd_min": 0.036, "voice_cartesia_usd_min": 0.022,
                    "voice_azure_usd_min": 0.011, "eleven_plan_usd": 22.0, "eleven_plan_credits": 100000,
-                   "eleven_credits_per_char": 0.5, "number_es_usd_month": 3.0, "number_cl_usd_month": 8.0,
+                   "eleven_credits_per_char": 0.5, "number_es_usd_month": 3.0, "number_cl_usd_month": 6.0,
                    "stripe_pct": 1.5, "stripe_fixed_eur": 0.25,
                    "fixed_costs": [{"name": "Servidor (Plesk)", "usd": 0.0}, {"name": "Vapi (cuota mensual)", "usd": 0.0},
                                    {"name": "Número principal Zadarma", "usd": 3.0}]}
@@ -187,7 +187,8 @@ class PricingIn(BaseModel):
 
 async def get_pricing() -> dict:
     doc = await db.platform_settings.find_one({"_id": "pricing"}) or {}
-    return {k: doc.get(k, v) for k, v in DEFAULT_PRICING.items()}
+    dest = await db.platform_settings.find_one({"_id": "dest_rates"}) or {}
+    return {**{k: doc.get(k, v) for k, v in DEFAULT_PRICING.items()}, "dest_rates": dest.get("rates") or {}}
 
 
 @router.get("/admin/pricing")
@@ -231,8 +232,7 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
                                 {"messages": 0, "transcript": 0}).sort("created_at", -1).to_list(5000)
     users = {str(u["_id"]): u async for u in db.users.find({}, {"business_name": 1, "email": 1, "country": 1})}
     agent_country = {str(a["_id"]): a.get("country", "ES") async for a in db.agents.find({}, {"country": 1})}
-    rates = {"ES": pricing["line_rate_usd_min"], "CL": pricing["line_rate_cl_usd_min"]}
-    by_country = {c: {"calls": 0, "minutes": 0.0, "total": 0.0, "voz": 0.0} for c in rates}
+    by_country = {c: {"calls": 0, "minutes": 0.0, "total": 0.0, "voz": 0.0} for c in ("ES", "CL")}
     voices = {k: {"minutes": 0.0, "voz": 0.0, "calls": 0} for k in ("11labs", "cartesia", "azure")}
     calls, tenants, totals = [], {}, {"calls": 0, "minutes": 0.0, "total": 0.0, "missing_cost": 0}
     keys = ["voz", "transcripcion", "ia", "vapi", "analisis", "linea", "otros"]
@@ -240,7 +240,7 @@ async def admin_costs(days: int = 30, tenant_id: str = "", user=Depends(require_
     own_voice_total = 0.0
     for ld in leads:
         country = agent_country.get(ld["agent_id"], "ES")
-        p = _parts(ld, rates[country], pricing)
+        p = _parts(ld, CR.line_rate(ld.get("phone"), country, pricing), pricing)
         own_voice_total += p["own_voice"]
         bc = by_country[country]
         bc["calls"] += 1
