@@ -13,12 +13,13 @@ const Pick = ({ value, onChange, opts, testid, placeholder }) => (
   </Select>
 );
 
-function ConnectDialog({ number, users, onClose, onDone }) {
+function ConnectDialog({ number, users, sips, onClose, onDone }) {
   const [tid, setTid] = useState("");
   const [o, setO] = useState(null);
   const [target, setTarget] = useState("main");
   const [busy, setBusy] = useState(false);
   const [charge, setCharge] = useState(true);
+  const [sip, setSip] = useState("new");
   useEffect(() => {
     setO(null); setTarget("main");
     if (tid) api.get(`/admin/zadarma/connect-options/${tid}`).then((r) => { setO(r.data); if (r.data.has_main) setTarget(r.data.agents[0]?.id || ""); setCharge(r.data.can_charge); }).catch((e) => toast.error(errMsg(e)));
@@ -27,7 +28,7 @@ function ConnectDialog({ number, users, onClose, onDone }) {
   const go = async () => {
     setBusy(true);
     try {
-      await api.post("/admin/zadarma/connect", { number: number.number, tenant_id: tid, agent_id: target === "main" ? "" : target, charge: target !== "main" && charge && o.can_charge });
+      await api.post("/admin/zadarma/connect", { number: number.number, tenant_id: tid, agent_id: target === "main" ? "" : target, charge: target !== "main" && charge && o.can_charge, sip_id: sip === "new" ? "" : sip });
       toast.success(`${number.number} conectado y funcionando`); onDone();
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
@@ -49,6 +50,9 @@ function ConnectDialog({ number, users, onClose, onDone }) {
                 <span>{o.can_charge ? <>Cobrar al cliente el número adicional por Stripe: <b>{o.price}</b> ahora (mes completo) y luego cada mes.</>
                   : <>Esta cuenta no paga por Stripe (plan asignado por ti), así que <b>no se cobrará automáticamente</b>; gestiona tú el cobro.</>}</span>
               </label>)}
+            <Pick value={sip} onChange={setSip} testid="connect-number-sip-select" placeholder="Línea SIP"
+              opts={[["new", "Crear una línea SIP nueva"], ...sips.map((x) => [x.id, `Usar mi línea SIP ${x.id}${x.name ? ` · ${x.name}` : ""}`])]} />
+            {sip !== "new" && <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200" data-testid="connect-number-sip-warning">Se le pondrá una contraseña nueva a la línea {sip}: si la usas en un teléfono o una app, dejará de funcionar ahí.</p>}
             <p className="text-xs text-slate-500">Se crea la línea SIP en Zadarma, se conecta a la IA y el número queda listo para recibir llamadas (recepcionista) y para llamar.</p>
           </>}
           <Button onClick={go} disabled={busy || !o?.kyc_ok || !target} className="w-full rounded-full" data-testid="connect-number-confirm-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Conectar y configurar todo</Button>
@@ -89,7 +93,7 @@ export function ConnectExisting({ users, onChanged }) {
           <Button size="sm" onClick={() => setOpen(r)} className="rounded-full" data-testid={`zadarma-existing-connect-${r.number.slice(1)}`}><Link2 className="mr-1.5 h-4 w-4" />Conectar</Button>
         </div>
       ))}
-      {open && <ConnectDialog number={open} users={users} onClose={() => setOpen(null)} onDone={() => { setOpen(null); load(); onChanged(); }} />}
+      {open && <ConnectDialog number={open} users={users} sips={rows?.sip_list || []} onClose={() => setOpen(null)} onDone={() => { setOpen(null); load(); onChanged(); }} />}
     </div>
   );
 }

@@ -60,7 +60,8 @@ async def _sip_room() -> dict:
         return {}
     used = {str(r.get("sip_id")) async for r in db.tenant_numbers.find({"sip_id": {"$nin": [None, ""]}, "status": {"$nin": ["liberado"]}}, {"sip_id": 1})}
     reusable = sum(1 for s in sips if str(s.get("display_name", "")).startswith("VozLeads") and str(s["id"]) not in used)
-    return {"sips": len(sips), "sips_left": left, "sips_reusable": reusable}
+    return {"sips": len(sips), "sips_left": left, "sips_reusable": reusable,
+            "sip_list": [{"id": str(s["id"]), "name": s.get("display_name", "")} for s in sips if str(s["id"]) not in used]}
 
 
 @router.get("/my-numbers")
@@ -95,6 +96,7 @@ class ConnectIn(BaseModel):
     tenant_id: str
     agent_id: str = ""
     charge: bool = True
+    sip_id: str = Field("", max_length=20)
 
 
 @router.post("/connect")
@@ -109,7 +111,9 @@ async def connect(body: ConnectIn, user=Depends(require_admin)):
     if number not in {_norm(r.get("number")) for r in free}:
         raise HTTPException(409, "Ese número ya no está disponible (en uso, vencido o inactivo en Zadarma). Actualiza la lista.")
     room = await _sip_room()
-    if room and room["sips_left"] + room["sips_reusable"] <= 0:
+    if body.sip_id and body.sip_id not in {s["id"] for s in room.get("sip_list", [])}:
+        raise HTTPException(409, "Esa línea SIP no existe en tu Zadarma o ya la usa otro número de VozLeads. Actualiza la lista.")
+    if not body.sip_id and room and room["sips_left"] + room["sips_reusable"] <= 0:
         raise HTTPException(409, "Tu cuenta de Zadarma llegó al límite de líneas SIP. Recarga saldo en Zadarma (el límite sube con el saldo) "
                                  "o pide a su soporte que lo amplíe, y vuelve a intentarlo. No se ha cobrado nada.")
     country = PREFIX.get(number[1:3], u.get("country", "ES"))
@@ -136,7 +140,7 @@ async def connect(body: ConnectIn, user=Depends(require_admin)):
         filt = {"_id": (await db.tenant_numbers.find_one(filt))["_id"]}
         inbound = (main or {}).get("inbound_agent_id") or await N._default_agent(tid, country)
     try:
-        await N.activate(filt, u, number, inbound)
+        await N.activate(filt, u, number, inbound, body.sip_id)
     except (Z.ZadarmaError, vapi.VapiError) as e:
         # Undo so the number is free again and nothing stays charged.
         if body.agent_id:

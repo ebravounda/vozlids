@@ -117,11 +117,15 @@ async def _sip_line(u: dict, pwd: str, number: str) -> str:
         return str(free[0])
 
 
-async def activate(filt: dict, u: dict, number: str, agent_id: str) -> None:
+async def activate(filt: dict, u: dict, number: str, agent_id: str, sip_id: str = "") -> None:
     """Create the SIP line, connect it to Vapi (outbound + inbound) and route the Zadarma number to the receptionist."""
     await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
     pwd = secrets.token_urlsafe(10) + "Vz7"
-    sip = await _step("crear la línea SIP en Zadarma", _sip_line(u, pwd, number))
+    if sip_id:
+        await _step(f"preparar tu línea SIP {sip_id} en Zadarma", Z.reuse_sip(sip_id, pwd, number))
+        sip = sip_id
+    else:
+        sip = await _step("crear la línea SIP en Zadarma", _sip_line(u, pwd, number))
     v = await _step("conectar la línea con la IA (Vapi)", vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"]))
     await _step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"])))
     await db.tenant_numbers.update_one(filt, {"$set": {
