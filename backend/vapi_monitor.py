@@ -1,4 +1,5 @@
 """Super admin: everything happening in Vapi — calls and why they ended, each number's wiring, errors and spend."""
+import json
 import logging
 import os
 import time
@@ -79,13 +80,26 @@ def _secs(c: dict) -> int:
         return 0
 
 
+def _transfer(c: dict) -> dict | None:
+    for m in c.get("messages") or []:
+        for t in m.get("toolCalls") or []:
+            if (t.get("function") or {}).get("name") == "transferCall":
+                try:
+                    to = json.loads(t["function"].get("arguments") or "{}").get("destination", "")
+                except ValueError:
+                    to = ""
+                return {"at": m.get("secondsFromStart") or 0, "to": to}
+    return None
+
+
 def _row(c: dict, phones: dict) -> dict:
     p = phones.get(c.get("phoneNumberId")) or {}
     label, level = reason(c.get("endedReason") or "", (c.get("assistant") or {}).get("firstMessage") or "")
     return {"id": c["id"], "at": c.get("createdAt"), "direction": "entrante" if c.get("type") == "inboundPhoneCall" else
             "web" if c.get("type") == "webCall" else "saliente", "number": p.get("number") or "—", "owner": p.get("owner") or "Web / demo",
             "tenant_id": p.get("tenant_id") or "", "customer": (c.get("customer") or {}).get("number") or "—", "status": c.get("status"),
-            "seconds": _secs(c), "cost": round(c.get("cost") or 0, 4), "reason": label, "level": level, "code": c.get("endedReason") or ""}
+            "seconds": _secs(c), "cost": round(c.get("cost") or 0, 4), "reason": label, "level": level, "code": c.get("endedReason") or "",
+            "transferred": bool(_transfer(c)) and "transfer-failed" not in (c.get("endedReason") or "")}
 
 
 @router.get("/calls")
@@ -94,6 +108,47 @@ async def calls(user=Depends(require_admin)):
         phones = await _phone_map()
         return [_row(c, phones) for c in await monitor.vapi_calls(limit=100)]
     return await _cached("calls", 10, load)
+
+
+COST_LABEL = {"transcriber": "Transcripción", "model": "IA", "voice": "Voz", "vapi": "Plataforma Vapi", "analysis": "Resumen",
+              "transport": "Línea", "knowledge-base": "Base de conocimiento"}
+
+
+async def _zadarma_leg(c: dict, to: str) -> dict | None:
+    if not to or not (await Z.creds()).get("key"):
+        return None
+    start = datetime.fromisoformat(c["startedAt"].replace("Z", "+00:00")) - timedelta(minutes=1)
+    end = datetime.fromisoformat((c.get("endedAt") or c["startedAt"]).replace("Z", "+00:00")) + timedelta(minutes=5)
+    try:
+        r = await Z.call("GET", "/v1/statistics/", {"start": start.strftime("%Y-%m-%d %H:%M:%S"), "end": end.strftime("%Y-%m-%d %H:%M:%S")})
+    except Z.ZadarmaError as e:
+        return {"error": str(e)[:200]}
+    digits = to.lstrip("+")
+    rows = [s for s in r.get("stats") or [] if str(s.get("to")) == digits]
+    if not rows:
+        return {"seconds": 0, "cost": 0, "currency": "", "note": "Zadarma aún no muestra esta llamada (puede tardar unos minutos)"}
+    return {"seconds": sum(int(s.get("billseconds") or 0) for s in rows), "cost": round(sum(float(s.get("billcost") or 0) for s in rows), 4),
+            "currency": rows[0].get("currency", ""), "rate": rows[0].get("cost"), "destination": rows[0].get("description", "")}
+
+
+@router.get("/calls/{call_id}")
+async def call_detail(call_id: str, user=Depends(require_admin)):
+    c = await vapi.get_call(call_id)
+    row, total, t = _row(c, await _phone_map()), _secs(c), _transfer(c)
+    sums: dict = {}
+    for x in c.get("costs") or []:
+        k = COST_LABEL.get(x.get("type"), x.get("type"))
+        sums[k] = sums.get(k, 0) + (x.get("cost") or 0)
+    items = [{"label": k, "cost": round(v, 4)} for k, v in sums.items() if v]
+    platform = sum(x.get("cost") or 0 for x in c.get("costs") or [] if x.get("type") in ("vapi", "transport"))
+    human_secs = max(0, total - round(t["at"])) if row["transferred"] else 0
+    human_vapi = round(platform * human_secs / total, 4) if total else 0
+    human = None
+    if t:
+        human = {"to": t["to"], "ok": row["transferred"], "seconds": human_secs, "vapi_cost": human_vapi,
+                 "zadarma": await _zadarma_leg(c, t["to"]) if row["transferred"] else None}
+    return {**row, "ai": {"seconds": total - human_secs, "cost": round((c.get("cost") or 0) - human_vapi, 4), "items": items},
+            "human": human}
 
 
 @router.get("/errors")

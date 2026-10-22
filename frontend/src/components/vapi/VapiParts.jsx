@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { CallDetail } from "@/components/vapi/CallDetail";
 
 const LEVEL = { ok: "bg-emerald-100 text-emerald-800", aviso: "bg-amber-100 text-amber-800", error: "bg-rose-100 text-rose-800" };
 const DIR = { entrante: "Entrante", saliente: "Saliente", web: "Web" };
@@ -11,6 +12,7 @@ const Th = ({ children, r }) => <th className={`px-2 pb-2 ${r ? "text-right" : "
 
 export const CallsTable = ({ rows }) => {
   const [f, setF] = useState("all");
+  const [open, setOpen] = useState(null);
   if (!rows) return <Empty t="vapi-calls-loading">Cargando llamadas…</Empty>;
   const list = rows.filter((r) => f === "all" || r.level === f || r.direction === f);
   return (
@@ -24,16 +26,17 @@ export const CallsTable = ({ rows }) => {
         <table className="w-full min-w-[900px] text-left text-sm" data-testid="vapi-calls-table">
           <thead><tr className="text-[11px] uppercase tracking-wider text-slate-500"><Th>Fecha</Th><Th>Tipo</Th><Th>Número</Th><Th>Cliente</Th><Th>Llamante / destino</Th><Th r>Duración</Th><Th r>Coste</Th><Th>Cómo terminó</Th></tr></thead>
           <tbody>{list.map((r) => (
-            <tr key={r.id} className="border-t border-slate-800 [&>td]:px-2" data-testid={`vapi-call-${r.id}`}>
+            <tr key={r.id} onClick={() => setOpen(r.id)} className="cursor-pointer border-t border-slate-800 hover:bg-slate-500/10 [&>td]:px-2" data-testid={`vapi-call-${r.id}`}>
               <td className="whitespace-nowrap py-2 text-xs text-slate-400">{when(r.at)}</td><td>{DIR[r.direction]}</td><td className="font-mono text-xs">{r.number}</td>
               <td className="whitespace-nowrap text-xs">{r.owner}</td><td className="font-mono text-xs">{r.customer}</td><td className="text-right">{dur(r.seconds)}</td>
               <td className="text-right">{usd(r.cost)}</td>
-              <td><span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${LEVEL[r.level]}`} title={r.code}>{r.status !== "ended" ? "En curso" : r.reason}</span></td>
+              <td><span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${LEVEL[r.level]}`} title={r.code}>{r.status !== "ended" ? "En curso" : r.reason}</span>{r.transferred && <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-800" data-testid={`vapi-transferred-${r.id}`}>Pasada</span>}</td>
             </tr>
           ))}</tbody>
         </table>
         {!list.length && <Empty t="vapi-calls-empty">No hay llamadas con este filtro.</Empty>}
       </div>
+      {open && <CallDetail id={open} onClose={() => setOpen(null)} />}
     </div>
   );
 };
