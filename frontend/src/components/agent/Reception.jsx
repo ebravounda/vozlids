@@ -16,7 +16,7 @@ const useOwnNumber = (agentId) => {
   const [num, setNum] = useState(undefined);
   useEffect(() => {
     if (!agentId) { setNum(null); return; }
-    api.get("/numbers").then((r) => setNum((r.data.numbers || []).find((n) => n.extra && n.agent_id === agentId) || null)).catch(() => setNum(null));
+    api.get("/numbers").then((r) => setNum((r.data.numbers || []).find((n) => n.agent_id === agentId && n.number) || null)).catch(() => setNum(null));
   }, [agentId]);
   return num;
 };
@@ -29,12 +29,18 @@ export const ReceptionPanel = ({ agent, update }) => {
       <PhoneIncoming className="h-4 w-4 shrink-0" />Cuando este agente tenga su propio número, podrás hacer que también atienda como recepcionista las llamadas que reciba.
     </p>
   );
-  const on = agent.receptionist ?? true;
+  const on = !own.extra || (agent.receptionist ?? true);
   return (
     <div className="space-y-3" data-testid="reception-panel">
-      <Toggle checked={on} onChange={(v) => update({ receptionist: v })} testid="reception-toggle"
-        title={`También hace de recepcionista en ${own.number}`}
-        desc="Cuando alguien llame a este número, atiende como recepcionista de este negocio o departamento. En las llamadas que hace sigue con su objetivo." />
+      {own.extra ? (
+        <Toggle checked={on} onChange={(v) => update({ receptionist: v })} testid="reception-toggle"
+          title={`También hace de recepcionista en ${own.number}`}
+          desc="Cuando alguien llame a este número, atiende como recepcionista de este negocio o departamento. En las llamadas que hace sigue con su objetivo." />
+      ) : (
+        <p className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4 text-sm font-semibold text-white" data-testid="reception-main-number">
+          <PhoneIncoming className="h-4 w-4 shrink-0 text-emerald-400" />Atiende como recepcionista las llamadas a {own.number}
+        </p>
+      )}
       {on && (
         <div className="space-y-3 border-l-2 border-emerald-500/40 pl-4" data-testid="reception-options">
           <Toggle checked={agent.reception_book ?? true} onChange={(v) => update({ reception_book: v })} testid="reception-book-toggle"

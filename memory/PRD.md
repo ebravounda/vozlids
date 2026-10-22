@@ -392,3 +392,5 @@
 - Inbound on an extra (own) number: receptionist ON -> reception objective (book / take message / transferCall to transfer_number); OFF -> agent own objective. Main number always receptionist. Lead doc gets `reception` flag in phone_numbers.assistant_request.
 - Emails for appointments/request_human go to agent.notify_email if set, else owner.
 - UI: components/agent/Reception.jsx in GeneralTab (toggle only shown if agent has own number). Tested iteration_40 (100%).
+- Fix: Reception panel now also shows for agents on the MAIN number (inbound_agent_id); main number has no on/off toggle (always receptionist) but has book/message/transfer options.
+- Debug note: +34919939915 inbound "not found" is a Zadarma-side issue (all destinations fail; config VozLeads/Vapi identical to working numbers). User to open Zadarma ticket.
