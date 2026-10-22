@@ -14,7 +14,7 @@ function RateRow({ r, onChange }) {
     catch (e) { toast.error(errMsg(e)); }
   };
   const reset = async () => {
-    try { const { data } = await api.delete(`/admin/pricing/dest-rates/${r.code}/manual`); onChange(data.rates); toast.success("Se volverá a tomar de Zadarma"); }
+    try { const { data } = await api.delete(`/admin/pricing/dest-rates/${r.code}/manual`); onChange(data.rates); toast.success("Se actualizará con el precio de Zadarma en la próxima sincronización"); }
     catch (e) { toast.error(errMsg(e)); }
   };
   return (

@@ -1,0 +1,34 @@
+{
+  "summary": "Tested per-destination tariffs (dest-rates API + DestRates panel), Zadarma compare dialog, weekly check endpoint, Chile number cost = 6, /admin/costs and /admin/monitor/margins regression. All requested flows work. 9/10 backend tests pass; one minor bug: DELETE /dest-rates/{code}/manual on unknown code creates junk entry.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "DELETE /api/admin/pricing/dest-rates/{code}/manual", "issue": "No existence check: for unknown code (e.g. ZZ) when dest_rates doc exists, it creates rates.ZZ={manual:false} with no usd_min/name. Listed in GET response and UI (empty input). Worse: CR.line_rate does learned['usd_min'] -> KeyError if a junk entry matches a real region (e.g. reset on 'MX' before learned) -> 500 in /admin/costs and compare. Fix: 404 like PUT, and use learned.get('usd_min') in line_rate."},
+      {"endpoint": "PricingIn (extra_routes.py:182)", "issue": "number_cl_usd_month Field default still 8.0 while DEFAULT_PRICING is 6.0; inconsistent if client omits field on PUT /admin/pricing."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/app/costes DestRates", "issues": ["After 'reset' (Volver a la de Zadarma), origin label shows 'De Zadarma' but value stays the manual one (0.2) until next Zadarma learn — could mislead; consider a hint like 'se actualizará en la próxima sincronización'."]},
+      {"screen": "Zadarma compare dialog", "issues": ["Dialog uses dark bg-slate-900 while the Costes page is light theme — visual inconsistency (readable though)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iter42_dest_rates.py", "/app/test_reports/pytest/pytest_iter42.xml"],
+  "action_items": [
+    "Add 404 check in reset_dest_rate for unknown codes and make CR.line_rate robust to entries missing usd_min",
+    "Change PricingIn.number_cl_usd_month default to 6.0"
+  ],
+  "critical_code_review_comments": [
+    "weekly_check marks week as done before running compare; if Zadarma errors transiently on Monday 9:00, that week's email is skipped silently (only a log line). Consider marking the week only on success/no-error.",
+    "monitor.py:393 CL 8->6 migration runs every loop iteration (cheap no-op, OK) but it will also override an admin that intentionally set exactly 8.0."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter42_dest_rates.py"],
+  "success_rate": {"backend": "90%", "frontend": "100%"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md); non-admin user registered on the fly (test_xxxx@example.com)",
+  "seed_data_creation": "Temporarily seeded platform_settings _id 'dest_rates' with GT; deleted afterwards (verified None). Registered TEST_ users for 403 checks.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Zadarma API not connected in preview: compare returns error 'Falta conectar la API de Zadarma en Super admin.' and weekly returns {sent:false,error}. DestRates UI verified: empty state, list, save->Manual, reset->De Zadarma. PricingForm shows Número Chile 6. pymongo not available inside browser_automation; seed via bash."
+}

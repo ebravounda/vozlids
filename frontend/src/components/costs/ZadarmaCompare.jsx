@@ -77,13 +77,13 @@ export function ZadarmaCompare({ days }) {
         <GitCompare className="mr-2 h-4 w-4" /> Comparar con Zadarma
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto border-slate-800 bg-slate-900" data-testid="zadarma-compare-dialog">
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto" data-testid="zadarma-compare-dialog">
           <DialogHeader>
-            <DialogTitle className="text-white">Zadarma frente al panel</DialogTitle>
-            <DialogDescription className="text-slate-400">Cada llamada facturada por Zadarma comparada con el coste de línea que cuenta VozLeads (máximo 29 días).</DialogDescription>
+            <DialogTitle>Zadarma frente al panel</DialogTitle>
+            <DialogDescription>Cada llamada facturada por Zadarma comparada con el coste de línea que cuenta VozLeads (máximo 29 días).</DialogDescription>
           </DialogHeader>
           {busy && <p className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Descargando llamadas de Zadarma…</p>}
-          {d?.error && <p className="text-sm text-rose-300" data-testid="zadarma-compare-error">{d.error}</p>}
+          {d?.error && <p className="text-sm text-rose-600" data-testid="zadarma-compare-error">{d.error}</p>}
           {d && !d.error && (
             <div className="space-y-4">
               <Summary t={d.totals} />

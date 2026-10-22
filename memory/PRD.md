@@ -418,3 +418,9 @@
 - Frontend: botón «Comparar con Zadarma» en Costes (components/costs/ZadarmaCompare.jsx).
 - Verificado con datos simulados del listado real (en preview no hay API de Zadarma).
 - Pendiente (el usuario decidió no aplicarlo por ahora): tarifa por país de destino para llamadas internacionales y número de Chile a $6.
+
+## 2026-06 · Tarifas por país, número de Chile real y aviso semanal
+- Tarifas de otros países: backend/costs_real.py (region, line_rate, learn_rates). Se aprenden del precio por minuto de Zadarma (platform_settings _id "dest_rates") durante la sincronización y la comparación. Se pueden editar (pasan a manual) en Costes → «Tarifas de otros países» (DestRates.jsx). Endpoints: GET/PUT /api/admin/pricing/dest-rates[/{code}] y DELETE /{code}/manual. Las estimaciones de admin_costs y margins usan line_rate(teléfono del lead).
+- Número de Chile: 6 $/mes por defecto; al arrancar, el valor guardado 8 se migra a 6 (monitor.loop).
+- Aviso semanal: costs_compare.weekly_check, en un bucle propio de la app cada 15 min (la app corre en Plesk, no con las tareas programadas de Emergent). Los lunes a partir de las 9:00 hora de Madrid compara los últimos 7 días y envía un email de alerta (monitor.notify "zadarma_diff") solo si Zadarma cobró ≥ 0,01 $ más que el panel. Prueba manual: POST /api/admin/costs/zadarma-weekly.
+- Probado: iteration_42 (el backend tuvo un fallo menor, ya corregido; el frontend pasó entero).

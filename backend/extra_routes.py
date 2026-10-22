@@ -179,7 +179,7 @@ class PricingIn(BaseModel):
     eleven_plan_credits: int = Field(100000, ge=1, le=100_000_000)
     eleven_credits_per_char: float = Field(0.5, ge=0, le=2)
     number_es_usd_month: float = Field(3.0, ge=0, le=500)
-    number_cl_usd_month: float = Field(8.0, ge=0, le=500)
+    number_cl_usd_month: float = Field(6.0, ge=0, le=500)
     stripe_pct: float = Field(1.5, ge=0, le=20)
     stripe_fixed_eur: float = Field(0.25, ge=0, le=5)
     fixed_costs: list[FixedCost] = Field(default_factory=list, max_length=30)

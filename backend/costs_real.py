@@ -42,7 +42,7 @@ def line_rate(phone: str, agent_country: str, pricing: dict) -> float:
     if reg in base:
         return base[reg]
     learned = (pricing.get("dest_rates") or {}).get(reg or "")
-    return learned["usd_min"] if learned else base.get(agent_country, base["ES"])
+    return learned["usd_min"] if learned and "usd_min" in learned else base.get(agent_country, base["ES"])
 
 
 async def learn_rates(rows: list, pricing: dict) -> int:

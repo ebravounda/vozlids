@@ -114,7 +114,11 @@ async def set_dest_rate(code: str, body: DestRateIn, user=Depends(require_admin)
 
 @router.delete("/admin/pricing/dest-rates/{code}/manual")
 async def reset_dest_rate(code: str, user=Depends(require_admin)):
-    await db.platform_settings.update_one({"_id": "dest_rates"}, {"$set": {f"rates.{code.upper()}.manual": False}})
+    code = code.upper()
+    doc = await db.platform_settings.find_one({"_id": "dest_rates"}) or {}
+    if code not in (doc.get("rates") or {}):
+        raise HTTPException(404, "País no encontrado")
+    await db.platform_settings.update_one({"_id": "dest_rates"}, {"$set": {f"rates.{code}.manual": False}})
     return await list_dest_rates(user)
 
 
