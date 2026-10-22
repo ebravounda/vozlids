@@ -1,6 +1,5 @@
 """Super admin «Líneas»: every Zadarma number in one table — connect, change agent, move, reconfigure, disconnect."""
 import re
-import secrets
 from datetime import date
 
 from bson import ObjectId
@@ -116,7 +115,7 @@ class ConnectIn(BaseModel):
 
 
 async def _wire(number: str, sip_id: str, label: str) -> dict:
-    pwd = secrets.token_urlsafe(10) + "Vz7"
+    pwd = Z.new_password()
     if sip_id == "new":
         sip = await N._step("crear la línea SIP en Zadarma", Z.create_sip(f"VozLeads {label}", pwd, number))
     else:

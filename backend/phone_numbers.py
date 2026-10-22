@@ -2,7 +2,6 @@ import re
 import asyncio
 import logging
 import os
-import secrets
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -125,7 +124,7 @@ async def _sip_line(u: dict, pwd: str, number: str) -> str:
 async def activate(filt: dict, u: dict, number: str, agent_id: str, sip_id: str = "") -> None:
     """Create the SIP line, connect it to Vapi (outbound + inbound) and route the Zadarma number to the receptionist."""
     await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
-    pwd = secrets.token_urlsafe(10) + "Vz7"
+    pwd = Z.new_password()
     if sip_id:
         await _step(f"preparar tu línea SIP {sip_id} en Zadarma", Z.reuse_sip(sip_id, pwd, number))
         sip = sip_id

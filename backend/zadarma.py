@@ -108,6 +108,13 @@ async def create_sip(name: str, password: str, callerid: str) -> str:
                                                         "callerid": callerid.lstrip("+")}))["sip"])
 
 
+def new_password() -> str:
+    """Zadarma SIP passwords: only letters and digits, 8-30 chars, with at least one of each."""
+    import secrets, string
+    body = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(14))
+    return body + secrets.choice(string.ascii_uppercase) + secrets.choice(string.digits)
+
+
 async def list_sips() -> tuple[list, int]:
     r = await call("GET", "/v1/sip/")
     return r.get("sips") or [], int(r.get("left") or 0)
