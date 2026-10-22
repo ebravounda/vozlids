@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Optional
 import stripe
+from datetime import datetime, timezone
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -329,9 +330,15 @@ async def webhook(request: Request):
         u = await db.users.find_one({"stripe_customer_id": obj.get("customer")})
         if u:
             await db.users.update_one({"_id": u["_id"]}, {"$set": {"billing_status": "past_due"}})
-            await emailer.send(u["email"], "No hemos podido cobrar tu plan", "Pago de la suscripción rechazado",
-                               [("Qué hacer", "Actualiza tu tarjeta para que tus llamadas sigan activas.")],
-                               os.environ["APP_PUBLIC_URL"] + "/app/plan")
+            cur, amt = obj.get("currency", "eur"), obj.get("amount_due") or 0
+            nxt = obj.get("next_payment_attempt")
+            rows = [("Importe", f"{amt:,} CLP".replace(",", ".") if cur == "clp" else f"{amt / 100:.2f} {cur.upper()}".replace(".", ",")),
+                    ("Motivo", "Tu banco rechazó el cobro o la tarjeta ha caducado."),
+                    ("Próximo intento", datetime.fromtimestamp(nxt, timezone.utc).strftime("%d/%m/%Y") if nxt else "Sin reintentos automáticos"),
+                    ("Qué hacer", "Actualiza tu tarjeta ahora para que tus llamadas sigan activas.")]
+            await emailer.send(u["email"], "No hemos podido cobrar tu plan de VozLeads", "Pago de la suscripción rechazado", rows,
+                               os.environ["APP_PUBLIC_URL"].rstrip("/") + "/app/plan", "Tu agente sigue activo por ahora, pero necesitamos una tarjeta válida.",
+                               "Actualizar mi tarjeta")
     elif t == "invoice.paid":
         await db.users.update_one({"stripe_customer_id": obj.get("customer")}, {"$set": {"billing_status": "active"}})
         if obj.get("billing_reason") == "subscription_cycle":

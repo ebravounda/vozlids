@@ -43,6 +43,7 @@ import lines  # noqa: E402
 import linehealth  # noqa: E402
 import payments  # noqa: E402
 import webscan  # noqa: E402
+import daily_jobs  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
@@ -240,6 +241,8 @@ class AgentIn(BaseModel):
     executives: List[Executive] = Field(default=[], max_length=5)
     languages: List[LangExec] = Field(default=[], max_length=6)
     memory: bool = True
+    website: str = Field("", max_length=300)
+    web_summary: str = Field("", max_length=4000)
     active: bool = True
 
 
@@ -664,6 +667,7 @@ app.include_router(connect_numbers.router)
 app.include_router(lines.router)
 app.include_router(payments.router)
 app.include_router(webscan.router)
+app.include_router(daily_jobs.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(
@@ -710,6 +714,7 @@ async def startup():
     await db.monitor_alerts.create_index("created_at")
     asyncio.create_task(monitor.loop())
     asyncio.create_task(linehealth.loop())
+    asyncio.create_task(daily_jobs.loop())
     await api_core.ensure_indexes()
     await privacy.ensure_indexes()
     await gcal.ensure_indexes()

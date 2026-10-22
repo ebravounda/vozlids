@@ -19,12 +19,28 @@ export function WebScan({ agent, update }) {
     const cur = (agent.product || "").trim();
     const next = `${cur}${cur ? "\n\n" : ""}— Información de la web (${url}) —\n${res.summary.trim()}`;
     if (next.length > 8000) return toast.error("No cabe: la información del negocio superaría 8000 caracteres. Acorta el resumen o lo que ya tienes.");
-    update({ product: next }); setRes(null); toast.success("Añadido a la información del negocio. Recuerda guardar el agente.");
+    update({ product: next, website: url.trim(), web_summary: res.summary.trim().slice(0, 4000) }); setRes(null); toast.success("Añadido a la información del negocio. Recuerda guardar el agente.");
+  };
+  const sug = agent.web_suggestion;
+  const decide = async (ok) => {
+    try {
+      const r = await api.post(`/agents/${agent.id}/web-suggestion/${ok ? "apply" : "dismiss"}`);
+      update(ok ? { product: r.data.product, web_suggestion: null } : { web_suggestion: null });
+      toast.success(ok ? "Cambios añadidos a la información del negocio" : "Cambios descartados");
+    } catch (e) { toast.error(errMsg(e)); }
   };
   return (
     <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50/60 p-4" data-testid="webscan-panel">
+      {sug && <div className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-3" data-testid="webscan-suggestion">
+        <p className="text-sm font-semibold text-amber-900">Tu web ha cambiado ({sug.at?.slice(0, 10)}). Esto es lo nuevo:</p>
+        <p className="whitespace-pre-line text-sm text-amber-900">{sug.text}</p>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => decide(true)} className="rounded-full" data-testid="webscan-suggestion-apply">Añadir los cambios</Button>
+          <Button size="sm" variant="ghost" onClick={() => decide(false)} className="rounded-full" data-testid="webscan-suggestion-dismiss">Descartar</Button>
+        </div>
+      </div>}
       <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Sparkles className="h-4 w-4 text-blue-600" />Leer mi web con IA</p>
-      <p className="text-xs text-slate-600">Pon la web de tu negocio: la IA la lee y te prepara un resumen (servicios, precios, horarios, dirección…). Lo revisas y lo añades a lo que ya escribiste. Máximo 2 lecturas al día.</p>
+      <p className="text-xs text-slate-600">Pon la web de tu negocio: la IA la lee y te prepara un resumen (servicios, precios, horarios, dirección…). Lo revisas y lo añades a lo que ya escribiste. Máximo 2 lecturas al día. Cada mes la volvemos a leer y te avisamos si algo cambia.</p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1"><Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://tunegocio.com" className="bg-white pl-9" data-testid="webscan-url-input" /></div>
         <Button onClick={scan} disabled={busy || url.trim().length < 4} className="rounded-full" data-testid="webscan-scan-button">{busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Leyendo la web…</> : "Leer la web"}</Button>

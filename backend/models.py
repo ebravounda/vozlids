@@ -44,6 +44,9 @@ class Agent(BaseDocument):
     executives: List[dict] = []
     languages: List[dict] = []
     memory: bool = True
+    website: str = ""
+    web_summary: str = ""
+    web_suggestion: Optional[dict] = None
     active: bool = True
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)
