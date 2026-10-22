@@ -140,6 +140,9 @@ async def voice_usage(user=Depends(require_admin)):
 
 async def vapi_calls(since: datetime | None = None, limit: int = 100) -> list:
     params = {"limit": limit}
+    floor = datetime.now(timezone.utc) - timedelta(days=13, hours=23)
+    if since and since < floor:
+        since = floor
     if since:
         params["createdAtGe"] = since.isoformat()
     async with httpx.AsyncClient(timeout=20) as c:

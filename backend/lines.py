@@ -296,11 +296,14 @@ async def health_check(user=Depends(require_admin)):
     return await linehealth.check_once()
 
 
-@router.post("/repair-inbound")
-async def repair_inbound(user=Depends(require_admin)):
+async def repair(only: set | None) -> dict:
+    if not (await Z.creds()).get("key"):
+        raise HTTPException(400, "Conecta Zadarma en Telefonía antes de reparar: sin Zadarma no se pueden ajustar los desvíos.")
     isolated = await vapi.isolate_inbound()
     out = []
     async for r in db.tenant_numbers.find({"status": "activo", "number": {"$nin": [None, ""]}}):
+        if only and r["number"] not in only:
+            continue
         try:
             v = await vapi.connect_inbound(r["number"])
             await Z.route_to(r["number"], v["inbound_uri"])
@@ -314,6 +317,11 @@ async def repair_inbound(user=Depends(require_admin)):
         if legacy or (p.get("credentialId") == cred and not str(p.get("number", "")).startswith("00")):
             await vapi.delete(f"/phone-number/{p['id']}")
     return {"isolated": isolated, "numbers": out}
+
+
+@router.post("/repair-inbound")
+async def repair_inbound(user=Depends(require_admin)):
+    return await repair(None)
 
 
 @router.post("/reconfigure-all")

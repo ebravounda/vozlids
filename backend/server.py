@@ -44,6 +44,8 @@ import linehealth  # noqa: E402
 import payments  # noqa: E402
 import webscan  # noqa: E402
 import daily_jobs  # noqa: E402
+import vapi_monitor  # noqa: E402
+import time  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
@@ -634,11 +636,17 @@ async def ambience_wav(preset: str, volume: int):
                     headers={"Cache-Control": "public, max-age=86400"})
 
 
+_WH_BAD = {"t": 0.0}
+
+
 @api.post("/vapi/webhook")
 async def vapi_webhook(request: Request):
     secret = os.environ["VAPI_WEBHOOK_SECRET"]
     header = request.headers.get("x-vapi-secret", "")
     if not secrets.compare_digest(header, secret):
+        if time.time() - _WH_BAD["t"] > 60:
+            _WH_BAD["t"] = time.time()
+            await vapi_monitor.event("webhook_rechazado", "", "Vapi envió un aviso con una clave distinta: revisa que los números avisen a este servidor")
         raise HTTPException(401, "Webhook no autorizado")
     msg = (await request.json()).get("message") or {}
     typ = msg.get("type")
@@ -691,6 +699,7 @@ app.include_router(lines.router)
 app.include_router(payments.router)
 app.include_router(webscan.router)
 app.include_router(daily_jobs.router)
+app.include_router(vapi_monitor.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(
@@ -742,6 +751,7 @@ async def startup():
     await privacy.ensure_indexes()
     await gcal.ensure_indexes()
     await SEC.ensure_indexes()
+    await vapi_monitor.ensure_indexes()
     await db.webhook_deliveries.update_many({"status": "sending"}, {"$set": {"status": "pending"}})
     asyncio.create_task(api_core.worker())
 

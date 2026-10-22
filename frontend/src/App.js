@@ -18,6 +18,7 @@ import Telephony from "@/pages/dashboard/Telephony";
 import MyNumberPage from "@/pages/dashboard/MyNumberPage";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
 import AdminLines from "@/pages/dashboard/AdminLines";
+import AdminVapi from "@/pages/dashboard/AdminVapi";
 import AdminPayments from "@/pages/dashboard/AdminPayments";
 import AdminMonitor from "@/pages/dashboard/AdminMonitor";
 import WebWidget from "@/pages/dashboard/WebWidget";
@@ -62,6 +63,7 @@ function App() {
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
             <Route path="lineas" element={<AdminLines />} />
+            <Route path="vapi" element={<AdminVapi />} />
             <Route path="pagos" element={<AdminPayments />} />
             <Route path="monitor" element={<AdminMonitor />} />
             <Route path="boton-web" element={<Gate f="widget"><WebWidget /></Gate>} />

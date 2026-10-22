@@ -175,7 +175,15 @@ async def _outbound_line(sip_login: str, sip_password: str, number: str, name: s
 
 async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:
     v = await _outbound_line(sip_login, sip_password, number, f"VozLeads {label}")
-    return {**v, **await connect_inbound(number)}
+    inbound = await connect_inbound(number)
+    await set_transfer_line(sip_login, sip_password)
+    return {**v, **inbound}
+
+
+async def set_transfer_line(sip_login: str, sip_password: str) -> None:
+    """Transfers dial out through the shared inbound trunk, so it needs a Zadarma SIP login to place that leg."""
+    await _post(f"/credential/{await inbound_credential()}", {"outboundLeadingPlusEnabled": True, "outboundAuthenticationPlan": {
+        "authUsername": sip_login, "authPassword": sip_password}}, "PATCH")
 
 
 ZADARMA_IN = [(f"185.45.{i}.0", 24) for i in (152, 153, 154, 155)] + [("195.122.19.0", 24), ("31.31.222.0", 24), ("15.235.128.0", 24)]
@@ -510,7 +518,9 @@ def tools(agent: dict, server: dict, lead: dict | None = None, handoff: bool = T
     if reception(lead) and agent.get("transfer_number"):
         out.append({"type": "transferCall", "destinations": [{
             "type": "number", "number": agent["transfer_number"], "message": "Un momento, te paso con el equipo.",
-            "description": f"Pasar la llamada a una persona del equipo de {agent['business_name']}"}]})
+            "description": f"Pasar la llamada a una persona del equipo de {agent['business_name']}",
+            "transferPlan": {"mode": "blind-transfer", "sipVerb": "dial", "fallbackPlan": {
+                "message": "Ahora mismo no puedo pasarte con el equipo. Si quieres, tomo nota y te llaman enseguida.", "endCallEnabled": False}}}]})
     if handoff and L.choices(agent):
         out.append(L.handoff_tool(agent, server))
     return out

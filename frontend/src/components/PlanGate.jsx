@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Activity, AlertTriangle, CreditCard, Euro, Lock, Phone, Radio, Shield, Sparkles } from "lucide-react";
+import { Activity, AlertTriangle, Bot, CreditCard, Euro, Lock, Phone, Radio, Shield, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { ChangePlanDialog, useNextPlan } from "@/components/ChangePlan";
 
@@ -81,7 +81,7 @@ export function UsageBanner() {
   );
 }
 
-export const ADMIN_TABS = [["/app/admin", "Cuentas y planes", Shield, "superadmin"], ["/app/pagos", "Pagos", CreditCard, "payments"], ["/app/monitor", "Monitor en vivo", Activity, "monitor"], ["/app/costes", "Costes y precios", Euro, "costs"], ["/app/lineas", "Líneas", Phone, "lines"], ["/app/telefonia", "Telefonía", Radio, "settings"]];
+export const ADMIN_TABS = [["/app/admin", "Cuentas y planes", Shield, "superadmin"], ["/app/pagos", "Pagos", CreditCard, "payments"], ["/app/monitor", "Monitor en vivo", Activity, "monitor"], ["/app/costes", "Costes y precios", Euro, "costs"], ["/app/lineas", "Líneas", Phone, "lines"], ["/app/vapi", "Monitor de Vapi", Bot, "vapi"], ["/app/telefonia", "Telefonía", Radio, "settings"]];
 export const ADMIN_PATHS = ADMIN_TABS.map((t) => t[0]);
 
 export function AdminTabs() {

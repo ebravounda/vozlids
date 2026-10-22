@@ -92,6 +92,8 @@ async def loop() -> None:
     while True:
         try:
             await check_once()
+            import vapi_monitor
+            await vapi_monitor.auto_repair()
         except Exception as e:  # noqa: BLE001
             log.warning("Line health loop failed: %s", e)
         await asyncio.sleep(EVERY)

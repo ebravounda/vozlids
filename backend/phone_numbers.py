@@ -187,11 +187,13 @@ def _short(text: str) -> dict:
 async def assistant_request(msg: dict) -> dict:
     import saas
     import services as S
+    import vapi_monitor as VM
     call = msg.get("call") or {}
     pid = call.get("phoneNumberId")
     r = await db.tenant_numbers.find_one({"$or": [{"phone_number_id": pid}, {"inbound_phone_number_id": pid}], "status": "activo"})
     if not r:
         log.warning("inbound %s: no active number for phoneNumberId", pid)
+        await VM.event("no_disponible", "", f"Llamada a una entrada de Vapi sin número activo en VozLeads ({pid})")
         return _short(UNAVAILABLE)
     import security_admin as SEC
     if await SEC.blocked_phone((call.get("customer") or {}).get("number") or ""):
@@ -205,6 +207,7 @@ async def assistant_request(msg: dict) -> dict:
     why = "no agent" if not agent else await saas.quota_error(r["tenant_id"])
     if why:
         log.warning("inbound %s: unavailable (%s)", r.get("number"), why)
+        await VM.event("no_disponible", r.get("number", ""), "Sin agente asignado" if why == "no agent" else why)
         return _short(UNAVAILABLE)
     phone = (call.get("customer") or {}).get("number") or "oculto"
     agent = await S.pick_executive(agent)
