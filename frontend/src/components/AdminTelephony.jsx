@@ -7,7 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
-import { ConnectExisting } from "@/components/numbers/ConnectExisting";
 
 const NUM_ST = { activo: "Activo", comprando: "Comprando…", pendiente_documentos: "Esperando documentos", error: "Error", liberado: "Liberado", sin_numero: "Sin número" };
 const sel = (value, onChange, opts, testid, placeholder = "Elegir") => (
@@ -97,7 +96,7 @@ function NumbersList({ connected }) {
           <Button disabled={!pick || !!busy} onClick={() => act(pick, "provision")} className="rounded-full" data-testid="tenant-number-assign-button">{busy && busy === pick && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Asignar</Button>
         </div>
       )}
-      {connected && <ConnectExisting users={users} onChanged={load} />}
+      {connected && <p className="border-t border-slate-800 pt-4 text-sm text-slate-400" data-testid="zadarma-lines-link">Para conectar, mover o reconfigurar los números que ya tienes en Zadarma, usa la pestaña <a href="/app/lineas" className="font-semibold text-blue-500 underline">Líneas</a>.</p>}
     </div>
   );
 }

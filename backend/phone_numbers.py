@@ -21,7 +21,7 @@ CurrentUser = Depends(get_current_user)
 BUSY = {"comprando"}
 
 
-PRIMARY = {"extra": {"$ne": True}}
+PRIMARY = {"extra": {"$ne": True}, "platform": {"$ne": True}}
 
 
 async def record(tenant_id: str):

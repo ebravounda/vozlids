@@ -17,6 +17,7 @@ import DoNotCall from "@/pages/dashboard/DoNotCall";
 import Telephony from "@/pages/dashboard/Telephony";
 import MyNumberPage from "@/pages/dashboard/MyNumberPage";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
+import AdminLines from "@/pages/dashboard/AdminLines";
 import AdminMonitor from "@/pages/dashboard/AdminMonitor";
 import WebWidget from "@/pages/dashboard/WebWidget";
 import Welcome from "@/pages/dashboard/Welcome";
@@ -59,6 +60,7 @@ function App() {
             <Route path="numero" element={<MyNumberPage />} />
             <Route path="telefonia" element={<Telephony />} />
             <Route path="costes" element={<AdminCosts />} />
+            <Route path="lineas" element={<AdminLines />} />
             <Route path="monitor" element={<AdminMonitor />} />
             <Route path="boton-web" element={<Gate f="widget"><WebWidget /></Gate>} />
             <Route path="bienvenida" element={<Welcome />} />
