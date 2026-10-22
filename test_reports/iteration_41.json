@@ -1,0 +1,40 @@
+{
+  "summary": "Iter41: Super admin 'Monitor de Vapi'. Only read-only checks: GET endpoints and UI, no repair, reconfigure or Vapi writes. Backend 13/13 pass: the 4 endpoints reject no-auth and non-admin with 401/403; the shapes of calls/errors/spend/numbers are right; spend days are sorted ascending and owners by cost descending; errors contain only level=error rows and no _id; numbers ok == !issues; reason() mapping unit tests pass. UI 100%: the sidebar item 'Monitor de Vapi' goes to /app/vapi; all 4 tabs render (100 calls; Numbers tab says '1 con fallo' with the expected stale-id issues for +34919932652; Errors (10) list; spend total $4.30 with per-day and per-client bars); filters work (entrante 48 + saliente 52 = 100, error 10, aviso 21, all 100); the Actualizar button updates vapi-updated-at; auto-refresh fires within 15s; no page errors. Regression: the agent editor General tab still shows reception-panel. /app/lineas renders, but GET /api/admin/lines returns 424 in preview because Zadarma is not configured, so the table stays on 'Cargando…'. This is environmental and existed before.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "vapi_monitor.reason()", "issue": "Some codes get the wrong label. 'call.in-progress.sip-completed-call' (likely a normal SIP hangup) is shown as error 'Fallo de la línea telefónica'. 'call.in-progress.error-transfer-failed' is shown as 'Fallo de voz o IA' when it should say 'No se pudo pasar la llamada'. Consider adding explicit mappings for transfer-failed and sip-completed-call."},
+      {"endpoint": "GET /api/admin/vapi/numbers", "issue": "audit() is not cached. It calls Vapi /credential and /phone-number (and Zadarma when configured) on every request, and the UI polls every 15s per open tab. Risk of hitting rate limits on the shared production Vapi account. Suggest a 15-30s _cached like calls/spend."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AdminLines (preview only)", "issue": "When GET /api/admin/lines fails (424 because Zadarma is not configured), only a toast appears and the page keeps showing 'Cargando…' with no error state. Existed before.", "selector": "/app/lineas", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "AdminVapi load", "issue": "Promise.all over 4 endpoints: if one fails (e.g. a Vapi credential error in numbers), none of the tabs update. Consider Promise.allSettled.", "affected_selectors": ["admin-vapi-page"]}
+    ],
+    "design_issues": [
+      {"screen": "/app/vapi Llamadas table", "issues": ["The 'Cliente' column wraps 'Sin asignar en VozLeads' onto 2 lines", "The 'COSTE' and 'CÓMO TERMINÓ' headers and the cells next to them have no horizontal padding, so they run together (e.g. '—$0.000', 'COSTE CÓMO TERMINÓ'). Add px-2 to th/td."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter41_vapi_monitor.py", "/app/test_reports/pytest/pytest_iter41.xml"],
+  "action_items": [
+    "Add reason mappings for transfer-failed and sip-completed-call (sip-completed-call should probably not be an error)",
+    "Cache audit() for 15-30s to avoid hammering Vapi every 15s",
+    "Add cell padding in the Vapi calls table; widen or no-wrap the owner column",
+    "Optional: Promise.allSettled in AdminVapi.load; error state in AdminLines when the load fails"
+  ],
+  "critical_code_review_comments": [
+    "The numbers audit is uncached while the UI polls every 15s (shared production Vapi account)",
+    "reason() falls back to substring matching ('sip', 'error'), so benign codes containing 'sip' get flagged as errors",
+    "A failure in one endpoint blocks all tabs (Promise.all)"
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter41_vapi_monitor.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "One TEST_VM non-admin user (test_vm_*@example.com) registered for the 403 test",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Never call repair-inbound/reconfigure/move/disconnect: Vapi is shared with production. Run tests with the backend .env loaded and -n0 to see prints. The preview DB number +34919932652 has stale ids, so the numbers tab is expected to show 2 issues. /api/admin/lines returns 424 in preview (no Zadarma).",
+  "test_credentials": "admin@vozlead.es / VozLead2026!"
+}

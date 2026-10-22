@@ -7,7 +7,7 @@ const when = (iso) => (iso ? new Date(iso).toLocaleString("es-ES", { day: "2-dig
 const dur = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "—");
 const usd = (n) => `$${(n || 0).toFixed(n < 1 ? 3 : 2)}`;
 const Empty = ({ t, children }) => <p className="py-6 text-sm text-slate-500" data-testid={t}>{children}</p>;
-const Th = ({ children, r }) => <th className={`pb-2 ${r ? "text-right" : ""}`}>{children}</th>;
+const Th = ({ children, r }) => <th className={`px-2 pb-2 ${r ? "text-right" : ""}`}>{children}</th>;
 
 export const CallsTable = ({ rows }) => {
   const [f, setF] = useState("all");
@@ -24,9 +24,9 @@ export const CallsTable = ({ rows }) => {
         <table className="w-full min-w-[900px] text-left text-sm" data-testid="vapi-calls-table">
           <thead><tr className="text-[11px] uppercase tracking-wider text-slate-500"><Th>Fecha</Th><Th>Tipo</Th><Th>Número</Th><Th>Cliente</Th><Th>Llamante / destino</Th><Th r>Duración</Th><Th r>Coste</Th><Th>Cómo terminó</Th></tr></thead>
           <tbody>{list.map((r) => (
-            <tr key={r.id} className="border-t border-slate-800" data-testid={`vapi-call-${r.id}`}>
-              <td className="py-2 text-xs text-slate-400">{when(r.at)}</td><td>{DIR[r.direction]}</td><td className="font-mono text-xs">{r.number}</td>
-              <td className="text-xs">{r.owner}</td><td className="font-mono text-xs">{r.customer}</td><td className="text-right">{dur(r.seconds)}</td>
+            <tr key={r.id} className="border-t border-slate-800 [&>td]:px-2" data-testid={`vapi-call-${r.id}`}>
+              <td className="whitespace-nowrap py-2 text-xs text-slate-400">{when(r.at)}</td><td>{DIR[r.direction]}</td><td className="font-mono text-xs">{r.number}</td>
+              <td className="whitespace-nowrap text-xs">{r.owner}</td><td className="font-mono text-xs">{r.customer}</td><td className="text-right">{dur(r.seconds)}</td>
               <td className="text-right">{usd(r.cost)}</td>
               <td><span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${LEVEL[r.level]}`} title={r.code}>{r.status !== "ended" ? "En curso" : r.reason}</span></td>
             </tr>
@@ -52,7 +52,7 @@ export const NumbersTable = ({ data }) => {
         <table className="w-full min-w-[760px] text-left text-sm" data-testid="vapi-numbers-table">
           <thead><tr className="text-[11px] uppercase tracking-wider text-slate-500"><Th>Número</Th><Th>De quién es</Th><Th>Identificador en Vapi</Th><Th>Estado</Th></tr></thead>
           <tbody>{data.numbers.map((n) => (
-            <tr key={n.number} className="border-t border-slate-800 align-top" data-testid={`vapi-number-${n.number.slice(1)}`}>
+            <tr key={n.number} className="border-t border-slate-800 align-top [&>td]:px-2" data-testid={`vapi-number-${n.number.slice(1)}`}>
               <td className="py-2 font-mono text-xs">{n.number}{n.extra && <span className="ml-1 text-slate-500">(agente)</span>}</td>
               <td className="text-xs">{n.owner}</td><td className="font-mono text-xs">{n.alias || "—"}</td>
               <td>{n.ok ? <Pill ok label="Recibe llamadas" /> : <ul className="space-y-1">{n.issues.map((i) => <li key={i}><Pill label={i} /></li>)}</ul>}</td>

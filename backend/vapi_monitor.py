@@ -24,6 +24,10 @@ REASONS = {
     "silence-timed-out": ("Cortada por silencio", "aviso"), "exceeded-max-duration": ("Superó la duración máxima", "aviso"),
     "manually-canceled": ("Colgada desde el panel", "ok"),
     "assistant-request-failed": ("Tu servidor no respondió al entrar la llamada", "error"),
+    "call.in-progress.sip-completed-call": ("Llamada terminada", "ok"),
+    "call.in-progress.error-transfer-failed": ("No se pudo pasar la llamada a la persona", "error"),
+    "call.forwarding.operator-busy": ("La persona a la que se pasaba estaba ocupada", "aviso"),
+    "call.forwarding.no-answer": ("La persona a la que se pasaba no contestó", "aviso"),
     "assistant-request-returned-error": ("Tu servidor devolvió un error al entrar la llamada", "error"),
 }
 
@@ -156,7 +160,7 @@ async def audit() -> dict:
 
 @router.get("/numbers")
 async def numbers(user=Depends(require_admin)):
-    return await audit()
+    return await _cached("numbers", 20, audit)
 
 
 async def auto_repair() -> list:

@@ -15,11 +15,12 @@ export default function AdminVapi() {
   const [at, setAt] = useState(null);
 
   const load = useCallback(async () => {
-    try {
-      const [calls, errors, spend, numbers] = await Promise.all(["calls", "errors", "spend", "numbers"].map((k) => api.get(`/admin/vapi/${k}`).then((r) => r.data)));
-      setData({ calls, errors, spend, numbers });
-      setAt(new Date());
-    } catch (e) { toast.error(errMsg(e)); }
+    const keys = ["calls", "errors", "spend", "numbers"];
+    const res = await Promise.allSettled(keys.map((k) => api.get(`/admin/vapi/${k}`).then((r) => r.data)));
+    setData((d) => ({ ...d, ...Object.fromEntries(keys.flatMap((k, i) => (res[i].status === "fulfilled" ? [[k, res[i].value]] : [])) ) }));
+    const failed = res.find((r) => r.status === "rejected");
+    if (failed) toast.error(errMsg(failed.reason));
+    setAt(new Date());
   }, []);
 
   useEffect(() => {
