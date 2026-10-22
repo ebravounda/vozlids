@@ -433,3 +433,9 @@
 ## 2026-06 · Reproductor de grabaciones
 - Se cambia el <audio controls> nativo (en Safari salía encogido y no reproducía) por components/RecordingPlayer.jsx: botón de reproducir/pausa, barra para avanzar, tiempo y descarga.
 - Nuevo GET /api/leads/{id}/recording-url, que devuelve la URL firmada de Vapi. La redirección /recording se mantiene.
+
+## 2026-06 · Teléfono en el panel (teclado numérico)
+- backend/dialer.py: GET /api/dialer, POST /api/dialer/session y GET /api/dialer/history. Al primer uso se crea un SIP de Zadarma propio para el teclado (tenant_numbers.dialer_sip_id), con el número del cliente como identificador de llamada. Pide una clave del widget WebRTC (/v1/webrtc/get_key/) y la guarda 48 h en la colección dialer_keys. El historial viene de /v1/statistics filtrado por ese SIP, con caché de 2 min (colección dialer_history); el coste solo lo ve el admin.
+- Función del plan «dialer» (por defecto desactivada; también para los usuarios sin plan). Se activa en el editor de planes del Super admin. Página /app/telefono (Dialer.jsx) que carga el widget v9 de Zadarma.
+- Las llamadas manuales se excluyen de la comparación y de la sincronización con Zadarma (totals.manual_calls/manual_cost). Las llamadas manuales NO descuentan minutos del plan.
+- Probado: iteration_43. El WebRTC real no se pudo probar en preview porque no hay API de Zadarma.

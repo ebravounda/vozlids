@@ -34,8 +34,10 @@ class LimitsIn(BaseModel):
 
 async def for_tenant(tid: str) -> dict:
     u = await db.users.find_one({"_id": ObjectId(tid)}, {"plan_id": 1, "role": 1}) if ObjectId.is_valid(tid) else None
-    if not u or u.get("role") == "admin" or not u.get("plan_id") or not ObjectId.is_valid(u["plan_id"]):
+    if u and u.get("role") == "admin":
         return dict(DEFAULT)
+    if not u or not u.get("plan_id") or not ObjectId.is_valid(u["plan_id"]):
+        return {**DEFAULT, "dialer": False}
     plan = await db.plans.find_one({"_id": ObjectId(u["plan_id"])}, {"limits": 1}) or {}
     return {**DEFAULT, "multilang": False, "dialer": False, **(plan.get("limits") or {})}
 

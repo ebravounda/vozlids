@@ -1,0 +1,31 @@
+{
+  "summary": "Tested the browser dialer ('Teléfono') feature end to end: backend (pytest, 10 tests, 9 pass) and UI (Playwright with admin, a locked client and the SuperAdmin plan editor). Admin: the sidebar shows 'Teléfono' at /app/telefono, the dialer page renders, the number select lists +34919932652, history is empty and shows '0 min en 0 llamadas', and refresh works. Clicking 'Activar teléfono' shows the expected toast 'No se pudo preparar el teléfono: Falta conectar la API de Zadarma en Super admin.'. A client on a plan without the dialer sees the sidebar lock icon and the locked Gate card. API returns 403 for history and session, and GET /api/dialer returns enabled=false. Toggling plan-feature-dialer in the plan editor and saving persists limits.dialer true, then false after reverting. Regressions pass: zadarma-compare returns 200, usage limits include 'dialer', and Eduardo's lead audio player renders. One gating bug found: users with NO plan get dialer enabled.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "plan_limits.for_tenant / GET /api/dialer, POST /api/dialer/session", "issue": "Users without a plan_id (every newly registered account, plus 83 existing non-admin users in the preview DB) get DEFAULT, which sets every feature to True, so dialer=True. The feature is supposed to be default OFF, but any user without a plan can open the phone. POST /dialer/session would then create a real Zadarma SIP (real cost) once Zadarma is connected. Fix: build DEFAULT so that dialer (and probably multilang) is False for tenants without a plan too, e.g. return {**DEFAULT, 'multilang': False, 'dialer': False} in the no-plan branch while keeping True for role=admin.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "PUT /api/admin/plans/{pid}", "issue": "Saving a plan runs LimitsIn.model_dump(), which silently drops legacy keys (e.g. premium_voices) from limits. Probably harmless, just noting it."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter43_dialer.py", "/app/test_reports/pytest/iter43.xml"],
+  "action_items": [
+    "HIGH: plan_limits.for_tenant: tenants with no plan_id must get dialer=False (the default-OFF requirement). Currently new registrations and the 83 plan-less users have the dialer enabled. Also decide whether multilang should behave the same way for plan-less users."
+  ],
+  "critical_code_review_comments": [
+    "dialer_session: when a tenant has several numbers and none has a SIP yet, two concurrent requests could each create a Zadarma SIP (race, no lock or upsert guard).",
+    "Dialer.jsx: the number selected in the UI is matched on the backend, and an unknown number silently falls back to lines[0]. Acceptable, but an explicit 400 would be clearer.",
+    "Dialer.jsx History: when the API returns an error string, the toast fires on every load and refresh. That is fine."
+  ],
+  "updated_files": ["/app/backend/tests/test_vozlead_iter43_dialer.py"],
+  "success_rate": {"backend": "90% (9/10; the failing test is the no-plan default-ON bug)", "frontend": "100%"},
+  "seed_data_creation": "Temporary test_dialer_* users were created and deleted. The 'Inicio (ejemplo)' plan was toggled (dialer on/off) and its limits were then restored via mongo to the shape of the other plans (no dialer key, so effectively dialer false).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Zadarma is not configured in preview, so the session endpoint returns 400 with the 'Falta conectar la API de Zadarma' message. The admin has number +34919932652. To test locked clients, register a test user and PUT /api/admin/users/{uid} {plan_id: Inicio}. Client ed0.2580@gmail.com does not exist in the preview DB. test_no_plan_user_dialer_state should pass once the fix lands."
+}
