@@ -74,17 +74,7 @@ async def provision(user_id: str, num_id=None) -> dict:
         if not direction:
             raise Z.ZadarmaError(f"Falta elegir la ciudad/tipo de número de {COUNTRIES[country]['name']} en Super admin → Zadarma.")
         number = await Z.order(direction, group or cfg.get(f"docs_{country.lower()}", ""))
-        await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
-        pwd = secrets.token_urlsafe(10) + "Vz7"
-        sip = await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)
-        v = await vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"])
-        await Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"]))
-        await db.tenant_numbers.update_one(filt, {"$set": {
-            "status": "activo", "sip_id": sip, **v, "activated_at": now_iso(),
-            "inbound_agent_id": (cur or {}).get("inbound_agent_id") or await _default_agent(user_id, country)}})
-        await emailer.send(u["email"], f"Tu número {number} ya está activo", "¡Tu número de VozLeads está listo!", [
-            ("Número", number), ("Llamadas salientes", "Tus agentes ya llaman desde este número"),
-            ("Llamadas entrantes", "Tu recepcionista IA contesta cuando te llamen")], os.environ["APP_PUBLIC_URL"] + "/app/telefonia")
+        await activate(filt, u, number, (cur or {}).get("inbound_agent_id") or await _default_agent(user_id, country))
     except (Z.ZadarmaError, vapi.VapiError) as e:
         log.warning("Provision failed for %s: %s", user_id, e)
         await db.tenant_numbers.update_one(filt, {"$set": {"status": "error", "error": str(e)[:300]}})
@@ -96,12 +86,26 @@ async def provision(user_id: str, num_id=None) -> dict:
     return _out(await db.tenant_numbers.find_one(filt))
 
 
+async def activate(filt: dict, u: dict, number: str, agent_id: str) -> None:
+    """Create the SIP line, connect it to Vapi (outbound + inbound) and route the Zadarma number to the receptionist."""
+    await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
+    pwd = secrets.token_urlsafe(10) + "Vz7"
+    sip = await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)
+    v = await vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"])
+    await Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"]))
+    await db.tenant_numbers.update_one(filt, {"$set": {
+        "status": "activo", "error": "", "sip_id": sip, **v, "activated_at": now_iso(), "inbound_agent_id": agent_id}})
+    await emailer.send(u["email"], f"Tu número {number} ya está activo", "¡Tu número de VozLeads está listo!", [
+        ("Número", number), ("Llamadas salientes", "Tus agentes ya llaman desde este número"),
+        ("Llamadas entrantes", "Tu recepcionista IA contesta cuando te llamen")], os.environ["APP_PUBLIC_URL"] + "/app/telefonia")
+
+
 async def release(user_id: str, num_id=None) -> dict:
     r = await db.tenant_numbers.find_one({"_id": num_id}) if num_id else await record(user_id)
     if not r or r.get("platform") or r.get("status") not in ("activo", "error"):
         return _out(r)
     errors = []
-    if r.get("number"):
+    if r.get("number") and r.get("source") != "zadarma_existente":
         try:
             await Z.autorenew(r["number"], False)
         except Z.ZadarmaError as e:

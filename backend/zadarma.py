@@ -99,6 +99,10 @@ async def order(direction_id: str, documents_group_id: str = "") -> str:
     return "+" + str(res["number"]).lstrip("+")
 
 
+async def my_numbers() -> list:
+    return (await call("GET", "/v1/direct_numbers/")).get("info") or []
+
+
 async def create_sip(name: str, password: str, callerid: str) -> str:
     return str((await call("POST", "/v1/sip/create/", {"name": name[:30], "password": password,
                                                         "callerid": callerid.lstrip("+")}))["sip"])

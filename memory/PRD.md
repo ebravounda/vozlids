@@ -350,3 +350,9 @@
 - Landing Multilang demo: "Escuchar" button plays a mini call (Marta question es-ES → customer → native exec) from static files /frontend/public/demo/lang/{q,c,r}_{lang}.mp3 (generated once with edge-tts, free; no credits per play). Speaking bubble highlighted; tab change stops audio. English exec renamed Jenny.
 - Catalan HD: languages.ELEVEN_LANGS includes "ca"; ELEVEN_MODEL {"ca": "eleven_v4_turbo"} (Vapi supports it; preview verified via ElevenLabs API; NOT verified in a live call). Super admin custom voices + library search accept Catalán.
 - 2026-06: demo re-recorded with real call voices: Marta = Cartesia Premium p_marta (q_*.wav), customer + native exec = ElevenLabs HD with language code (c_/r_*.mp3; Catalan via eleven_v4_turbo). Script /tmp/hd.py pattern: voice_preview.tts(voice, text, lang). One-time cost, static files.
+
+## 2026-06 · Conectar números existentes de Zadarma
+- connect_numbers.py: GET /api/admin/zadarma/my-numbers (Zadarma /v1/direct_numbers/, marks used_by), GET /api/admin/zadarma/connect-options/{tid} (kyc_ok, has_main, agents, price), POST /api/admin/zadarma/connect {number, tenant_id, agent_id?} → KYC required (409), main line or per-agent extra (charged), phone_numbers.activate() creates SIP + Vapi + routes inbound. source="zadarma_existente" → release does not turn off Zadarma autorenew (number returns to stock).
+- Extra numbers now charge FULL first month at once (invoice + pay) instead of proration; subscription item with proration none; reject credits full amount to the customer balance. NOT verified against real Stripe (preview uses proxy).
+- UI: components/numbers/ConnectExisting.jsx inside Super admin → Zadarma panel ("Conectar números de mi Zadarma").
+- SIP: no need to buy SIP lines; one internal Zadarma SIP is created per number via API.

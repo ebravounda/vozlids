@@ -52,7 +52,7 @@ async def _product(c, mode: str) -> str:
 
 
 async def _charge(user: dict, country: str) -> str:
-    """Add the extra number to the tenant's subscription and charge the prorated part now. Returns the item id."""
+    """Add the extra number to the tenant's subscription and charge the full first month now. Returns the item id."""
     if user.get("role") == "admin":
         return ""
     if not user.get("stripe_subscription_id") or user.get("billing_status") != "active":
@@ -64,20 +64,35 @@ async def _charge(user: dict, country: str) -> str:
     cur, amt = PRICE.get(country, PRICE["ES"])
     try:
         item = await asyncio.to_thread(c.v1.subscription_items.create, {
-            "subscription": user["stripe_subscription_id"], "proration_behavior": "always_invoice",
+            "subscription": user["stripe_subscription_id"], "proration_behavior": "none",
             "metadata": {"kind": "extra_number"},
             "price_data": {"currency": cur, "unit_amount": amt, "recurring": {"interval": "month"}, "product": await _product(c, mode)}})
     except stripe.error.StripeError as e:
         raise HTTPException(402, f"No se pudo cobrar el número: {e.user_message or str(e)[:160]}")
+    try:
+        inv = await asyncio.to_thread(c.v1.invoices.create, {"customer": user["stripe_customer_id"], "currency": cur, "auto_advance": False,
+                                                             "pending_invoice_items_behavior": "exclude", "metadata": {"kind": "extra_number"}})
+        await asyncio.to_thread(c.v1.invoice_items.create, {"customer": user["stripe_customer_id"], "invoice": inv["id"], "currency": cur,
+                                                            "amount": amt, "description": "Número adicional VozLeads · primer mes"})
+        await asyncio.to_thread(c.v1.invoices.finalize_invoice, inv["id"])
+        await asyncio.to_thread(c.v1.invoices.pay, inv["id"])
+    except stripe.error.StripeError as e:
+        await _uncharge(user, item["id"])
+        raise HTTPException(402, f"No se pudo cobrar el número: {e.user_message or str(e)[:160]}")
     return item["id"]
 
 
-async def _uncharge(user: dict, item_id: str, proration: str = "none"):
+async def _uncharge(user: dict, item_id: str, refund: str = ""):
+    """Remove the number from the subscription; with refund=country, credit the paid first month to the customer's balance."""
     if not item_id:
         return
     c, _, _ = await B.client(user.get("stripe_mode", "live"))
     try:
-        await asyncio.to_thread(c.v1.subscription_items.delete, item_id, {"proration_behavior": proration})
+        await asyncio.to_thread(c.v1.subscription_items.delete, item_id, {"proration_behavior": "none"})
+        if refund:
+            cur, amt = PRICE.get(refund, PRICE["ES"])
+            await asyncio.to_thread(c.v1.customers.balance_transactions.create, user["stripe_customer_id"],
+                                    {"amount": -amt, "currency": cur, "description": "Devolución número adicional rechazado"})
     except stripe.error.StripeError as e:
         log.warning("Could not remove extra number item %s: %s", item_id, e)
 
@@ -187,7 +202,7 @@ async def reject_extra(num_id: str, user=Depends(require_admin)):
         await N.release(r["tenant_id"], r["_id"])
     await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {"status": "rechazado", "updated_at": now_iso()}})
     tenant = await db.users.find_one({"_id": ObjectId(r["tenant_id"])}) or {}
-    await _uncharge(tenant, r.get("stripe_item_id", ""), "always_invoice")
+    await _uncharge(tenant, r.get("stripe_item_id", ""), r.get("country", "ES"))
     await emailer.send(tenant.get("email", ""), "Tu número adicional no se ha podido activar", "Número adicional cancelado", [
         ("País", r.get("country", "")), ("Cobro", "Se ha anulado y el importe se descuenta de tu próxima factura")],
         os.environ["APP_PUBLIC_URL"] + "/app")

@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
+import { ConnectExisting } from "@/components/numbers/ConnectExisting";
 
 const NUM_ST = { activo: "Activo", comprando: "Comprando…", pendiente_documentos: "Esperando documentos", error: "Error", liberado: "Liberado", sin_numero: "Sin número" };
 const sel = (value, onChange, opts, testid, placeholder = "Elegir") => (
@@ -93,9 +94,10 @@ function NumbersList({ connected }) {
       {connected && (
         <div className="flex gap-2">
           <div className="flex-1">{sel(pick, setPick, users.map((u) => [u.id, `${u.business_name || u.email} · ${u.country}`]), "tenant-number-user-select", "Asignar número a un cliente…")}</div>
-          <Button disabled={!pick || !!busy} onClick={() => act(pick, "provision")} className="rounded-full" data-testid="tenant-number-assign-button">{busy === pick && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Asignar</Button>
+          <Button disabled={!pick || !!busy} onClick={() => act(pick, "provision")} className="rounded-full" data-testid="tenant-number-assign-button">{busy && busy === pick && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Asignar</Button>
         </div>
       )}
+      {connected && <ConnectExisting users={users} onChanged={load} />}
     </div>
   );
 }
