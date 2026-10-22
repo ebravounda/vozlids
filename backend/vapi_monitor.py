@@ -99,7 +99,23 @@ def _row(c: dict, phones: dict) -> dict:
             "web" if c.get("type") == "webCall" else "saliente", "number": p.get("number") or "—", "owner": p.get("owner") or "Web / demo",
             "tenant_id": p.get("tenant_id") or "", "customer": (c.get("customer") or {}).get("number") or "—", "status": c.get("status"),
             "seconds": _secs(c), "cost": round(c.get("cost") or 0, 4), "reason": label, "level": level, "code": c.get("endedReason") or "",
-            "transferred": bool(_transfer(c)) and "transfer-failed" not in (c.get("endedReason") or "")}
+            "transferred": _done(c), **_human(c)}
+
+
+def _done(c: dict) -> bool:
+    ts = (c.get("artifact") or {}).get("transfers")
+    if ts:
+        return any(t.get("status") not in ("failed", "cancelled") for t in ts)
+    return bool(_transfer(c)) and "transfer-failed" not in (c.get("endedReason") or "")
+
+
+def _human(c: dict) -> dict:
+    t, total = _transfer(c), _secs(c)
+    if not t or not _done(c) or not total:
+        return {"human_seconds": 0, "human_vapi_cost": 0, "transfer_to": (t or {}).get("to", "")}
+    secs = max(0, total - round(t["at"]))
+    platform = sum(x.get("cost") or 0 for x in c.get("costs") or [] if x.get("type") in ("vapi", "transport"))
+    return {"human_seconds": secs, "human_vapi_cost": round(platform * secs / total, 4), "transfer_to": t["to"]}
 
 
 @router.get("/calls")
@@ -114,17 +130,36 @@ COST_LABEL = {"transcriber": "Transcripción", "model": "IA", "voice": "Voz", "v
               "transport": "Línea", "knowledge-base": "Base de conocimiento"}
 
 
+def _ts(iso: str) -> datetime:
+    return datetime.fromisoformat(iso.replace("Z", "+00:00"))
+
+
+async def _zadarma_stats(start: datetime, end: datetime) -> list:
+    r = await Z.call("GET", "/v1/statistics/", {"start": start.strftime("%Y-%m-%d %H:%M:%S"), "end": end.strftime("%Y-%m-%d %H:%M:%S")})
+    return r.get("stats") or []
+
+
+def _match(stats: list, c: dict, to: str) -> list:
+    lo, hi = _ts(c["startedAt"]) - timedelta(minutes=1), _ts(c.get("endedAt") or c["startedAt"]) + timedelta(minutes=5)
+    out = []
+    for s in stats:
+        try:
+            at = datetime.strptime(s.get("callstart", ""), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if str(s.get("to")) == to.lstrip("+") and lo <= at <= hi:
+            out.append(s)
+    return out
+
+
 async def _zadarma_leg(c: dict, to: str) -> dict | None:
     if not to or not (await Z.creds()).get("key"):
         return None
-    start = datetime.fromisoformat(c["startedAt"].replace("Z", "+00:00")) - timedelta(minutes=1)
-    end = datetime.fromisoformat((c.get("endedAt") or c["startedAt"]).replace("Z", "+00:00")) + timedelta(minutes=5)
     try:
-        r = await Z.call("GET", "/v1/statistics/", {"start": start.strftime("%Y-%m-%d %H:%M:%S"), "end": end.strftime("%Y-%m-%d %H:%M:%S")})
+        stats = await _zadarma_stats(_ts(c["startedAt"]) - timedelta(minutes=1), _ts(c.get("endedAt") or c["startedAt"]) + timedelta(minutes=5))
     except Z.ZadarmaError as e:
         return {"error": str(e)[:200]}
-    digits = to.lstrip("+")
-    rows = [s for s in r.get("stats") or [] if str(s.get("to")) == digits]
+    rows = _match(stats, c, to)
     if not rows:
         return {"seconds": 0, "cost": 0, "currency": "", "note": "Zadarma aún no muestra esta llamada (puede tardar unos minutos)"}
     return {"seconds": sum(int(s.get("billseconds") or 0) for s in rows), "cost": round(sum(float(s.get("billcost") or 0) for s in rows), 4),
@@ -140,9 +175,7 @@ async def call_detail(call_id: str, user=Depends(require_admin)):
         k = COST_LABEL.get(x.get("type"), x.get("type"))
         sums[k] = sums.get(k, 0) + (x.get("cost") or 0)
     items = [{"label": k, "cost": round(v, 4)} for k, v in sums.items() if v]
-    platform = sum(x.get("cost") or 0 for x in c.get("costs") or [] if x.get("type") in ("vapi", "transport"))
-    human_secs = max(0, total - round(t["at"])) if row["transferred"] else 0
-    human_vapi = round(platform * human_secs / total, 4) if total else 0
+    human_secs, human_vapi = row["human_seconds"], row["human_vapi_cost"]
     human = None
     if t:
         human = {"to": t["to"], "ok": row["transferred"], "seconds": human_secs, "vapi_cost": human_vapi,
@@ -163,16 +196,38 @@ async def spend(user=Depends(require_admin)):
     async def load():
         phones = await _phone_map()
         since = datetime.now(timezone.utc) - timedelta(days=13)
-        days, owners = {}, {}
-        for c in await monitor.vapi_calls(since, 1000):
+        days, owners, tr = {}, {}, {}
+        raw = await monitor.vapi_calls(since, 1000)
+        stats = None
+        if any(_human(c)["human_seconds"] for c in raw) and (await Z.creds()).get("key"):
+            try:
+                stats = await _zadarma_stats(since, datetime.now(timezone.utc))
+            except Z.ZadarmaError:
+                stats = None
+        for c in raw:
             r = _row(c, phones)
+            if r["human_seconds"]:
+                z = _match(stats, c, r["transfer_to"]) if stats is not None else []
+                for key in ("Total", r["owner"]):
+                    b = tr.setdefault(key, {"calls": 0, "seconds": 0, "vapi": 0, "zadarma": 0, "zadarma_seconds": 0, "currency": ""})
+                    b["calls"] += 1
+                    b["seconds"] += r["human_seconds"]
+                    b["vapi"] += r["human_vapi_cost"]
+                    b["zadarma"] += sum(float(x.get("billcost") or 0) for x in z)
+                    b["zadarma_seconds"] += sum(int(x.get("billseconds") or 0) for x in z)
+                    b["currency"] = b["currency"] or (z[0].get("currency", "") if z else "")
             for bucket, key in ((days, (r["at"] or "")[:10]), (owners, r["owner"])):
                 b = bucket.setdefault(key, {"calls": 0, "minutes": 0, "cost": 0})
                 b["calls"] += 1
                 b["minutes"] += r["seconds"] / 60
                 b["cost"] += r["cost"]
         fmt = lambda d: {k: {"calls": v["calls"], "minutes": round(v["minutes"], 1), "cost": round(v["cost"], 2)} for k, v in d.items()}  # noqa: E731
-        return {"days": sorted(({"day": k, **v} for k, v in fmt(days).items()), key=lambda x: x["day"]),
+        transfers = [{"owner": k, "calls": v["calls"], "minutes": round(v["seconds"] / 60, 1), "vapi": round(v["vapi"], 4),
+                      "zadarma": round(v["zadarma"], 4) if stats is not None else None, "currency": v["currency"],
+                      "vapi_per_min": round(v["vapi"] / (v["seconds"] / 60), 4) if v["seconds"] else 0,
+                      "zadarma_per_min": round(v["zadarma"] / (v["zadarma_seconds"] / 60), 4) if v["zadarma_seconds"] else None}
+                     for k, v in tr.items()]
+        return {"transfers": sorted(transfers, key=lambda x: (x["owner"] != "Total", -x["minutes"])), "days": sorted(({"day": k, **v} for k, v in fmt(days).items()), key=lambda x: x["day"]),
                 "owners": sorted(({"owner": k, **v} for k, v in fmt(owners).items()), key=lambda x: -x["cost"])}
     return await _cached("spend", 60, load)
 

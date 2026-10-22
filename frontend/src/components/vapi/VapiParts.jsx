@@ -112,13 +112,40 @@ const Bars = ({ rows, k, label }) => {
   );
 };
 
+const perMin = (t) => (t.zadarma_per_min == null ? null : t.vapi_per_min + t.zadarma_per_min);
+
+const Transfers = ({ rows }) => (
+  <div className="space-y-2" data-testid="vapi-transfers">
+    <p className="text-sm font-semibold">Minutos pasados a personas · últimos 14 días</p>
+    <p className="text-xs text-slate-400">Coste real de cada minuto pasado: lo que cobra Vapi por seguir uniendo la llamada más lo que cobra Zadarma por la llamada al móvil. Estos minutos ya se descuentan del plan del cliente; el cliente no ve este desglose.</p>
+    {!rows?.length ? <Empty t="vapi-transfers-empty">Aún no hay llamadas pasadas a una persona.</Empty> : (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead><tr className="text-[11px] uppercase tracking-wider text-slate-500"><Th>Cliente</Th><Th r>Llamadas</Th><Th r>Minutos</Th><Th r>Vapi</Th><Th r>Zadarma</Th><Th r>Coste real / min</Th></tr></thead>
+          <tbody>{rows.map((t) => (
+            <tr key={t.owner} className={`border-t border-slate-800 [&>td]:px-2 ${t.owner === "Total" ? "font-semibold" : ""}`} data-testid={`vapi-transfer-${t.owner}`}>
+              <td className="py-2">{t.owner}</td><td className="text-right">{t.calls}</td><td className="text-right">{t.minutes}</td>
+              <td className="text-right">{usd(t.vapi)} <span className="text-xs text-slate-500">({usd(t.vapi_per_min)}/min)</span></td>
+              <td className="text-right">{t.zadarma == null ? "Solo en tu servidor" : `${t.zadarma} ${t.currency}`}{t.zadarma_per_min != null && <span className="text-xs text-slate-500"> ({t.zadarma_per_min}/min)</span>}</td>
+              <td className="text-right">{perMin(t) == null ? "—" : `${perMin(t).toFixed(4)} /min`}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);
+
 export const SpendView = ({ data }) => {
   if (!data) return <Empty t="vapi-spend-loading">Calculando gasto…</Empty>;
   const total = data.days.reduce((a, d) => a + d.cost, 0);
   return (
-    <div className="grid gap-6 lg:grid-cols-2" data-testid="vapi-spend">
-      <div><p className="mb-3 text-sm font-semibold" data-testid="vapi-spend-total">Por día · últimos 14 días · {usd(total)}</p><Bars rows={data.days} k="day" label="day" /></div>
-      <div><p className="mb-3 text-sm font-semibold">Por cliente</p><Bars rows={data.owners} k="owner" label="owner" /></div>
+    <div className="space-y-8" data-testid="vapi-spend">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div><p className="mb-3 text-sm font-semibold" data-testid="vapi-spend-total">Por día · últimos 14 días · {usd(total)}</p><Bars rows={data.days} k="day" label="day" /></div>
+        <div><p className="mb-3 text-sm font-semibold">Por cliente</p><Bars rows={data.owners} k="owner" label="owner" /></div>
+      </div>
+      <Transfers rows={data.transfers} />
     </div>
   );
 };
