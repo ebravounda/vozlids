@@ -191,6 +191,7 @@ async def assistant_request(msg: dict) -> dict:
     pid = call.get("phoneNumberId")
     r = await db.tenant_numbers.find_one({"$or": [{"phone_number_id": pid}, {"inbound_phone_number_id": pid}], "status": "activo"})
     if not r:
+        log.warning("inbound %s: no active number for phoneNumberId", pid)
         return _short(UNAVAILABLE)
     import security_admin as SEC
     if await SEC.blocked_phone((call.get("customer") or {}).get("number") or ""):
@@ -201,7 +202,9 @@ async def assistant_request(msg: dict) -> dict:
         aid = (await record(r["tenant_id"]) or {}).get("inbound_agent_id")
     if aid and ObjectId.is_valid(aid):
         agent = await db.agents.find_one({"_id": ObjectId(aid), "tenant_id": r["tenant_id"]})
-    if not agent or await saas.quota_error(r["tenant_id"]):
+    why = "no agent" if not agent else await saas.quota_error(r["tenant_id"])
+    if why:
+        log.warning("inbound %s: unavailable (%s)", r.get("number"), why)
         return _short(UNAVAILABLE)
     phone = (call.get("customer") or {}).get("number") or "oculto"
     agent = await S.pick_executive(agent)
