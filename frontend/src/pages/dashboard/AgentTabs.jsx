@@ -1,4 +1,5 @@
 import { FEATURE_INFO, useFeature } from "@/components/PlanGate";
+import { WebScan } from "@/components/agent/WebScan";
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -58,6 +59,7 @@ export const GeneralTab = ({ agent, update }) => (
         <span>El agente solo responde con lo que escribas aquí y en «Instrucciones adicionales». Cualquier pregunta ajena al negocio la rechaza con amabilidad.</span>
         <span className="shrink-0 tabular-nums">{(agent.product || "").length}/8000</span>
       </p>
+      <WebScan agent={agent} update={update} />
     </div>
     <div className="space-y-3">
       <Label>Objetivo de la llamada</Label>

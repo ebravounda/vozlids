@@ -41,6 +41,8 @@ import kyc  # noqa: E402
 import connect_numbers  # noqa: E402
 import lines  # noqa: E402
 import linehealth  # noqa: E402
+import payments  # noqa: E402
+import webscan  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
@@ -146,7 +148,7 @@ async def welcome_email(u: dict) -> None:
     ids = "tu cédula de identidad (ambas caras) o pasaporte y tu RUT" if cl else "tu DNI o NIE (ambas caras) o pasaporte"
     await emailer.send(u["email"], "Bienvenido a VozLeads: tus primeros pasos", f"¡Bienvenido, {u.get('name') or u['business_name']}!", [
         ("1 · Sube tus documentos", f"Por ley, tu número va a tu nombre. En «Mi número» sube {ids}. Si eres empresa, también su certificado."),
-        ("2 · Tu número", "Ya estamos asignando tu número. Puede tardar de 1 a 24 horas, según las solicitudes en curso y la disponibilidad de números. Te avisaremos por email."),
+        ("2 · Tu número", "Estamos a la espera de asignación de numeración: puede demorar de 2 a 24 horas. Tu suscripción comienza cuando tu numeración está activa. Te avisaremos por email."),
         ("3 · Crea tu agente IA", "Elige su voz y acento, cómo saluda y qué debe hacer: recepcionista, agendar citas o ventas. Escúchalo antes de activarlo."),
         ("4 · Mira tus llamadas", "En «Leads y llamadas» verás cada llamada con su resumen, grabación y resultado. Las citas llegan a tu agenda."),
         ("5 · ¿Dudas?", "Escríbenos desde «Asistencia técnica» o llámanos: Chile +56 2 3384 4477 · España +34 919 93 26 52."),
@@ -660,6 +662,8 @@ app.include_router(extra_numbers.router)
 app.include_router(kyc.router)
 app.include_router(connect_numbers.router)
 app.include_router(lines.router)
+app.include_router(payments.router)
+app.include_router(webscan.router)
 app.mount("/api/v1", apiv1.app)
 ORIGINS = [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()]
 app.add_middleware(

@@ -11,6 +11,7 @@ import { PageHeader, Panel } from "@/components/Common";
 import { CartesiaSettings, CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
 import { SplitAccount } from "@/components/admin/SplitAccount";
+import { OpenAISettings } from "@/components/admin/OpenAISettings";
 import { PendingExtraBanner, PendingExtraNumbers } from "@/components/numbers/AgentNumbers";
 import { AdminKyc } from "@/components/kyc/AdminKyc";
 import { AdminOnboarding } from "@/components/AdminOnboarding";
@@ -188,6 +189,7 @@ export default function SuperAdmin() {
         <PendingExtraNumbers />
         <LandingSettings />
         <StripeSettings />
+        <OpenAISettings />
         <ElevenLabsSettings />
         <CartesiaSettings />
         <ResendSettings />

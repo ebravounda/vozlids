@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Shield, Sparkles } from "lucide-react";
+import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Sparkles } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature, usePlan } from "@/components/PlanGate";
+import { ADMIN_TABS, PlanProvider, UsageBanner, UsageMeter, useFeature, usePlan } from "@/components/PlanGate";
 import { KycBanner } from "@/components/kyc/KycPanel";
 import { Tour } from "@/components/Tour";
 import { SwitchToClient } from "@/components/admin/SplitAccount";
@@ -22,7 +22,7 @@ const NAV = [
   { to: "/app/privacidad", label: "Privacidad (RGPD)", icon: Lock, id: "privacy" },
   { to: "/app/plan", label: "Mi plan", icon: CreditCard, id: "plan" },
 ];
-const ADMIN_NAV = [{ to: "/app/admin", label: "Super admin", icon: Shield, id: "superadmin", admin: true }];
+const ADMIN_NAV = ADMIN_TABS.map(([to, label, icon, id]) => ({ to, label, icon, id, admin: true, end: true }));
 const LOCK = { outbound: "outbound", webwidget: "widget", api: "api" };
 
 function CreateAgentButton() {
@@ -38,10 +38,10 @@ function CreateAgentButton() {
 
 function NavItem({ n, tickets, path }) {
   const ok = useFeature(LOCK[n.id] || "outbound");
-  const active = n.admin && ADMIN_PATHS.includes(path);
+  const active = false;
   return (
     <NavLink to={n.to} end={n.end} data-testid={`sidebar-nav-${n.id}`}
-      className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive || active ? "bg-blue-50 text-blue-700 shadow-[inset_3px_0_0_#2563EB]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
+      className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${isActive || active ? "bg-blue-50 text-blue-700 shadow-[inset_3px_0_0_#2563EB]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
       <n.icon className="h-4 w-4" /> {n.label}
       {LOCK[n.id] && !ok && <Lock className="ml-auto h-3.5 w-3.5 text-slate-400" data-testid={`sidebar-lock-${n.id}`} />}
       {n.id === "support" && tickets.open > 0 && <span className="ml-auto rounded-full bg-rose-500 px-2 text-xs font-bold text-white" data-testid="sidebar-support-count">{tickets.open}</span>}
@@ -69,10 +69,13 @@ const HumanAlert = ({ n }) => (
 function ProvisioningBar() {
   const [st, setSt] = useState(null);
   useEffect(() => { api.get("/my-number").then((r) => setSt(r.data.status)).catch(() => {}); }, []);
-  if (!["pendiente", "comprando", "error"].includes(st)) return null;
+  const { user } = useAuth();
+  if (user?.role === "admin" || !["sin_numero", "pendiente", "comprando", "error", "pendiente_documentos"].includes(st)) return null;
   return (
-    <Link to="/app/numero" className="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100" data-testid="provisioning-bar">
-      <Loader2 className="h-4 w-4 animate-spin" /> Aprovisionando línea · Recibirás un email cuando tu línea esté lista para operar
+    <Link to="/app/numero" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-900 hover:bg-amber-100" data-testid="provisioning-bar">
+      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+      <b>Estamos a la espera de asignación de numeración.</b>
+      <span>Puede demorar de 2 a 24 horas. Tu suscripción comienza cuando tu numeración está activa.</span>
     </Link>
   );
 }
@@ -113,10 +116,15 @@ export default function DashboardLayout() {
         <Link to="/" className="mb-6 shrink-0 px-2"><Logo /></Link>
         <p className="mb-2 shrink-0 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Menú</p>
         <nav className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-2 pb-3 [scrollbar-width:thin]" data-testid="sidebar-nav">
-          {nav.map((n) => <NavItem key={n.to} n={n} tickets={tickets} path={location.pathname} />)}
+          {nav.map((n, i) => (
+            <div key={n.to}>
+              {n.admin && !nav[i - 1]?.admin && <p className="mb-1.5 mt-4 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400" data-testid="sidebar-admin-heading">Administración</p>}
+              <NavItem n={n} tickets={tickets} path={location.pathname} />
+            </div>
+          ))}
         </nav>
         <SwitchToClient className="mb-2" />
-        {!adminOnly && <button onClick={() => setTour(true)} className="mb-2 flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50" data-testid="sidebar-tour-button"><Sparkles className="h-4 w-4" /> Ver tutorial</button>}
+        {user?.role !== "admin" && <button onClick={() => setTour(true)} className="mb-2 flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50" data-testid="sidebar-tour-button"><Sparkles className="h-4 w-4" /> Ver tutorial</button>}
         {!adminOnly && <UsageMeter />}
         <div className="mt-3 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-business-name">{user?.business_name}</p>
@@ -148,7 +156,6 @@ export default function DashboardLayout() {
           {!adminOnly && <button onClick={() => setTour(true)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600" data-testid="mobile-tour-button">Ver tutorial</button>}
         </nav>
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 md:px-10">
-          {user?.role === "admin" && ADMIN_PATHS.includes(location.pathname) && <AdminTabs />}
           <div key={location.pathname} className="fade-up"><Outlet /></div>
         </main>
       </div>
