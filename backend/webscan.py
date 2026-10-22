@@ -57,15 +57,39 @@ def _public(host: str) -> bool:
     return all(ipaddress.ip_address(i[4][0]).is_global for i in infos)
 
 
-async def _fetch(x: httpx.AsyncClient, url: str):
+BLOCKED = ("Esta web tiene activada una protección anti-bots (Cloudflare u otra) que impide leerla automáticamente. "
+           "Desactiva temporalmente el modo «Under Attack» / verificación de bots en Cloudflare, o añade una regla que permita el "
+           "agente «VozLeadsBot», y vuelve a intentarlo.")
+GENERIC = "No se pudo leer esa web. Revisa la dirección (por ejemplo https://tunegocio.com)."
+
+
+def _blocked(r: httpx.Response) -> bool:
+    body = r.text[:5000].lower()
+    return r.status_code in (403, 429, 503) and (r.headers.get("cf-mitigated") == "challenge" or "cf-ray" in r.headers
+                                                  or "just a moment" in body or "captcha" in body or "verif" in body)
+
+
+async def _fetch(x: httpx.AsyncClient, url: str, strict: bool = False):
     p = urlparse(url)
     if p.scheme not in ("http", "https") or not p.hostname or not await asyncio.to_thread(_public, p.hostname):
+        if strict:
+            raise HTTPException(400, GENERIC)
         return None
     try:
         r = await x.get(url)
-    except httpx.HTTPError:
+    except httpx.TimeoutException:
+        if strict:
+            raise HTTPException(400, "La web tardó demasiado en responder. Inténtalo de nuevo en unos minutos.")
         return None
+    except httpx.HTTPError:
+        if strict:
+            raise HTTPException(400, GENERIC)
+        return None
+    if strict and _blocked(r):
+        raise HTTPException(400, BLOCKED)
     if r.status_code >= 400 or "html" not in r.headers.get("content-type", ""):
+        if strict:
+            raise HTTPException(400, f"La web respondió con un error ({r.status_code}). Revisa la dirección." if r.status_code >= 400 else GENERIC)
         return None
     t = _Text()
     t.feed(r.text[:1_500_000])
@@ -74,10 +98,7 @@ async def _fetch(x: httpx.AsyncClient, url: str):
 
 async def read_site(url: str) -> tuple[str, int]:
     async with httpx.AsyncClient(timeout=15, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 VozLeadsBot"}) as x:
-        first = await _fetch(x, url)
-        if not first:
-            raise HTTPException(400, "No se pudo leer esa web. Revisa la dirección (por ejemplo https://tunegocio.com).")
-        text, links = first
+        text, links = await _fetch(x, url, strict=True)
         host = urlparse(url).hostname
         extra = list(dict.fromkeys(u.split("#")[0] for u in links if urlparse(u).hostname == host and any(k in u.lower() for k in KEYWORDS)))[:4]
         pages = [text] + [r[0] for r in await asyncio.gather(*(_fetch(x, u) for u in extra)) if r]
