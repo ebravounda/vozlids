@@ -1,0 +1,20 @@
+{
+  "summary": "Frontend-only test of /app/lineas SIP selector fix with Playwright-mocked GET /api/admin/lines and /api/admin/lines/options. All 5 requested checks pass: SipList shows 'Tus líneas SIP en Zadarma (4)' with 4 rows (412345 'en uso por +34919932652', others 'libre', 412348 'sin nombre'); Connect dialog SIP select lists all 4 SIPs + 'Crear…' (412345 disabled with 'en uso por +34919932652', 412346/7/8 enabled ' · libre', 'Crear una línea SIP nueva (Zadarma no deja crear más)' disabled); Reconfigure dialog preselects and enables 412345 '(la actual)'; lines-summary reads '2 números · 1 conectados · 1 libres · Líneas SIP: 4 (3 sin usar, puedes crear 0 más)'; Probar opens line-test-dialog with phone +34600850506 (call not clicked).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "LineDialog (light dialog)", "issues": ["Select triggers use bg-slate-950/60 (dark) inside a white dialog; placeholder text ('Elige la línea SIP', owner placeholder) has low contrast on the dark grey bar. Consider a light bg or lighter placeholder text."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": ["Optional: improve contrast of Select triggers in LineDialog (bg-slate-950/60 on light dialog)."],
+  "critical_code_review_comments": ["sipOptions(): logic correct — busy = used_by && id !== current; current SIP labelled '(la actual)' and enabled; 'new' disabled when sips_left <= 0."],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None; all lines data mocked via page.route",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mock page.route('**/api/admin/lines') and '**/api/admin/lines/options' before navigating to /app/lineas. Login admin@vozlead.es / VozLead2026!. Radix options: [role=option], disabled via data-disabled."
+}
