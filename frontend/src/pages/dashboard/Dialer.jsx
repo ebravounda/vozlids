@@ -4,7 +4,7 @@ import { AlertTriangle, Headphones, Loader2, Phone, PhoneCall, RefreshCw } from 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel } from "@/components/Common";
-import { Keypad, usePhone } from "@/components/dialer/Keypad";
+import { Keypad, PhoneLog, usePhone } from "@/components/dialer/Keypad";
 import * as P from "@/lib/zadarmaPhone";
 import { api, errMsg } from "@/lib/api";
 
@@ -106,6 +106,7 @@ export default function Dialer() {
           <Panel><Recents calls={hist?.calls || []} onPick={pick} /></Panel>
         </div>
       )}
+      <PhoneLog />
       <History d={hist} onRefresh={load} />
     </div>
   );

@@ -3,6 +3,7 @@ import { Delete, Mic, MicOff, Pause, Phone, PhoneOff, Play } from "lucide-react"
 import * as P from "@/lib/zadarmaPhone";
 
 const KEYS = [["1", ""], ["2", "ABC"], ["3", "DEF"], ["4", "GHI"], ["5", "JKL"], ["6", "MNO"], ["7", "PQRS"], ["8", "TUV"], ["9", "WXYZ"], ["*", ""], ["0", "+"], ["#", ""]];
+const left = (ms) => (ms >= 3600000 ? `${Math.floor(ms / 60000)} min` : `${clock(ms)} min`);
 const clock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 export function usePhone() {
@@ -24,7 +25,7 @@ function CallInfo({ s }) {
   return (
     <div className="flex items-center justify-center gap-4 text-sm" data-testid="keypad-status">
       <span className="font-mono text-emerald-300" data-testid="keypad-timer">{clock(now - s.startedAt)}</span>
-      {s.deadline != null && <span className={`text-xs ${s.deadline - now < 60000 ? "text-rose-300" : "text-slate-400"}`} data-testid="keypad-remaining">Te quedan {clock(s.deadline - now)} min</span>}
+      {s.deadline != null && <span className={`text-xs ${s.deadline - now < 60000 ? "text-rose-300" : "text-slate-400"}`} data-testid="keypad-remaining">Te quedan {left(s.deadline - now)}</span>}
     </div>
   );
 }
@@ -33,6 +34,19 @@ const Round = ({ on, onClick, children, label, testid }) => (
   <button type="button" onClick={onClick} title={label} data-testid={testid}
     className={`flex h-12 w-12 items-center justify-center rounded-full border transition-colors ${on ? "border-amber-400 bg-amber-400/15 text-amber-300" : "border-slate-700 text-slate-300 hover:bg-slate-800"}`}>{children}</button>
 );
+
+export function PhoneLog() {
+  const s = usePhone();
+  if (!s.log.length) return null;
+  return (
+    <details className="rounded-xl border border-slate-800 p-3 text-xs" data-testid="dialer-log">
+      <summary className="cursor-pointer text-slate-400">Diagnóstico de la llamada</summary>
+      <div className="mt-2 max-h-60 space-y-1 overflow-y-auto font-mono">
+        {s.log.map((l, i) => <p key={i} className="break-all text-slate-400"><span className="text-slate-500">{l.at}</span> <span className="text-emerald-300">{l.event}</span> {l.txt}</p>)}
+      </div>
+    </details>
+  );
+}
 
 export function Keypad({ number, setNumber }) {
   const s = usePhone();

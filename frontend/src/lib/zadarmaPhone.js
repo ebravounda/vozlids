@@ -9,7 +9,7 @@ const ERRORS = {
   BROWSER_NOT_SUPPORTED: "Este navegador no permite llamadas. Usa Chrome, Edge o Safari actualizados.",
 };
 
-let state = { status: "off", line: "", to: "", startedAt: 0, deadline: null, muted: false, held: false, error: "" };
+let state = { status: "off", line: "", to: "", startedAt: 0, deadline: null, muted: false, held: false, error: "", log: [] };
 const subs = new Set();
 const set = (patch) => { state = { ...state, ...patch }; subs.forEach((f) => f(state)); };
 export const subscribe = (f) => { subs.add(f); f(state); return () => subs.delete(f); };
@@ -65,7 +65,14 @@ function onEnded() {
   window.dispatchEvent(new Event("voz-dialer-ended"));
 }
 
-function onStatus(msg) {
+function trace(event, data) {
+  let txt = "";
+  try { txt = data == null ? "" : JSON.stringify(data).slice(0, 300); } catch { txt = String(data); }
+  set({ log: [{ at: new Date().toLocaleTimeString(), event, txt }, ...state.log].slice(0, 30) });
+}
+
+function onStatus(msg, params) {
+  trace(msg, params);
   if (msg === "confirmed") onConfirmed();
   else if (["canceled", "rejected", "busy"].includes(msg)) {
     if (msg === "busy") toast("El número está ocupado");
@@ -88,9 +95,11 @@ export async function connect(number) {
       key: data.key, sip: data.sip, type: "site", language: "es",
       getStatusMessage: onStatus,
       getSipsCallback: (sips, code, text) => {
+        trace("sips", { sips, code, text });
         if (sips?.disabled || code) set({ status: "error", error: ERRORS[code] || `${code || "Zadarma"}: ${text || "la línea no está disponible para llamadas web"}` });
       },
-      callbackEndCall: onEnded,
+      callbackEndCall: (d) => { trace("fin de llamada", d); onEnded(); },
+      callbackGetPrice: (d) => trace("tarifa", d),
     });
     phone.reg(data.sip);
     set({ status: "ready", line: data.number });
@@ -105,6 +114,7 @@ export function dial(raw) {
   const to = normalize(raw, state.line);
   if (to.length < 6) { toast.error("Escribe un número válido"); return; }
   set({ status: "calling", to });
+  trace("marcando", { to, line: state.line });
   phone.call(to);
 }
 
