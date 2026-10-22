@@ -4,7 +4,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from bson import ObjectId
+from pydantic import BaseModel, Field
 
 import auth as A
 import costs_real as CR
@@ -67,7 +68,7 @@ async def dialer_session(body: SessionIn, user=CurrentUser):
 async def sync_calls(force: bool = False) -> str:
     """Copy this month's keypad calls from Zadarma into dialer_calls so they count towards plan minutes."""
     st = await db.platform_settings.find_one({"_id": "dialer_sync"}) or {}
-    at = CR._parse(st.get("at", ""))
+    at = CR._parse(st.get("tried_at", ""))
     if not force and at and datetime.now(timezone.utc) - at < HISTORY_TTL:
         return st.get("error", "")
     owners = {d["dialer_sip_id"]: d async for d in db.tenant_numbers.find({"dialer_sip_id": {"$nin": [None, ""]}},
@@ -90,8 +91,42 @@ async def sync_calls(force: bool = False) -> str:
                 "destination": r.get("description"), "status": r.get("disposition"),
                 "duration_seconds": int(CR._num(r.get("billseconds"))), "cost": round(CR._num(r.get("billcost")), 4),
                 "currency": r.get("currency")}}, upsert=True)
-    await db.platform_settings.update_one({"_id": "dialer_sync"}, {"$set": {"at": datetime.now(timezone.utc).isoformat(), "error": error}}, upsert=True)
+    now = datetime.now(timezone.utc).isoformat()
+    if not error:
+        await db.dialer_pending.delete_many({"created_at": {"$lt": now}})
+    await db.platform_settings.update_one({"_id": "dialer_sync"}, {"$set": {"at": now if not error else st.get("at", ""), "error": error,
+                                                                            "tried_at": now}}, upsert=True)
     return error
+
+
+async def _pending_seconds(tid: str) -> int:
+    st = await db.platform_settings.find_one({"_id": "dialer_sync"}) or {}
+    q = {"tenant_id": tid, "created_at": {"$gte": st.get("at", "")}}
+    return sum([d.get("seconds", 0) async for d in db.dialer_pending.find(q)])
+
+
+@router.get("/dialer/remaining")
+async def dialer_remaining(user=CurrentUser):
+    """Seconds of plan left for keypad calls (null = no limit)."""
+    import saas
+    u = await db.users.find_one({"_id": ObjectId(user["id"])}, {"plan_id": 1, "allow_overage": 1})
+    plan = await db.plans.find_one({"_id": ObjectId(u["plan_id"])}, {"minutes": 1}) if u and u.get("plan_id") else None
+    if not plan or u.get("allow_overage"):
+        return {"seconds": None}
+    left = plan["minutes"] * 60 - await saas.minutes_used(user["id"]) * 60 - await _pending_seconds(user["id"])
+    return {"seconds": max(0, int(left))}
+
+
+class PendingIn(BaseModel):
+    seconds: int = Field(ge=0, le=36000)
+
+
+@router.post("/dialer/pending")
+async def dialer_pending(body: PendingIn, user=CurrentUser):
+    """Talk time the browser measured, counted until Zadarma's real record arrives."""
+    if body.seconds:
+        await db.dialer_pending.insert_one({"tenant_id": user["id"], "seconds": body.seconds, "created_at": datetime.now(timezone.utc).isoformat()})
+    return {"ok": True}
 
 
 @router.get("/dialer/history")

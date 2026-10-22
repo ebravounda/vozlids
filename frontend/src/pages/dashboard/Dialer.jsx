@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
+import { startDialerGuard } from "@/lib/dialerGuard";
 
 const BASE = "https://my.zadarma.com/webphoneWebRTCWidget/v9/js/";
 const loadScript = (src) => new Promise((ok, fail) => {
@@ -28,6 +29,7 @@ function PhoneCard({ numbers }) {
       await loadScript(`${BASE}loader-phone-fn.js?sub_v=1`);
       window.zadarmaWidgetFn(data.key, data.sip, "rounded", "es", true, "{right:'24px',bottom:'24px'}");
       window.__vozDialer = data.number;
+      startDialerGuard();
       setState("ready");
       toast.success("Teléfono listo: usa el teclado de abajo a la derecha");
     } catch (e) {
