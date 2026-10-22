@@ -77,6 +77,11 @@ export function ConnectExisting({ users, onChanged }) {
       <p className="text-xs text-slate-400">Usa números que ya tienes comprados en Zadarma: elige uno libre, el cliente y si es su número principal o el de un agente. Todo se configura solo.</p>
       {rows && !free.length && <p className="text-xs text-slate-500" data-testid="zadarma-existing-empty">No tienes números disponibles en Zadarma.</p>}
       {rows && <p className="text-xs text-slate-500" data-testid="zadarma-existing-summary">{free.length} disponibles{rows.hidden ? ` · ${rows.hidden} ocultos (en uso en VozLeads, vencidos o inactivos)` : ""}</p>}
+      {rows && rows.sips !== undefined && (
+        <p className={`text-xs ${rows.sips_left + rows.sips_reusable > 0 ? "text-slate-500" : "text-amber-400"}`} data-testid="zadarma-sip-room">
+          Líneas SIP en Zadarma: {rows.sips} creadas · puedes crear {rows.sips_left} más{rows.sips_reusable ? ` · ${rows.sips_reusable} de VozLeads libres para reutilizar` : ""}
+          {rows.sips_left + rows.sips_reusable === 0 && " — llegaste al límite: recarga saldo en Zadarma o pide a su soporte que lo amplíe antes de conectar."}
+        </p>)}
       {free.map((r) => (
         <div key={r.number} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 p-3 text-sm" data-testid={`zadarma-existing-${r.number.slice(1)}`}>
           <span className="text-white"><span className="font-mono">{r.number}</span>

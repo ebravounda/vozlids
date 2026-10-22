@@ -25,7 +25,8 @@ def _norm(n) -> str:
 
 async def _in_use() -> dict:
     used = {r["number"]: r["tenant_id"] async for r in db.tenant_numbers.find(
-        {"number": {"$nin": [None, ""]}, "status": {"$in": E.OPEN}}, {"number": 1, "tenant_id": 1})}
+        {"number": {"$nin": [None, ""]}, "status": {"$in": E.OPEN},
+         "$nor": [{"status": "error", "source": "zadarma_existente"}]}, {"number": 1, "tenant_id": 1})}
     plat = (await db.platform_settings.find_one({"_id": "platform_inbound"}) or {}).get("number")
     if plat:
         used[_norm(plat)] = "plataforma"
@@ -52,11 +53,21 @@ async def _free() -> tuple[list, int]:
     return free, len(rows) - len(free)
 
 
+async def _sip_room() -> dict:
+    try:
+        sips, left = await Z.list_sips()
+    except Z.ZadarmaError:
+        return {}
+    used = {str(r.get("sip_id")) async for r in db.tenant_numbers.find({"sip_id": {"$nin": [None, ""]}, "status": {"$nin": ["liberado"]}}, {"sip_id": 1})}
+    reusable = sum(1 for s in sips if str(s.get("display_name", "")).startswith("VozLeads") and str(s["id"]) not in used)
+    return {"sips": len(sips), "sips_left": left, "sips_reusable": reusable}
+
+
 @router.get("/my-numbers")
 async def my_numbers(user=Depends(require_admin)):
     """Only numbers that are active in Zadarma, not expired and not used by any VozLeads account."""
     free, hidden = await _free()
-    return {"hidden": hidden, "numbers": [
+    return {"hidden": hidden, **await _sip_room(), "numbers": [
         {"number": _norm(r.get("number")), "country": PREFIX.get(_norm(r.get("number"))[1:3], ""),
          "description": r.get("description") or r.get("number_name") or "", "stop_date": str(r.get("stop_date") or "")[:10]}
         for r in free]}
@@ -97,6 +108,10 @@ async def connect(body: ConnectIn, user=Depends(require_admin)):
     free, _ = await _free()
     if number not in {_norm(r.get("number")) for r in free}:
         raise HTTPException(409, "Ese número ya no está disponible (en uso, vencido o inactivo en Zadarma). Actualiza la lista.")
+    room = await _sip_room()
+    if room and room["sips_left"] + room["sips_reusable"] <= 0:
+        raise HTTPException(409, "Tu cuenta de Zadarma llegó al límite de líneas SIP. Recarga saldo en Zadarma (el límite sube con el saldo) "
+                                 "o pide a su soporte que lo amplíe, y vuelve a intentarlo. No se ha cobrado nada.")
     country = PREFIX.get(number[1:3], u.get("country", "ES"))
     tid = body.tenant_id
     if body.agent_id:
@@ -123,6 +138,11 @@ async def connect(body: ConnectIn, user=Depends(require_admin)):
     try:
         await N.activate(filt, u, number, inbound)
     except (Z.ZadarmaError, vapi.VapiError) as e:
-        await db.tenant_numbers.update_one(filt, {"$set": {"status": "error", "error": str(e)[:300]}})
-        raise HTTPException(424, f"No se pudo conectar: {str(e)[:250]}. Puedes reintentar o rechazarlo (se devuelve el cobro).")
+        # Undo so the number is free again and nothing stays charged.
+        if body.agent_id:
+            await db.tenant_numbers.delete_one(filt)
+            await E._uncharge(u, item, u.get("country", "ES") if item else "")
+        else:
+            await db.tenant_numbers.update_one(filt, {"$set": {"status": "error", "number": "", "error": str(e)[:300]}})
+        raise HTTPException(424, f"No se pudo conectar: {str(e)[:300]} No se ha cobrado nada y el número sigue disponible.")
     return {"ok": True, "number": number, "extra": bool(body.agent_id)}

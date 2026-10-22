@@ -108,6 +108,16 @@ async def create_sip(name: str, password: str, callerid: str) -> str:
                                                         "callerid": callerid.lstrip("+")}))["sip"])
 
 
+async def list_sips() -> tuple[list, int]:
+    r = await call("GET", "/v1/sip/")
+    return r.get("sips") or [], int(r.get("left") or 0)
+
+
+async def reuse_sip(sip: str, password: str, callerid: str) -> None:
+    await call("PUT", f"/v1/sip/{sip}/password/", {"value": password})
+    await call("PUT", "/v1/sip/callerid/", {"id": sip, "number": callerid.lstrip("+")})
+
+
 async def route_to(number: str, sip_uri: str) -> None:
     await call("PUT", "/v1/direct_numbers/set_sip_id/", {"number": number.lstrip("+"), "sip_id": sip_uri})
 

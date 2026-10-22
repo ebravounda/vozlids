@@ -86,13 +86,39 @@ async def provision(user_id: str, num_id=None) -> dict:
     return _out(await db.tenant_numbers.find_one(filt))
 
 
+async def _step(label: str, coro):
+    try:
+        return await coro
+    except Z.ZadarmaError as e:
+        raise Z.ZadarmaError(f"Paso «{label}»: {e}") from e
+    except vapi.VapiError as e:
+        raise vapi.VapiError(f"Paso «{label}»: {e}") from e
+
+
+async def _sip_line(u: dict, pwd: str, number: str) -> str:
+    """New Zadarma SIP line; at the account limit, reuse a free line VozLeads created before (never your own lines)."""
+    try:
+        return await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)
+    except Z.ZadarmaError as e:
+        if "more than" not in str(e).lower() and "limit" not in str(e).lower():
+            raise
+        sips, _ = await Z.list_sips()
+        used = {str(r.get("sip_id")) async for r in db.tenant_numbers.find({"sip_id": {"$nin": [None, ""]}, "status": {"$nin": ["liberado"]}}, {"sip_id": 1})}
+        free = [s["id"] for s in sips if str(s.get("display_name", "")).startswith("VozLeads") and str(s["id"]) not in used]
+        if not free:
+            raise Z.ZadarmaError("Tu cuenta de Zadarma llegó al límite de líneas SIP y no hay ninguna de VozLeads libre. "
+                                 "Recarga saldo en Zadarma (el límite sube con el saldo) o pide a su soporte que lo amplíe, y reintenta.")
+        await Z.reuse_sip(free[0], pwd, number)
+        return str(free[0])
+
+
 async def activate(filt: dict, u: dict, number: str, agent_id: str) -> None:
     """Create the SIP line, connect it to Vapi (outbound + inbound) and route the Zadarma number to the receptionist."""
     await db.tenant_numbers.update_one(filt, {"$set": {"number": number}})
     pwd = secrets.token_urlsafe(10) + "Vz7"
-    sip = await Z.create_sip(f"VozLeads {u.get('business_name', '')}", pwd, number)
-    v = await vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"])
-    await Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"]))
+    sip = await _step("crear la línea SIP en Zadarma", _sip_line(u, pwd, number))
+    v = await _step("conectar la línea con la IA (Vapi)", vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"]))
+    await _step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"])))
     await db.tenant_numbers.update_one(filt, {"$set": {
         "status": "activo", "error": "", "sip_id": sip, **v, "activated_at": now_iso(), "inbound_agent_id": agent_id}})
     agent = await db.agents.find_one({"_id": ObjectId(agent_id)}, {"name": 1}) if ObjectId.is_valid(agent_id or "") else None
