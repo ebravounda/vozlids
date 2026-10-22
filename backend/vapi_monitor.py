@@ -234,7 +234,7 @@ async def spend(user=Depends(require_admin)):
 
 async def audit() -> dict:
     creds = await vapi._list("/credential")
-    shared = next((c["id"] for c in creds if c.get("provider") == "byo-sip-trunk" and c.get("name") == vapi.INBOUND_NAME), None)
+    shared = next((c["id"] for c in creds if c.get("provider") == "byo-sip-trunk" and (c.get("name") or "").startswith(vapi.INBOUND_NAME)), None)
     dups = [c["id"] for c in creds if c.get("provider") == "byo-sip-trunk" and c["id"] != shared
             and any(g.get("inboundEnabled", True) for g in c.get("gateways") or [])]
     phones = {p["id"]: p for p in await vapi._list("/phone-number")}
@@ -263,8 +263,8 @@ async def audit() -> dict:
         rows.append({"number": r["number"], "owner": owners.get(r.get("tenant_id"), "Plataforma"), "extra": bool(r.get("extra")),
                      "alias": (p or {}).get("number"), "webhook": ((p or {}).get("server") or {}).get("url"), "issues": issues,
                      "ok": not issues, "health": r.get("health"), "health_reason": r.get("health_reason", "")})
-    sc = next((c for c in creds if c["id"] == shared), {})
-    return {"shared": bool(shared), "transfer_ready": bool((sc.get("outboundAuthenticationPlan") or {}).get("authUsername")), "duplicates": len(dups), "zadarma": routes is not None, "numbers": rows,
+    tl = await db.platform_settings.find_one({"_id": "transfer_line"}) or {}
+    return {"shared": bool(shared), "transfer_ready": bool(shared) and tl.get("credential_id") == shared, "duplicates": len(dups), "zadarma": routes is not None, "numbers": rows,
             "webhook": vapi.webhook_url()}
 
 

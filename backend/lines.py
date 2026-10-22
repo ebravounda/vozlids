@@ -14,6 +14,9 @@ import zadarma as Z
 from db import db
 from extra_routes import require_admin
 from models import now_iso
+import logging
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin/lines")
 PREFIX = {"34": "ES", "56": "CL"}
@@ -122,6 +125,8 @@ async def _wire(number: str, sip_id: str, label: str) -> dict:
         await N._step(f"preparar tu línea SIP {sip_id} en Zadarma", Z.reuse_sip(sip_id, pwd, number))
         sip = sip_id
     v = await N._step("conectar la línea con la IA (Vapi)", vapi.connect_tenant_number(sip, pwd, number, label))
+    old, new = await N._step("preparar las llamadas pasadas a personas", set_transfer(str(sip), pwd))
+    v["inbound_uri"] = v["inbound_uri"].replace(old, new)
     await N._step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, v["inbound_uri"]))
     return {"sip_id": str(sip), **v, "routed": True}
 
@@ -296,19 +301,41 @@ async def health_check(user=Depends(require_admin)):
     return await linehealth.check_once()
 
 
+async def set_transfer(sip: str, pwd: str) -> tuple:
+    """Re-create the shared inbound trunk with this SIP login, move every inbound alias onto it and re-point Zadarma."""
+    old = await vapi.inbound_credential()
+    new = await vapi.new_inbound_credential(sip, pwd)
+    for p in await vapi._list("/phone-number"):
+        if p.get("credentialId") == old:
+            await vapi._post(f"/phone-number/{p['id']}", {"credentialId": new}, "PATCH")
+    async for r in db.tenant_numbers.find({"inbound_uri": {"$regex": old}}):
+        uri = r["inbound_uri"].replace(old, new)
+        try:
+            await Z.route_to(r["number"], uri)
+        except Z.ZadarmaError as e:
+            log.warning("re-route %s failed: %s", r["number"], e)
+        await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {"inbound_uri": uri}})
+    await vapi.delete(f"/credential/{old}")
+    await vapi._post(f"/credential/{new}", {"name": vapi.INBOUND_NAME}, "PATCH")
+    await db.platform_settings.update_one({"_id": "transfer_line"}, {"$set": {"credential_id": new, "sip": sip, "at": now_iso()}}, upsert=True)
+    return old, new
+
+
+async def transfer_ready() -> bool:
+    doc = await db.platform_settings.find_one({"_id": "transfer_line"}) or {}
+    return bool(doc.get("credential_id")) and doc["credential_id"] == await vapi.inbound_credential()
+
+
 async def ensure_transfer_line() -> str:
-    """Give the shared trunk a Zadarma SIP login (new password on one existing line) so transfers can dial out."""
-    if await vapi.transfer_line_ready():
+    """If the shared trunk can't dial out, fully reconfigure one line (proven path) so transfers get a working SIP login."""
+    if await transfer_ready():
         return ""
-    recs = [r async for r in db.tenant_numbers.find({**LIVE, "sip_id": {"$nin": [None, ""]}, "credential_id": {"$nin": [None, ""]}})]
+    recs = [r async for r in db.tenant_numbers.find({**LIVE, "sip_id": {"$nin": [None, ""]}})]
     r = next((x for x in recs if not x.get("extra")), recs[0] if recs else None)
     if not r:
         return "No hay ninguna línea SIP conectada para pasar llamadas"
-    pwd, sip = Z.new_password(), str(r["sip_id"])
-    await Z.reuse_sip(sip, pwd, r["number"])
-    await vapi._post(f"/credential/{r['credential_id']}", {"outboundAuthenticationPlan": {"authUsername": sip, "authPassword": pwd}}, "PATCH")
-    await vapi.set_transfer_line(sip, pwd)
-    return f"Llamadas pasadas a personas: salen por la línea SIP {sip} ({r['number']})"
+    await reconfigure(r["number"], SipIn(sip_id=str(r["sip_id"])), {})
+    return f"Llamadas pasadas a personas: salen por la línea SIP {r['sip_id']} ({r['number']})"
 
 
 async def repair(only: set | None) -> dict:

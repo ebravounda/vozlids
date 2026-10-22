@@ -175,20 +175,14 @@ async def _outbound_line(sip_login: str, sip_password: str, number: str, name: s
 
 async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:
     v = await _outbound_line(sip_login, sip_password, number, f"VozLeads {label}")
-    inbound = await connect_inbound(number)
-    await set_transfer_line(sip_login, sip_password)
-    return {**v, **inbound}
+    return {**v, **await connect_inbound(number)}
 
 
-async def transfer_line_ready() -> bool:
-    cur = next((c for c in await _list("/credential") if c.get("name") == INBOUND_NAME), {})
-    return bool((cur.get("outboundAuthenticationPlan") or {}).get("authUsername"))
-
-
-async def set_transfer_line(sip_login: str, sip_password: str) -> None:
-    """Transfers dial out through the shared inbound trunk, so it needs a Zadarma SIP login to place that leg."""
-    await _post(f"/credential/{await inbound_credential()}", {"outboundLeadingPlusEnabled": True, "outboundAuthenticationPlan": {
-        "authUsername": sip_login, "authPassword": sip_password}}, "PATCH")
+async def new_inbound_credential(sip_login: str, sip_password: str) -> str:
+    """Vapi drops SIP passwords sent by PATCH, so the shared trunk is re-created with the login baked in."""
+    return (await _post("/credential", {"provider": "byo-sip-trunk", "name": f"{INBOUND_NAME} *", "gateways": INBOUND_GATEWAYS,
+                                        "outboundLeadingPlusEnabled": True,
+                                        "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password}}))["id"]
 
 
 ZADARMA_IN = [(f"185.45.{i}.0", 24) for i in (152, 153, 154, 155)] + [("195.122.19.0", 24), ("31.31.222.0", 24), ("15.235.128.0", 24)]
@@ -211,7 +205,7 @@ async def _list(path: str) -> list:
 
 async def inbound_credential() -> str:
     """One shared trunk owns Zadarma's inbound IPs; Vapi routes every Zadarma call through it by the dialled number."""
-    cur = next((c for c in await _list("/credential") if c.get("provider") == "byo-sip-trunk" and c.get("name") == INBOUND_NAME), None)
+    cur = next((c for c in await _list("/credential") if c.get("provider") == "byo-sip-trunk" and (c.get("name") or "").startswith(INBOUND_NAME)), None)
     if cur:
         if len(cur.get("gateways") or []) != len(INBOUND_GATEWAYS):
             await _post(f"/credential/{cur['id']}", {"gateways": INBOUND_GATEWAYS}, "PATCH")
@@ -239,7 +233,7 @@ async def isolate_inbound() -> int:
     """Strip inbound IPs from every other trunk so they can't swallow calls meant for the shared one."""
     fixed = 0
     for c in await _list("/credential"):
-        if c.get("provider") == "byo-sip-trunk" and c.get("name") != INBOUND_NAME and any(
+        if c.get("provider") == "byo-sip-trunk" and not (c.get("name") or "").startswith(INBOUND_NAME) and any(
                 g.get("inboundEnabled", True) for g in c.get("gateways") or []):
             await _post(f"/credential/{c['id']}", {"gateways": OUTBOUND_GATEWAYS}, "PATCH")
             fixed += 1
