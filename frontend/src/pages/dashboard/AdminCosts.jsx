@@ -9,6 +9,7 @@ import { PageHeader, Panel, StatusBadge } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
 import { FixedCostsEditor, ProfitSummary } from "@/components/costs/ProfitParts";
+import { ZadarmaCompare } from "@/components/costs/ZadarmaCompare";
 
 const PARTS = [["voz", "Voz"], ["transcripcion", "Transcripción"], ["ia", "IA (GPT-4.1)"], ["vapi", "Vapi plataforma"], ["analisis", "Resumen/análisis"], ["linea", "Línea Zadarma"], ["otros", "Otros"]];
 const eur = (usd, fx, d = 3) => (usd == null ? "—" : `${(usd * fx).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d })} €`);
@@ -185,6 +186,7 @@ export default function AdminCosts() {
         <Button variant="outline" onClick={sync} disabled={syncing} className="rounded-full border-slate-700 bg-transparent" data-testid="costs-sync-button">
           {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Actualizar costes reales
         </Button>
+        <ZadarmaCompare days={days} />
       </PageHeader>
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Llamadas" value={t.calls} hint={t.missing_cost ? `${t.missing_cost} sin coste aún` : "con coste registrado"} testid="costs-stat-calls" />
