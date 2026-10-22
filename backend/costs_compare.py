@@ -25,9 +25,9 @@ async def compare(days: int) -> dict:
     except Z.ZadarmaError as e:
         return {"rows": [], "totals": {}, "error": str(e)}
     import dialer
-    manual = await dialer.dialer_sips()
-    manual_rows = [r for r in stats if str(r.get("sip")) in manual]
-    stats = [r for r in stats if str(r.get("sip")) not in manual]
+    manual = await dialer.manual_ids()
+    manual_rows = [r for r in stats if str(r.get("id")) in manual]
+    stats = [r for r in stats if str(r.get("id")) not in manual]
     if await CR.learn_rates(stats, pricing):
         pricing = await get_pricing()
     leads = await db.leads.find({"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since.isoformat()}},

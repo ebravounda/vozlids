@@ -10,16 +10,18 @@ const talking = () => {
 
 export function startDialerGuard() {
   if (window.__vozGuard) return;
-  let startedAt = 0, deadline = null, warned = false;
+  let startedAt = 0, deadline = null, warned = false, pid = null;
+  const dialed = () => window.zdrmWPhI?.number || document.getElementById("zdrm-webphone-phonenumber-input")?.value || "";
   const end = () => {
     const secs = Math.round((Date.now() - startedAt) / 1000);
-    startedAt = 0; deadline = null; warned = false;
-    api.post("/dialer/pending", { seconds: secs }).catch(() => {});
+    if (pid) api.post(`/dialer/pending/${pid}/end`, { seconds: secs }).catch(() => {});
+    startedAt = 0; deadline = null; warned = false; pid = null;
   };
   window.__vozGuard = setInterval(async () => {
     const on = talking();
     if (on && !startedAt) {
       startedAt = Date.now();
+      api.post("/dialer/pending", { to: dialed() }).then((r) => { pid = r.data.id; }).catch(() => {});
       try {
         const { data } = await api.get("/dialer/remaining");
         deadline = data.seconds == null ? null : startedAt + data.seconds * 1000;
