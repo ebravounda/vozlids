@@ -356,3 +356,4 @@
 - Extra numbers now charge FULL first month at once (invoice + pay) instead of proration; subscription item with proration none; reject credits full amount to the customer balance. NOT verified against real Stripe (preview uses proxy).
 - UI: components/numbers/ConnectExisting.jsx inside Super admin → Zadarma panel ("Conectar números de mi Zadarma").
 - SIP: no need to buy SIP lines; one internal Zadarma SIP is created per number via API.
+- 2026-06: "Número activo" celebration email (phone_numbers.activate): subject "¡Enhorabuena! Tu número X ya está activo", rows (número, quién contesta, pruébalo ahora, salientes, siguiente paso), CTA "Probar mi agente" → /app/agentes/{agent}?tab=test (AgentBuilder reads ?tab=).

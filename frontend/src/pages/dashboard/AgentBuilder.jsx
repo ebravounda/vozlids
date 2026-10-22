@@ -34,7 +34,7 @@ export default function AgentBuilder() {
       ambience: !ambOk && a.ambience !== "none" ? "none" : a.ambience,
     });
   }, [ambOk, agentId]);
-  const [tab, setTab] = useState("general");
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "general");
 
   useEffect(() => {
     if (agentId) api.get(`/agents/${agentId}`).then((r) => setAgent({ ...r.data, questions: r.data.questions.length ? r.data.questions : [""] })).catch(() => navigate("/app/agentes"));

@@ -95,9 +95,15 @@ async def activate(filt: dict, u: dict, number: str, agent_id: str) -> None:
     await Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"]))
     await db.tenant_numbers.update_one(filt, {"$set": {
         "status": "activo", "error": "", "sip_id": sip, **v, "activated_at": now_iso(), "inbound_agent_id": agent_id}})
-    await emailer.send(u["email"], f"Tu número {number} ya está activo", "¡Tu número de VozLeads está listo!", [
-        ("Número", number), ("Llamadas salientes", "Tus agentes ya llaman desde este número"),
-        ("Llamadas entrantes", "Tu recepcionista IA contesta cuando te llamen")], os.environ["APP_PUBLIC_URL"] + "/app/telefonia")
+    agent = await db.agents.find_one({"_id": ObjectId(agent_id)}, {"name": 1}) if ObjectId.is_valid(agent_id or "") else None
+    who = (agent or {}).get("name") or "tu agente IA"
+    link = os.environ["APP_PUBLIC_URL"].rstrip("/") + (f"/app/agentes/{agent_id}?tab=test" if agent else "/app/agentes")
+    await emailer.send(u["email"], f"¡Enhorabuena! Tu número {number} ya está activo", "¡Tu número ya está funcionando!", [
+        ("Tu número", number), ("Quién contesta", f"{who}, tu recepcionista IA, atiende cada llamada las 24 horas"),
+        ("Pruébalo ahora", f"Llama al {number} desde tu móvil y habla con {who}, o pide que te llame desde el botón de abajo"),
+        ("Llamadas salientes", "Tus agentes ya llaman a tus clientes desde este número"),
+        ("Siguiente paso", "Ponlo en tu web, Google y redes sociales para empezar a recibir llamadas")],
+        link, f"Tu línea de {u.get('business_name') or 'tu negocio'} ya está conectada y lista para atender.", "Probar mi agente")
 
 
 async def release(user_id: str, num_id=None) -> dict:
