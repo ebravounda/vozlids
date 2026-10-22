@@ -135,7 +135,18 @@ async def open_tickets(user=CurrentUser):
 @router.get("/support-tickets")
 async def list_tickets(user=CurrentUser):
     docs = await db.support_tickets.find({"tenant_id": user["id"]}).sort("created_at", -1).to_list(300)
-    return [{**{k: v for k, v in d.items() if k != "_id"}, "id": str(d["_id"])} for d in docs]
+    ids = [ObjectId(d["lead_id"]) for d in docs if ObjectId.is_valid(d.get("lead_id", ""))]
+    leads = {str(x["_id"]): x async for x in db.leads.find({"_id": {"$in": ids}}, {"summary": 1, "agent_id": 1, "line_number": 1,
+                                                                                    "direction": 1, "duration_seconds": 1})}
+    aids = {ObjectId(x["agent_id"]) for x in leads.values() if ObjectId.is_valid(x.get("agent_id") or "")}
+    agents = {str(a["_id"]): a.get("name") async for a in db.agents.find({"_id": {"$in": list(aids)}}, {"name": 1})}
+    out = []
+    for d in docs:
+        ld = leads.get(d.get("lead_id"), {})
+        out.append({**{k: v for k, v in d.items() if k != "_id"}, "id": str(d["_id"]), "summary": ld.get("summary", ""),
+                    "agent_name": agents.get(ld.get("agent_id") or "", ""), "line_number": ld.get("line_number", ""),
+                    "direction": ld.get("direction", ""), "duration_seconds": ld.get("duration_seconds")})
+    return out
 
 
 @router.put("/support-tickets/{tid}/resolve")

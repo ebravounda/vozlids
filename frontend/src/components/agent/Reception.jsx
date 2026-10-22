@@ -46,13 +46,7 @@ export const ReceptionPanel = ({ agent, update }) => {
           <Toggle checked={agent.reception_book ?? true} onChange={(v) => update({ reception_book: v })} testid="reception-book-toggle"
             title="Agendar citas" desc="Reserva en los huecos libres de tu agenda." />
           <Toggle checked={agent.reception_message ?? true} onChange={(v) => update({ reception_message: v })} testid="reception-message-toggle"
-            title="Tomar recado y avisar" desc="Apunta quién llama y qué necesita, y te avisa por email." />
-          <div className="space-y-2">
-            <Label>Pasar la llamada a este número (opcional)</Label>
-            <Input value={agent.transfer_number || ""} onChange={(e) => update({ transfer_number: e.target.value })} placeholder="+34 600 000 000"
-              className="bg-slate-950/60" data-testid="reception-transfer-input" />
-            <p className="text-xs text-slate-500">Si quien llama pide hablar con una persona, el agente le pasa a este teléfono. Déjalo vacío para no pasar llamadas.</p>
-          </div>
+            title="Tomar recado y avisar" desc="Si quien llama pide hablar con una persona, apunta su número y el motivo, te sale una alerta en el panel y te llega un email para que le llames tú." />
         </div>
       )}
     </div>

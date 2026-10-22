@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, LifeBuoy, UserRound } from "lucide-react";
+import { CheckCircle2, LifeBuoy, Phone, UserRound } from "lucide-react";
 import { PageHeader, Panel } from "@/components/Common";
 import { api } from "@/lib/api";
 import { fmtDate } from "@/lib/constants";
@@ -22,10 +22,12 @@ export default function Support() {
                 <p className="font-semibold text-white">{t.lead_name} <a href={`tel:${t.lead_phone}`} className="font-mono text-xs text-slate-400 hover:text-emerald-300" data-testid={`support-call-${t.id}`}>{t.lead_phone}</a></p>
                 <p className="mt-1 text-sm text-slate-300">{t.issue}</p>
                 {t.best_time && <p className="mt-1 text-xs text-slate-400">Mejor momento: {t.best_time}</p>}
-                <p className="mt-1 text-xs text-slate-500">{fmtDate(t.created_at)} · {t.status}</p>
+                {t.summary && <p className="mt-2 rounded-lg bg-slate-500/10 p-2 text-xs text-slate-300" data-testid={`support-summary-${t.id}`}>Resumen de la llamada: {t.summary}</p>}
+                <p className="mt-1 text-xs text-slate-500">{fmtDate(t.created_at)}{t.agent_name && ` · atendió ${t.agent_name}`}{t.line_number && ` · llamó al ${t.line_number}`} · {t.status}</p>
+                {t.status === "abierta" && t.kind === "humano" && <a href={`tel:${t.lead_phone}`} className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-500" data-testid={`support-callback-${t.id}`}><Phone className="h-3.5 w-3.5" />Llamar ahora a {t.lead_phone}</a>}
               </div>
             </div>
-            {t.status === "abierta" && <button onClick={() => resolve(t.id)} className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-emerald-500" data-testid={`support-resolve-${t.id}`}><CheckCircle2 className="h-3.5 w-3.5" /> Resuelta</button>}
+            {t.status === "abierta" && <button onClick={() => resolve(t.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-emerald-500" data-testid={`support-resolve-${t.id}`}><CheckCircle2 className="h-3.5 w-3.5" /> {t.kind === "humano" ? "Ya le he llamado" : "Resuelta"}</button>}
           </Panel>
         ))}
         {!items.length && <Panel><p className="text-sm text-slate-500" data-testid="support-empty">No hay solicitudes de asistencia.</p></Panel>}

@@ -343,18 +343,13 @@ def reception_objective(agent: dict) -> str:
            "qué necesita. Resuelve dudas solo con la información del negocio."]
     if agent.get("reception_book", True):
         out.append("Si quiere una cita, llama a check_availability, ofrece dos o tres horas y reserva con book_appointment.")
-    if agent.get("transfer_number"):
-        out.append("Si pide hablar con una persona o no puedes resolverlo, dile que le pasas con el equipo y usa transferCall.")
     if agent.get("reception_message", True):
-        out.append("Si quiere dejar un recado" + (" o no se puede pasar la llamada" if agent.get("transfer_number") else ", pide hablar con "
-                   "alguien o no puedes resolverlo") + ", toma nota del motivo y de cuándo le viene bien que le llamen y usa request_human.")
+        out.append("Si quiere dejar un recado, pide hablar con alguien o no puedes resolverlo, toma nota del motivo y de cuándo le viene "
+                   "bien que le llamen y usa request_human.")
     return " ".join(out)
 
 
 def human_rule(agent: dict, lead: dict) -> str:
-    if reception(lead) and agent.get("transfer_number"):
-        return ("Si la persona pide hablar con una persona, con un humano o con alguien del equipo: dile que le pasas ahora y usa "
-                "transferCall. Si la transferencia no funciona, pregúntale el motivo y cuándo le viene bien que le llamen y usa request_human.")
     return ("Si el lead pide hablar con una persona, con un humano o con alguien del equipo: no insistas. Pregúntale brevemente el "
             "motivo y cuándo le viene bien que le llamen, llama a request_human, dile que una persona del equipo le llamará lo antes "
             "posible, agradécele y despídete.")
@@ -514,12 +509,6 @@ def tools(agent: dict, server: dict, lead: dict | None = None, handoff: bool = T
              "time": {"type": "string", "description": "Hora HH:MM en formato 24h"},
              "notes": {"type": "string", "description": "Notas breves sobre lo que necesita el lead"}},
             ["date", "time"], server))
-    if reception(lead) and agent.get("transfer_number"):
-        out.append({"type": "transferCall", "destinations": [{
-            "type": "number", "number": agent["transfer_number"], "message": "Un momento, te paso con el equipo.",
-            "description": f"Pasar la llamada a una persona del equipo de {agent['business_name']}",
-            "transferPlan": {"mode": "blind-transfer", "sipVerb": "dial", "fallbackPlan": {
-                "message": "Ahora mismo no puedo pasarte con el equipo. Si quieres, tomo nota y te llaman enseguida.", "endCallEnabled": False}}}]})
     if handoff and L.choices(agent):
         out.append(L.handoff_tool(agent, server))
     return out
