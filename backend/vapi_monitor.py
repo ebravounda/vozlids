@@ -279,7 +279,7 @@ async def auto_repair() -> list:
         return []
     a = await audit()
     fixable = [n for n in a["numbers"] if any("Reconfigurar" not in i for i in n["issues"])]
-    if not fixable and not a["duplicates"] and a["shared"]:
+    if not fixable and not a["duplicates"] and a["shared"] and (a["transfer_ready"] or not a["numbers"]):
         return []
     import lines
     res = await lines.repair(None)

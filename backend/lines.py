@@ -296,11 +296,32 @@ async def health_check(user=Depends(require_admin)):
     return await linehealth.check_once()
 
 
+async def ensure_transfer_line() -> str:
+    """Give the shared trunk a Zadarma SIP login (new password on one existing line) so transfers can dial out."""
+    if await vapi.transfer_line_ready():
+        return ""
+    recs = [r async for r in db.tenant_numbers.find({**LIVE, "sip_id": {"$nin": [None, ""]}, "credential_id": {"$nin": [None, ""]}})]
+    r = next((x for x in recs if not x.get("extra")), recs[0] if recs else None)
+    if not r:
+        return "No hay ninguna línea SIP conectada para pasar llamadas"
+    pwd, sip = Z.new_password(), str(r["sip_id"])
+    await Z.reuse_sip(sip, pwd, r["number"])
+    await vapi._post(f"/credential/{r['credential_id']}", {"outboundAuthenticationPlan": {"authUsername": sip, "authPassword": pwd}}, "PATCH")
+    await vapi.set_transfer_line(sip, pwd)
+    return f"Llamadas pasadas a personas: salen por la línea SIP {sip} ({r['number']})"
+
+
 async def repair(only: set | None) -> dict:
     if not (await Z.creds()).get("key"):
         raise HTTPException(400, "Conecta Zadarma en Telefonía antes de reparar: sin Zadarma no se pueden ajustar los desvíos.")
     isolated = await vapi.isolate_inbound()
     out = []
+    try:
+        note = await ensure_transfer_line()
+    except (vapi.VapiError, Z.ZadarmaError, HTTPException) as e:
+        note = f"No se pudo preparar la línea para pasar llamadas: {getattr(e, 'detail', e)}"
+    if note:
+        out.append({"number": "Transferencias", "ok": "No se pudo" not in note and "No hay" not in note, "detail": note})
     async for r in db.tenant_numbers.find({"status": "activo", "number": {"$nin": [None, ""]}}):
         if only and r["number"] not in only:
             continue

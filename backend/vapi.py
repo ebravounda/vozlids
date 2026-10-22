@@ -180,6 +180,11 @@ async def connect_tenant_number(sip_login: str, sip_password: str, number: str, 
     return {**v, **inbound}
 
 
+async def transfer_line_ready() -> bool:
+    cur = next((c for c in await _list("/credential") if c.get("name") == INBOUND_NAME), {})
+    return bool((cur.get("outboundAuthenticationPlan") or {}).get("authUsername"))
+
+
 async def set_transfer_line(sip_login: str, sip_password: str) -> None:
     """Transfers dial out through the shared inbound trunk, so it needs a Zadarma SIP login to place that leg."""
     await _post(f"/credential/{await inbound_credential()}", {"outboundLeadingPlusEnabled": True, "outboundAuthenticationPlan": {
