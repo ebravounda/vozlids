@@ -17,13 +17,6 @@ router = APIRouter(prefix="/api")
 WEEKLY_MIN_USD = 0.01
 
 
-def _when(r: dict):
-    try:
-        return datetime.strptime(str(r["callstart"])[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=CR.MADRID)
-    except (KeyError, ValueError, TypeError):
-        return None
-
-
 async def compare(days: int) -> dict:
     pricing = await get_pricing()
     since = datetime.now(timezone.utc) - timedelta(days=max(1, min(days, 29)))
@@ -37,25 +30,14 @@ async def compare(days: int) -> dict:
                                 {"messages": 0, "transcript": 0}).to_list(5000)
     agent_country = {str(a["_id"]): a.get("country", "ES") async for a in db.agents.find({}, {"country": 1})}
     users = {str(u["_id"]): u.get("business_name") or u.get("email") async for u in db.users.find({}, {"business_name": 1, "email": 1})}
-    by_num: dict = {}
-    for ld in leads:
-        by_num.setdefault(CR._digits(ld.get("phone") or "")[-9:], []).append(ld)
-    used, rows = set(), []
+    pairs = {str(r.get("id")): lid for lid, r in CR.match(leads, stats).items()}
+    by_id = {str(ld["_id"]): ld for ld in leads}
+    rows = []
     t = {"zadarma": 0.0, "panel": 0.0, "zadarma_seconds": 0, "panel_seconds": 0, "ok": 0, "diff": 0, "missing": 0, "free": 0}
     for r in stats:
-        when = _when(r)
         cost = CR.to_usd(CR._num(r.get("billcost")), r.get("currency"), pricing)
         secs = int(CR._num(r.get("billseconds")))
-        best = None
-        for n in {CR._digits(str(r.get("to") or ""))[-9:], CR._digits(str(r.get("from") or ""))[-9:]} - {""}:
-            for ld in by_num.get(n, []):
-                start = CR._parse(ld.get("started_at") or ld.get("created_at"))
-                if when is None or start is None or ld["_id"] in used:
-                    continue
-                gap = abs((when - (start if start.tzinfo else start.replace(tzinfo=timezone.utc))).total_seconds())
-                if gap <= 600 and (best is None or gap < best[0]):
-                    best = (gap, ld)
-        ld = best[1] if best else None
+        ld = by_id.get(pairs.get(str(r.get("id")), ""))
         if ld is None and cost == 0:
             t["free"] += 1
             continue
@@ -66,7 +48,6 @@ async def compare(days: int) -> dict:
         z_rate = round(cost / secs * 60, 4) if secs else None
         status = "missing" if ld is None else ("ok" if abs(panel - cost) < 0.001 else "diff")
         if ld:
-            used.add(ld["_id"])
             t["panel"] += panel
             t["panel_seconds"] += ld.get("duration_seconds") or 0
         t["zadarma"] += cost

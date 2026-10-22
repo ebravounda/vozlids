@@ -424,3 +424,8 @@
 - Número de Chile: 6 $/mes por defecto; al arrancar, el valor guardado 8 se migra a 6 (monitor.loop).
 - Aviso semanal: costs_compare.weekly_check, en un bucle propio de la app cada 15 min (la app corre en Plesk, no con las tareas programadas de Emergent). Los lunes a partir de las 9:00 hora de Madrid compara los últimos 7 días y envía un email de alerta (monitor.notify "zadarma_diff") solo si Zadarma cobró ≥ 0,01 $ más que el panel. Prueba manual: POST /api/admin/costs/zadarma-weekly.
 - Probado: iteration_42 (el backend tuvo un fallo menor, ya corregido; el frontend pasó entero).
+
+## 2026-06 · Mejor emparejamiento Zadarma ↔ llamadas
+- costs_real.match(): empareja por número, hora más cercana y duración más parecida (puntuación = diferencia de hora + 2 × diferencia de duración, ventana de ±10 min). Elige las parejas de mejor a peor puntuación, no en orden de llegada, y cada registro de Zadarma se usa una sola vez. La usan tanto sync_zadarma como compare.
+- Cada lead guarda line_zadarma_id. sync vuelve a emparejar una vez todos los leads sin ese id (corrige emparejamientos antiguos) y excluye los registros ya asignados.
+- Pendiente (el usuario no lo eligió): caché y límite de consultas para el tope de 3 consultas de estadísticas por minuto de Zadarma, contar las llamadas de 0 s en Vapi y marcar llamadas caras con su origen.

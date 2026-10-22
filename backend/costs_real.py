@@ -101,16 +101,51 @@ async def _stats(start: datetime) -> list:
     return rows
 
 
+def _row_time(r: dict):
+    try:
+        return datetime.strptime(str(r["callstart"])[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=MADRID)
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def match(leads: list, rows: list, taken: set | None = None) -> dict:
+    """Pair VozLeads calls with Zadarma records: same number, closest start time and most similar duration, each record used once."""
+    by_num: dict = {}
+    for r in rows:
+        t = _row_time(r)
+        if t is None or str(r.get("id")) in (taken or set()):
+            continue
+        for n in {_digits(str(r.get("to") or ""))[-9:], _digits(str(r.get("from") or ""))[-9:]} - {""}:
+            by_num.setdefault(n, []).append((t, r))
+    pairs = []
+    for ld in leads:
+        start = _parse(ld.get("started_at") or ld.get("created_at"))
+        if start is None:
+            continue
+        start = start if start.tzinfo else start.replace(tzinfo=timezone.utc)
+        secs = ld.get("duration_seconds") or 0
+        for t, r in by_num.get(_digits(ld.get("phone") or "")[-9:], []):
+            gap = abs((t - start).total_seconds())
+            if gap <= 600:
+                pairs.append((gap + 2 * abs(_num(r.get("billseconds")) - secs), str(ld["_id"]), str(r.get("id")), r))
+    out, used = {}, set()
+    for _, lid, rid, r in sorted(pairs, key=lambda p: p[0]):
+        if lid not in out and rid not in used:
+            out[lid] = r
+            used.add(rid)
+    return out
+
+
 async def sync_zadarma(pricing: dict, force: bool = False) -> dict:
-    """Store the real Zadarma cost (billcost) on each call, matching by number and start time."""
+    """Store the real Zadarma cost (billcost) on each call."""
     st = await db.platform_settings.find_one({"_id": "zadarma_sync"}) or {}
     last = _parse(st.get("at", ""))
     if not force and last and datetime.now(timezone.utc) - last < timedelta(minutes=SYNC_EVERY_MIN):
         return {"skipped": True, **{k: st.get(k) for k in ("matched", "error")}}
     since = datetime.now(timezone.utc) - timedelta(days=29)
-    leads = await db.leads.find({"vapi_call_id": {"$ne": None}, "line_cost_usd": None, "duration_seconds": {"$gt": 0},
-                                 "created_at": {"$gte": since.isoformat()}},
-                                {"phone": 1, "created_at": 1, "started_at": 1, "direction": 1, "source": 1}).to_list(3000)
+    base = {"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since.isoformat()}}
+    leads = await db.leads.find({**base, "line_zadarma_id": None, "duration_seconds": {"$gt": 0}},
+                                {"phone": 1, "created_at": 1, "started_at": 1, "duration_seconds": 1}).to_list(3000)
     out = {"at": datetime.now(timezone.utc).isoformat(), "matched": 0, "pending": len(leads), "error": ""}
     if leads:
         try:
@@ -119,38 +154,13 @@ async def sync_zadarma(pricing: dict, force: bool = False) -> dict:
             out["error"] = str(e)
             rows = []
         await learn_rates(rows, pricing)
-        by_num: dict = {}
-        for r in rows:
-            try:
-                t = datetime.strptime(str(r["callstart"])[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=MADRID)
-            except (KeyError, ValueError, TypeError):
-                continue
-            for n in {_digits(str(r.get("to") or "")), _digits(str(r.get("from") or ""))} - {""}:
-                by_num.setdefault(n[-9:], []).append((t, r))
-        used = set()
-        for ld in leads:
-            start = _parse(ld.get("started_at") or ld.get("created_at"))
-            if start is None:
-                continue
-            if start.tzinfo is None:
-                start = start.replace(tzinfo=timezone.utc)
-            best = None
-            for t, r in by_num.get(_digits(ld.get("phone") or "")[-9:], []):
-                if r.get("id") in used:
-                    continue
-                gap = abs((t - start).total_seconds())
-                if gap <= 600 and (best is None or gap < best[0]):
-                    best = (gap, r)
-            if best:
-                r = best[1]
-                used.add(r.get("id"))
-                try:
-                    usd = to_usd(float(str(r.get("billcost") or 0).replace(",", ".")), r.get("currency"), pricing)
-                except ValueError:
-                    continue
-                await db.leads.update_one({"_id": ld["_id"]}, {"$set": {"line_cost_usd": round(usd, 5),
-                                                                         "line_currency": r.get("currency")}})
-                out["matched"] += 1
+        taken = {d["line_zadarma_id"] async for d in db.leads.find({**base, "line_zadarma_id": {"$ne": None}}, {"line_zadarma_id": 1})}
+        ids = {str(ld["_id"]): ld["_id"] for ld in leads}
+        for lid, r in match(leads, rows, taken).items():
+            usd = to_usd(_num(r.get("billcost")), r.get("currency"), pricing)
+            await db.leads.update_one({"_id": ids[lid]}, {"$set": {"line_cost_usd": round(usd, 5), "line_currency": r.get("currency"),
+                                                                  "line_zadarma_id": str(r.get("id"))}})
+            out["matched"] += 1
         out["pending"] -= out["matched"]
     await db.platform_settings.update_one({"_id": "zadarma_sync"}, {"$set": out}, upsert=True)
     return out
