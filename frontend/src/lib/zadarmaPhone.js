@@ -31,12 +31,13 @@ const loadLib = () => new Promise((ok, fail) => {
   }, 100);
 });
 
+// Full international number (digits only). Only local numbers (9 digits) get the active line's country code.
 export function normalize(raw, line) {
-  let d = String(raw || "").replace(/[^\d+]/g, "");
+  const d = String(raw || "").replace(/[^\d+]/g, "");
   if (d.startsWith("+")) return d.slice(1);
   if (d.startsWith("00")) return d.slice(2);
-  const cc = line.startsWith("+56") ? "56" : "34";
-  return d.length === 9 ? cc + d : d;
+  if (d.length !== 9) return d;
+  return (line.startsWith("+56") ? "56" : line.startsWith("+34") ? "34" : "") + d;
 }
 
 function onConfirmed() {
@@ -114,8 +115,8 @@ export function dial(raw) {
   const to = normalize(raw, state.line);
   if (to.length < 6) { toast.error("Escribe un número válido"); return; }
   set({ status: "calling", to });
-  trace("marcando", { to, line: state.line });
-  phone.call(to);
+  trace("marcando", { to: `+${to}`, line: state.line });
+  phone.call(`+${to}`);
 }
 
 export function hangup() { phone?.finishCall?.(); onEnded(); }
