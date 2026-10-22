@@ -10,6 +10,7 @@ import { ProviderAlerts } from "@/components/VoiceBalanceAlert";
 import { PageHeader, Panel } from "@/components/Common";
 import { CartesiaSettings, CustomVoices, ElevenLabsSettings, GoogleSettings, LandingSettings, ResendSettings, StripeSettings } from "@/components/AdminIntegrations";
 import { ZadarmaSettings } from "@/components/AdminTelephony";
+import { SplitAccount } from "@/components/admin/SplitAccount";
 import { PendingExtraBanner, PendingExtraNumbers } from "@/components/numbers/AgentNumbers";
 import { AdminKyc } from "@/components/kyc/AdminKyc";
 import { AdminOnboarding } from "@/components/AdminOnboarding";
@@ -135,7 +136,7 @@ function UserRow({ u, plans, reload }) {
   const over = plan && u.minutes_used >= plan.minutes;
   return (
     <tr className="border-t border-slate-800" data-testid={`admin-user-${u.id}`}>
-      <td className="p-3"><p className="text-white">{u.business_name}</p><p className="text-xs text-slate-500">{u.email} · {u.country}{u.role === "admin" ? " · admin" : ""}</p></td>
+      <td className="p-3"><p className="text-white">{u.business_name}</p><p className="text-xs text-slate-500">{u.email} · {u.country}{u.role === "admin" ? " · admin" : ""}{u.split_from_admin ? " · tu cuenta de llamadas" : ""}</p></td>
       <td className="p-3">
         <Select value={u.plan_id || "none"} onValueChange={(v) => save({ plan_id: v === "none" ? null : v })}>
           <SelectTrigger className="h-8 w-40 bg-slate-950/60 text-xs" data-testid={`admin-user-plan-${u.id}`}><SelectValue /></SelectTrigger>
@@ -181,6 +182,7 @@ export default function SuperAdmin() {
       </div>
       <p className="mt-4 text-xs text-slate-500">Con "Exceso" activo la cuenta sigue llamando al agotar el plan. Los clientes contratan su plan desde "Mi plan" y Stripe les cobra la cuota mensual.</p>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <SplitAccount />
         <AdminKyc />
         <ZadarmaSettings />
         <PendingExtraNumbers />

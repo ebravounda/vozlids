@@ -70,7 +70,8 @@ def oid(v: str) -> ObjectId:
 def user_out(u: dict) -> dict:
     return {"id": str(u.get("id") or u.get("_id")), "email": u["email"], "name": u.get("name", ""),
             "business_name": u.get("business_name", ""), "role": u.get("role", "business"),
-            "country": u.get("country", "ES"), "billing_status": u.get("billing_status"), "tour_pending": u.get("tour_done") is False}
+            "country": u.get("country", "ES"), "billing_status": u.get("billing_status"), "tour_pending": u.get("tour_done") is False,
+            "admin_only": bool(u.get("admin_only")), "client_id": u.get("client_id", "")}
 
 
 def ago(minutes: int) -> str:

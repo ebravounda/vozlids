@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Shield, Sparkles } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { ADMIN_PATHS, AdminTabs, PlanProvider, UsageBanner, UsageMeter, useFeature, usePlan } from "@/components/PlanGate";
 import { KycBanner } from "@/components/kyc/KycPanel";
 import { Tour } from "@/components/Tour";
+import { SwitchToClient } from "@/components/admin/SplitAccount";
 
 const NAV = [
   { to: "/app", label: "Leads y llamadas", icon: PhoneCall, id: "leads", end: true },
@@ -97,11 +98,14 @@ export default function DashboardLayout() {
   };
   const location = useLocation();
   const tickets = useOpenTickets(location.pathname);
+  const adminOnly = user?.admin_only && !user?.impersonating;
+  const nav = adminOnly ? ADMIN_NAV : user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV;
 
   useEffect(() => {
     if (user?.role === "admin") api.get("/telephony/status").then((r) => setTel(r.data)).catch(() => {});
   }, [location.pathname, user?.role]);
 
+  if (adminOnly && location.pathname === "/app") return <Navigate to="/app/admin" replace />;
   return (
     <PlanProvider path={location.pathname}>
     <div className="app-light flex min-h-screen bg-[#F8FAFC] text-slate-700">
@@ -109,10 +113,11 @@ export default function DashboardLayout() {
         <Link to="/" className="mb-6 shrink-0 px-2"><Logo /></Link>
         <p className="mb-2 shrink-0 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Menú</p>
         <nav className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-2 pb-3 [scrollbar-width:thin]" data-testid="sidebar-nav">
-          {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => <NavItem key={n.to} n={n} tickets={tickets} path={location.pathname} />)}
+          {nav.map((n) => <NavItem key={n.to} n={n} tickets={tickets} path={location.pathname} />)}
         </nav>
-        <button onClick={() => setTour(true)} className="mb-2 flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50" data-testid="sidebar-tour-button"><Sparkles className="h-4 w-4" /> Ver tutorial</button>
-        <UsageMeter />
+        <SwitchToClient className="mb-2" />
+        {!adminOnly && <button onClick={() => setTour(true)} className="mb-2 flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50" data-testid="sidebar-tour-button"><Sparkles className="h-4 w-4" /> Ver tutorial</button>}
+        {!adminOnly && <UsageMeter />}
         <div className="mt-3 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-business-name">{user?.business_name}</p>
           <p className="truncate text-xs text-slate-500">{user?.email}</p>
@@ -134,13 +139,13 @@ export default function DashboardLayout() {
             <span className={`h-2 w-2 rounded-full ${tel?.configured ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
             {tel?.configured ? "Telefonía conectada" : "Telefonía sin configurar"}
           </Link> : <span />}
-          <CreateAgentButton />
+          {adminOnly ? <SwitchToClient /> : <CreateAgentButton />}
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-slate-800 px-3 py-2 md:hidden">
-          {(user?.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((n) => (
+          {nav.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} data-testid={`mobile-nav-${n.id}`} className={({ isActive }) => `whitespace-nowrap rounded-lg px-3 py-1.5 text-xs ${isActive ? "bg-blue-50 text-blue-700" : "text-slate-500"}`}>{n.label}</NavLink>
           ))}
-          <button onClick={() => setTour(true)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600" data-testid="mobile-tour-button">Ver tutorial</button>
+          {!adminOnly && <button onClick={() => setTour(true)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600" data-testid="mobile-tour-button">Ver tutorial</button>}
         </nav>
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 md:px-10">
           {user?.role === "admin" && ADMIN_PATHS.includes(location.pathname) && <AdminTabs />}

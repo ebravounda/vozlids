@@ -357,3 +357,9 @@
 - UI: components/numbers/ConnectExisting.jsx inside Super admin → Zadarma panel ("Conectar números de mi Zadarma").
 - SIP: no need to buy SIP lines; one internal Zadarma SIP is created per number via API.
 - 2026-06: "Número activo" celebration email (phone_numbers.activate): subject "¡Enhorabuena! Tu número X ya está activo", rows (número, quién contesta, pruébalo ahora, salientes, siguiente paso), CTA "Probar mi agente" → /app/agentes/{agent}?tab=test (AgentBuilder reads ?tab=).
+
+## 2026-06 · Separar cuenta admin / cuenta de llamadas
+- POST /api/admin/split-account {email} (one-time, Super admin panel "Separar tu cuenta…", email prefilled ed0.2580@gmail.com): creates role=business user (same password hash, copied business fields, split_from_admin) and moves every collection's tenant_id from admin → client (except users/platform_settings/plans/login_attempts/oauth_states/ip_geo/tts_cache/api_rate). Admin gets admin_only + client_id, business_name "Administración VozLeads"; seed skips sample data for admin_only.
+- Frontend: admin_only → nav only Super admin, /app redirects to /app/admin, no tutorial/usage meter; "Mi cuenta de llamadas" button (impersonate client_id); "Volver a mi cuenta" via existing impersonation bar. Users list marks "tu cuenta de llamadas".
+- minutes_used excludes landing demo leads (source web_vozleads).
+- Preview admin NOT split (test creds unchanged). Production: user must press the button after updating.

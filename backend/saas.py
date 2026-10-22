@@ -41,7 +41,7 @@ def month_start() -> str:
 
 
 async def minutes_used(tenant_id: str) -> float:
-    q = [{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}}},
+    q = [{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}, "source": {"$ne": "web_vozleads"}}},
          {"$group": {"_id": None, "s": {"$sum": {"$ifNull": ["$duration_seconds", 0]}}}}]
     secs = 0
     for col in (db.leads, db.usage_archive):
@@ -226,7 +226,8 @@ async def admin_users(user=Depends(require_admin)):
                     "country": u.get("country", "ES"), "role": u.get("role", "business"), "plan_id": u.get("plan_id"),
                     "allow_overage": u.get("allow_overage", False), "suspended": u.get("suspended", False),
                     "minutes_used": await minutes_used(uid), "calls": await db.leads.count_documents({"tenant_id": uid, "vapi_call_id": {"$ne": None}}),
-                    "agents": await db.agents.count_documents({"tenant_id": uid}), "created_at": u.get("created_at")})
+                    "agents": await db.agents.count_documents({"tenant_id": uid}), "created_at": u.get("created_at"),
+                    "split_from_admin": bool(u.get("split_from_admin")), "admin_only": bool(u.get("admin_only"))})
     return out
 
 
@@ -321,6 +322,39 @@ async def impersonate(uid: str, response: Response, request: Request, user=Depen
                         max_age=7200, path="/")
     A.set_auth_cookies(response, uid, target["email"])
     return {"ok": True}
+
+
+class SplitIn(BaseModel):
+    email: str = Field(min_length=5, max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+SPLIT_KEEP = {"users", "platform_settings", "plans", "login_attempts", "oauth_states", "ip_geo", "tts_cache", "api_rate", "system.views"}
+NO_COPY = {"_id", "email", "password_hash", "role", "plan_id", "billing_status", "stripe_customer_id", "stripe_subscription_id",
+           "stripe_mode", "billing_test", "tour_done", "created_at", "admin_only", "client_id"}
+
+
+@router.post("/admin/split-account")
+async def split_account(body: SplitIn, user=Depends(require_admin)):
+    """One-time: move the admin's own business (agents, leads, numbers…) to a normal client account; the admin stays admin-only."""
+    admin = await db.users.find_one({"_id": oid(user["id"])})
+    if admin.get("admin_only"):
+        raise HTTPException(409, "Tu cuenta ya está separada.")
+    email = body.email.strip().lower()
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(409, "Ese email ya tiene una cuenta en VozLeads.")
+    client = {k: v for k, v in admin.items() if k not in NO_COPY}
+    res = await db.users.insert_one({**client, "email": email, "password_hash": admin["password_hash"], "role": "business",
+                                     "created_at": now_iso(), "split_from_admin": True})
+    new_id, old_id = str(res.inserted_id), user["id"]
+    moved = {}
+    for col in await db.list_collection_names():
+        if col in SPLIT_KEEP:
+            continue
+        r = await db[col].update_many({"tenant_id": old_id}, {"$set": {"tenant_id": new_id}})
+        if r.modified_count:
+            moved[col] = r.modified_count
+    await db.users.update_one({"_id": admin["_id"]}, {"$set": {"admin_only": True, "client_id": new_id, "business_name": "Administración VozLeads"}})
+    return {"ok": True, "client_id": new_id, "email": email, "moved": moved}
 
 
 @router.post("/auth/stop-impersonation")
