@@ -182,7 +182,7 @@ async def dial(agent: dict, lead: dict):
         return
     import phone_numbers as N
     country = N.num_country(lead.get("phone", "")) or country
-    own = await N.phone_id_for(agent["tenant_id"], country, str(agent["_id"]))
+    own = lead.get("via_phone_id") or await N.phone_id_for(agent["tenant_id"], country, str(agent["_id"]))
     if not own and not vapi.configured(country):
         await db.leads.update_one({"_id": lid}, {"$set": {
             "status": "fallida", "updated_at": now_iso(),
@@ -194,6 +194,7 @@ async def dial(agent: dict, lead: dict):
     try:
         call_id = await vapi.create_call(agent, await attach_history(agent, lead), today_text(country), own)
         await db.leads.update_one({"_id": lid}, {"$set": {"vapi_call_id": call_id, "call_phase": "queued",
+                                                          "line_number": await N.line_number(own or vapi.phone_number_id(country), country),
                                                           "voice_provider": vapi.voice_provider(agent["voice"]),
                                                           "executive": agent.get("executive", ""),
                                                           "updated_at": now_iso()}})

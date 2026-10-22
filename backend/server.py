@@ -40,6 +40,7 @@ import languages as L  # noqa: E402
 import kyc  # noqa: E402
 import connect_numbers  # noqa: E402
 import lines  # noqa: E402
+import linehealth  # noqa: E402
 import security_admin as SEC  # noqa: E402
 import reminders  # noqa: E402
 import callbacks  # noqa: E402
@@ -704,6 +705,7 @@ async def startup():
     await X.load_custom_voices()
     await db.monitor_alerts.create_index("created_at")
     asyncio.create_task(monitor.loop())
+    asyncio.create_task(linehealth.loop())
     await api_core.ensure_indexes()
     await privacy.ensure_indexes()
     await gcal.ensure_indexes()

@@ -18,3 +18,15 @@ export function LangFlag({ lang, phone = "", withName = false, testid }) {
     </span>
   );
 }
+
+const LINE_FLAG = { "+34": "🇪🇸", "+56": "🇨🇱" };
+
+export function LineFlag({ number, inbound, testid }) {
+  if (!number) return <span className="text-xs text-slate-500" data-testid={testid}>—</span>;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap" title={inbound ? `Llamó a tu línea ${number}` : `Salió desde tu línea ${number}`} data-testid={testid}>
+      <span className="text-base leading-none">{LINE_FLAG[number.slice(0, 3)] || "🌐"}</span>
+      <span className="font-mono text-xs text-slate-300">{number}</span>
+    </span>
+  );
+}

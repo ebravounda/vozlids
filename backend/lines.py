@@ -77,8 +77,9 @@ async def lines(user=Depends(require_admin)):
             row.update({"role": _role(r), "tenant_id": r.get("tenant_id"), "owner": names.get(r.get("tenant_id"), ""),
                         "agent_id": agent or "", "agent": names.get(agent, ""), "sip_id": str(r.get("sip_id") or ""),
                         "status": r.get("status"), "error": r.get("error", ""), "billing": r.get("billing") or ("stripe" if r.get("stripe_item_id") else ""),
-                        "ok_in": r.get("status") == "activo" and bool(r.get("credential_id")) and r.get("routed", True) is not False,
-                        "ok_out": r.get("status") == "activo" and bool(r.get("phone_number_id")),
+                        "ok_in": r.get("status") == "activo" and bool(r.get("credential_id")) and r.get("routed", True) is not False and r.get("health") != "caida",
+                        "ok_out": r.get("status") == "activo" and bool(r.get("phone_number_id")) and r.get("health") != "caida",
+                        "health_reason": r.get("health_reason", "") if r.get("health") == "caida" else "", "health_at": r.get("health_at", ""),
                         "ok_docs": bool(r.get("platform")) or kyc_ok.get(r.get("tenant_id"), False)})
         out.append(row)
     orphans = [{"number": n, "owner": names.get(r.get("tenant_id"), ""), "status": r.get("status")} for n, r in recs.items() if n not in seen]
@@ -223,6 +224,39 @@ async def _rec(number: str) -> dict:
     return r
 
 
+class TestIn(BaseModel):
+    phone: str = Field(min_length=9, max_length=20)
+
+
+@router.post("/{number}/test")
+async def test_line(number: str, body: TestIn, user=Depends(require_admin)):
+    """The line's agent calls `phone` from this exact number."""
+    import services as S
+    from countries import norm_phone
+    from models import Lead
+    r = await _rec(number)
+    if r.get("status") != "activo" or not r.get("phone_number_id"):
+        raise HTTPException(409, "Esta línea no está activa: reconfigúrala primero.")
+    aid = (r.get("agent_id") if r.get("extra") else r.get("inbound_agent_id")) or await N._default_agent(r["tenant_id"], country_of(r["number"]) or "ES")
+    agent = await db.agents.find_one({"_id": ObjectId(aid)}) if aid and ObjectId.is_valid(aid) else None
+    if not agent:
+        raise HTTPException(409, "Esta línea no tiene agente: usa «Cambiar agente».")
+    raw = body.phone.strip()
+    try:
+        phone = raw if raw.startswith("+") else norm_phone(raw, country_of(r["number"]) or agent.get("country", "ES"))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    lead = Lead(tenant_id=agent["tenant_id"], agent_id=aid, agent_name=agent["name"], name="Prueba de línea", phone=phone,
+                is_test=True, source="prueba_linea", via_phone_id=r["phone_number_id"], line_number=r["number"])
+    doc = lead.to_mongo()
+    doc["_id"] = (await db.leads.insert_one(doc)).inserted_id
+    await S.dial(agent, doc)
+    out = await db.leads.find_one({"_id": doc["_id"]}, {"status": 1, "error": 1, "vapi_call_id": 1})
+    if out.get("status") == "fallida":
+        raise HTTPException(424, f"No se pudo llamar: {out.get('error') or 'error desconocido'}")
+    return {"ok": True, "agent": agent["name"], "phone": phone}
+
+
 class AgentIn(BaseModel):
     agent_id: str = Field(min_length=1, max_length=40)
 
@@ -254,6 +288,12 @@ async def reconfigure(number: str, body: SipIn, user=Depends(require_admin)):
     except HTTPException as e:
         await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {"status": "error", "error": str(e.detail)[:300]}})
         raise
+
+
+@router.post("/health-check")
+async def health_check(user=Depends(require_admin)):
+    import linehealth
+    return await linehealth.check_once()
 
 
 @router.post("/reconfigure-all")

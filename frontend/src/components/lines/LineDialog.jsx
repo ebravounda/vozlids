@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, errMsg } from "@/lib/api";
@@ -99,6 +100,34 @@ export function AgentDialog({ line, opts, onClose, onDone }) {
         <DialogHeader><DialogTitle>¿Qué agente contesta en {line.number}?</DialogTitle></DialogHeader>
         <Pick label="Agente" value={agent} onChange={setAgent} opts={(o?.agents || []).map((a) => [a.id, a.name])} testid="line-agent-change-select" placeholder="Elige el agente" />
         <Button onClick={save} disabled={!agent} className="mt-2 w-full rounded-full" data-testid="line-agent-save-button">Guardar</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function TestDialog({ line, onClose }) {
+  const [phone, setPhone] = useState(() => localStorage.getItem("vl_line_test_phone") || "+34600850506");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(null);
+  const call = async () => {
+    setBusy(true);
+    try {
+      localStorage.setItem("vl_line_test_phone", phone);
+      const r = (await api.post(`/admin/lines/${encodeURIComponent(line.number)}/test`, { phone })).data;
+      setDone(r);
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md" data-testid="line-test-dialog">
+        <DialogHeader><DialogTitle>Probar {line.number}</DialogTitle></DialogHeader>
+        {done ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300" data-testid="line-test-result">
+          Llamando a {done.phone}… Contestará {done.agent} desde {line.number}. Si suena y ves ese número en tu móvil, las llamadas salientes funcionan. Para probar las entrantes, llama tú al {line.number}.</p>
+          : <>
+            <p className="text-sm text-slate-400">{line.agent ? `${line.agent} te llamará` : "El agente de esta línea te llamará"} desde {line.number}. Así compruebas que la línea hace llamadas y que se ve el número correcto.</p>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-slate-950/60 font-mono" placeholder="+34600000000" data-testid="line-test-phone-input" />
+            <Button onClick={call} disabled={busy || phone.trim().length < 9} className="w-full rounded-full" data-testid="line-test-call-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Llamarme ahora</Button>
+          </>}
       </DialogContent>
     </Dialog>
   );

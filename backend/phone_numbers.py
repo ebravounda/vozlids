@@ -32,6 +32,11 @@ def num_country(number: str) -> str:
     return {"34": "ES", "56": "CL"}.get(re.sub(r"\D", "", number or "")[:2], "")
 
 
+async def line_number(phone_id: str, country: str) -> str:
+    r = await db.tenant_numbers.find_one({"phone_number_id": phone_id}, {"number": 1}) if phone_id else None
+    return (r or {}).get("number") or vapi.number_info(country).get("number", "")
+
+
 async def phone_id_for(tenant_id: str, country: str, agent_id: str = ""):
     """Caller number for a call to `country`: the agent's own number there, else the main one, else any of the account's."""
     rows = [r async for r in db.tenant_numbers.find({"tenant_id": tenant_id, "status": "activo", "phone_number_id": {"$nin": [None, ""]}})]
@@ -203,7 +208,7 @@ async def assistant_request(msg: dict) -> dict:
     lead = Lead(executive=agent.get("executive", ""), tenant_id=r["tenant_id"], agent_id=str(agent["_id"]), agent_name=agent.get("base_name", agent["name"]), name="Llamada entrante",
                 phone=phone if phone.startswith("+") or phone == "oculto" else f"+{phone}", source="entrante",
                 direction="entrante", status="en_curso")
-    doc = lead.to_mongo()
+    doc = {**lead.to_mongo(), "line_number": r.get("number", "")}
     doc["vapi_call_id"] = call.get("id")
     doc["_id"] = (await db.leads.insert_one(doc)).inserted_id
     import plan_limits as PL

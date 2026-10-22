@@ -57,6 +57,8 @@ class Lead(BaseDocument):
     executive: str = ""
     language: Optional[str] = ""
     memory_calls: Optional[int] = 0
+    line_number: Optional[str] = ""
+    via_phone_id: Optional[str] = ""
     name: str
     phone: str
     email: str = ""

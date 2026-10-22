@@ -6,7 +6,7 @@ import { PageHeader, Panel, StatusBadge } from "@/components/Common";
 import { LeadDetail } from "@/pages/dashboard/LeadDetail";
 import { api } from "@/lib/api";
 import { STATUS, fmtDate } from "@/lib/constants";
-import { LEAD_LANGS, LangFlag } from "@/components/LangFlag";
+import { LEAD_LANGS, LangFlag, LineFlag } from "@/components/LangFlag";
 
 const STAT_KEYS = [
   ["total", "Leads totales", "text-white"],
@@ -78,7 +78,7 @@ export default function Leads() {
       <Panel className="overflow-x-auto p-0">
         <table className="w-full min-w-[720px] text-sm" data-testid="leads-table">
           <thead className="border-b border-slate-800 text-left text-xs uppercase tracking-wider text-slate-500">
-            <tr><th className="p-4 font-medium">Lead</th><th className="p-4 font-medium">Teléfono</th><th className="p-4 font-medium">Agente</th><th className="p-4 font-medium">Idioma</th><th className="p-4 font-medium">Estado</th><th className="p-4 font-medium">Interés</th><th className="p-4 font-medium">Fecha</th></tr>
+            <tr><th className="p-4 font-medium">Lead</th><th className="p-4 font-medium">Teléfono</th><th className="p-4 font-medium">Agente</th><th className="p-4 font-medium">Línea</th><th className="p-4 font-medium">Idioma</th><th className="p-4 font-medium">Estado</th><th className="p-4 font-medium">Interés</th><th className="p-4 font-medium">Fecha</th></tr>
           </thead>
           <tbody>
             {leads?.map((l) => (
@@ -89,6 +89,7 @@ export default function Leads() {
                 </td>
                 <td className="p-4 font-mono text-xs text-slate-300">{l.phone}</td>
                 <td className="p-4 text-slate-300">{l.agent_name}</td>
+                <td className="p-4"><LineFlag number={l.line_number} inbound={l.direction === "entrante"} testid={`lead-line-${l.id}`} /></td>
                 <td className="p-4"><LangFlag lang={l.language} phone={l.phone} withName testid={`lead-language-${l.id}`} /></td>
                 <td className="p-4"><StatusBadge status={l.status} testid={`lead-status-badge-${l.id}`} /></td>
                 <td className="p-4">{l.interest_score != null ? <span className="font-mono text-slate-200">{l.interest_score}%</span> : <span className="text-slate-600">—</span>}</td>

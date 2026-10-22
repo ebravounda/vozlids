@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Wrench, XCircle } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Loader2, PhoneCall, RefreshCw, Wrench, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
-import { AgentDialog, LineDialog } from "@/components/lines/LineDialog";
+import { AgentDialog, LineDialog, TestDialog } from "@/components/lines/LineDialog";
 
 const ROLE = { main: "Principal", agent: "Agente", platform: "Plataforma" };
 const Check = ({ ok, label, t }) => (
@@ -25,10 +25,11 @@ function Row({ l, act, busy }) {
       <td className="py-3 pr-3 font-mono text-xs text-slate-300">{l.sip_id || "—"}</td>
       <td className="py-3 pr-3">{l.connected && <div className="flex flex-wrap gap-1">
         <Check ok={l.ok_in} label="Entrantes" t={`line-in-${id}`} /><Check ok={l.ok_out} label="Salientes" t={`line-out-${id}`} /><Check ok={l.ok_docs} label="Documentos" t={`line-docs-${id}`} />
-        {l.error && <p className="mt-1 w-full text-xs text-rose-300">{l.error}</p>}</div>}</td>
+        {l.error && <p className="mt-1 w-full text-xs text-rose-300">{l.error}</p>}
+        {l.health_reason && <p className="mt-1 w-full text-xs text-rose-300" data-testid={`line-health-${id}`}>Caída: {l.health_reason}</p>}</div>}</td>
       <td className="py-3"><div className="flex flex-wrap justify-end gap-1.5">
         {!l.connected && l.usable && <B k="connect" v="default">Conectar</B>}
-        {l.connected && <><B k="agent">Cambiar agente</B><B k="move">Mover</B><B k="reconfigure">Reconfigurar</B><B k="disconnect">Desconectar</B></>}
+        {l.connected && <><B k="test" v="default"><PhoneCall className="mr-1 h-3.5 w-3.5" />Probar</B><B k="agent">Cambiar agente</B><B k="move">Mover</B><B k="reconfigure">Reconfigurar</B><B k="disconnect">Desconectar</B></>}
       </div></td>
     </tr>
   );
@@ -60,14 +61,26 @@ export default function AdminLines() {
     catch (e) { toast.error(errMsg(e)); setBusy(false); }
   };
   const done = () => { setDlg(null); load(); };
+  const health = async () => {
+    setBusy(true);
+    try {
+      const r = (await api.post("/admin/lines/health-check")).data;
+      const bad = r.filter((x) => !x.ok);
+      if (!r.length) toast.message("No se pudo revisar: conecta Zadarma y Vapi.");
+      else if (bad.length) toast.error(`${bad.length} línea(s) con problemas: revisa la tabla`);
+      else toast.success(`Las ${r.length} líneas funcionan`);
+      await load();
+    } catch (e) { toast.error(errMsg(e)); setBusy(false); }
+  };
   const lines = data?.lines || [];
   return (
     <div className="fade-up" data-testid="admin-lines-page">
-      <PageHeader eyebrow="Super admin" title="Líneas" desc="Todos tus números de Zadarma en un solo sitio: conéctalos a un cliente, a un agente o a la plataforma, y VozLeads lo configura todo." />
+      <PageHeader eyebrow="Super admin" title="Líneas" desc="Todos tus números de Zadarma en un solo sitio: conéctalos a un cliente, a un agente o a la plataforma, y VozLeads lo configura todo. Cada 30 minutos se revisan solas y te avisamos por email si alguna se cae." />
       <Panel className="mt-6 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <p className="mr-auto text-sm text-slate-400" data-testid="lines-summary">{data ? `${lines.length} números · ${lines.filter((l) => l.connected).length} conectados · ${lines.filter((l) => !l.connected && l.usable).length} libres · Líneas SIP: ${data.sips.length} (${data.sips.filter((s) => !s.used_by).length} sin usar, puedes crear ${data.sips_left} más)` : "Cargando…"}</p>
           <Button size="sm" variant="outline" onClick={load} disabled={busy} className="rounded-full" data-testid="lines-refresh-button">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Actualizar</Button>
+          <Button size="sm" variant="outline" onClick={health} disabled={busy} className="rounded-full" data-testid="lines-health-button"><Activity className="mr-2 h-4 w-4" />Revisar ahora</Button>
           <Button size="sm" onClick={all} disabled={busy || !lines.some((l) => l.connected)} className="rounded-full" data-testid="lines-reconfigure-all-button"><Wrench className="mr-2 h-4 w-4" />Reconfigurar todo</Button>
         </div>
         {results && <div className="rounded-xl border border-slate-700 p-3 text-xs" data-testid="lines-results">{results.map((r) => <p key={r.number} className={r.ok ? "text-emerald-400" : "text-rose-300"}>{r.number}: {r.detail}</p>)}</div>}
@@ -80,7 +93,8 @@ export default function AdminLines() {
           {data && !lines.length && <p className="py-6 text-sm text-slate-500" data-testid="lines-empty">No hay números en tu Zadarma.</p>}
         </div>
       </Panel>
-      {dlg && opts && (dlg.k === "agent"
+      {dlg?.k === "test" && <TestDialog line={dlg.l} onClose={() => setDlg(null)} />}
+      {dlg && opts && dlg.k !== "test" && (dlg.k === "agent"
         ? <AgentDialog line={dlg.l} opts={opts} onClose={() => setDlg(null)} onDone={done} />
         : <LineDialog mode={dlg.k} line={dlg.l} data={data} opts={opts} onClose={() => setDlg(null)} onDone={done} />)}
     </div>
