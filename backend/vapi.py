@@ -178,10 +178,12 @@ async def connect_tenant_number(sip_login: str, sip_password: str, number: str, 
     return {**v, **await connect_inbound(number)}
 
 
-ZADARMA_IN = [("185.45.152.0", 24), ("185.45.154.0", 24), ("185.45.155.0", 24), ("195.122.19.0", 24),
-              ("15.235.128.0", 24), ("31.31.222.0", 24)]
+ZADARMA_IN = [(f"185.45.{i}.0", 24) for i in (152, 153, 154, 155)] + [("195.122.19.0", 24), ("31.31.222.0", 24), ("15.235.128.0", 24)]
+ZADARMA_HOSTS = ["185.45.152.216", "185.45.152.164", "185.45.152.177", "185.45.152.200", "185.45.154.15", "185.45.155.14",
+                 "185.45.155.16", "185.45.155.17", "185.45.155.33", "195.122.19.20", "195.122.19.29", "15.235.128.70", "31.31.222.201"]
 INBOUND_GATEWAYS = [{"ip": "sip.zadarma.com", "inboundEnabled": False}] + [
-    {"ip": ip, "netmask": m, "inboundEnabled": True, "outboundEnabled": False} for ip, m in ZADARMA_IN]
+    {"ip": ip, "netmask": m, "inboundEnabled": True, "outboundEnabled": False} for ip, m in ZADARMA_IN] + [
+    {"ip": ip, "inboundEnabled": True, "outboundEnabled": False} for ip in ZADARMA_HOSTS]
 OUTBOUND_GATEWAYS = [{"ip": "sip.zadarma.com", "inboundEnabled": False}]
 INBOUND_NAME = "VozLeads Entrante Zadarma"
 
@@ -198,6 +200,8 @@ async def inbound_credential() -> str:
     """One shared trunk owns Zadarma's inbound IPs; Vapi routes every Zadarma call through it by the dialled number."""
     cur = next((c for c in await _list("/credential") if c.get("provider") == "byo-sip-trunk" and c.get("name") == INBOUND_NAME), None)
     if cur:
+        if len(cur.get("gateways") or []) != len(INBOUND_GATEWAYS):
+            await _post(f"/credential/{cur['id']}", {"gateways": INBOUND_GATEWAYS}, "PATCH")
         return cur["id"]
     return (await _post("/credential", {"provider": "byo-sip-trunk", "name": INBOUND_NAME, "gateways": INBOUND_GATEWAYS}))["id"]
 
