@@ -10,7 +10,7 @@ const STEPS = [
   { target: "agenda", icon: CalendarDays, title: "4 · Agenda y citas", text: "Las citas que agenda tu agente aparecen en tu calendario y te llega un recordatorio por email antes de cada una." },
   { target: "outbound", icon: PhoneOutgoing, title: "5 · Llamadas salientes", text: "Lanza llamadas a tus contactos: tu agente los llama, les presenta tu oferta y te deja anotado el resultado." },
   { target: "webwidget", icon: MousePointerClick, title: "6 · Botón para tu web", text: "Pon un botón en tu web para que tus visitantes reciban una llamada de tu agente al momento." },
-  { target: "support", icon: LifeBuoy, title: "7 · Asistencia técnica", text: "¿Dudas o algo no va bien? Escríbenos desde aquí y te ayudamos." },
+  { target: "support", icon: LifeBuoy, title: "7 · Asistencia técnica", text: "Cuando alguien pide hablar con una persona durante una llamada, aparece aquí con su teléfono y el motivo para que le devuelvas la llamada. También te avisamos por email." },
   { target: "plan", icon: CreditCard, title: "8 · Mi plan y minutos", text: "Revisa tus minutos usados, cuándo se renuevan y mejora tu plan si lo necesitas." },
   { icon: Clock, title: "¡Todo listo!", text: "Mientras preparamos tu número, crea tu primer agente: en unos minutos lo tendrás listo para atender.", cta: true },
 ];
