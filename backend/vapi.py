@@ -206,15 +206,20 @@ async def inbound_credential() -> str:
     return (await _post("/credential", {"provider": "byo-sip-trunk", "name": INBOUND_NAME, "gateways": INBOUND_GATEWAYS}))["id"]
 
 
+def inbound_alias(number: str) -> str:
+    # Vapi can't find some numbers by their plain digits (registered elsewhere); a "00" alias is always unique.
+    return "00" + number.lstrip("+")
+
+
 async def connect_inbound(number: str) -> dict:
-    cred, digits = await inbound_credential(), number.lstrip("+")
-    cur = next((p for p in await _list("/phone-number") if p.get("credentialId") == cred and p.get("number") == digits), None)
+    cred, alias = await inbound_credential(), inbound_alias(number)
+    cur = next((p for p in await _list("/phone-number") if p.get("credentialId") == cred and p.get("number") == alias), None)
     if cur:
         await _post(f"/phone-number/{cur['id']}", {"server": server_cfg()}, "PATCH")
     else:
-        cur = await _post("/phone-number", {"provider": "byo-phone-number", "name": f"Entrante {digits}", "number": digits,
+        cur = await _post("/phone-number", {"provider": "byo-phone-number", "name": f"Entrante {alias}", "number": alias,
                                             "numberE164CheckEnabled": False, "credentialId": cred, "server": server_cfg()})
-    return {"inbound_phone_number_id": cur["id"], "inbound_uri": inbound_sip_uri(digits, cred)}
+    return {"inbound_phone_number_id": cur["id"], "inbound_uri": inbound_sip_uri(alias, cred)}
 
 
 async def isolate_inbound() -> int:

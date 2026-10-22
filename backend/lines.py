@@ -308,8 +308,10 @@ async def repair_inbound(user=Depends(require_admin)):
             out.append({"number": r["number"], "ok": True, "detail": "Llamadas entrantes reparadas"})
         except (vapi.VapiError, Z.ZadarmaError) as e:
             out.append({"number": r["number"], "ok": False, "detail": str(e)[:200]})
+    cred = await vapi.inbound_credential()
     for p in await vapi._list("/phone-number"):
-        if p.get("provider") == "vapi" and (p.get("sipUri") or "").startswith("sip:vozleads-"):
+        legacy = p.get("provider") == "vapi" and (p.get("sipUri") or "").startswith("sip:vozleads-")
+        if legacy or (p.get("credentialId") == cred and not str(p.get("number", "")).startswith("00")):
             await vapi.delete(f"/phone-number/{p['id']}")
     return {"isolated": isolated, "numbers": out}
 
