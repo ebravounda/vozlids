@@ -4,10 +4,11 @@ import { AlertTriangle, CalendarCheck, Copy, Download, PhoneCall } from "lucide-
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/Common";
 import { SubjectActions } from "@/components/PrivacyParts";
-import { API, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import { fmtDate, fmtSlot } from "@/lib/constants";
 import { cap } from "@/lib/cal";
 import { LangFlag } from "@/components/LangFlag";
+import { RecordingPlayer } from "@/components/RecordingPlayer";
 
 const Score = ({ value }) => (
   <div data-testid="lead-interest-score">
@@ -99,7 +100,7 @@ export const LeadDetail = ({ id, onClose }) => {
               </div>
             )}
             {lead.recording_url ? (
-              <audio controls preload="none" src={`${API}/leads/${lead.id}/recording`} className="w-full" data-testid="lead-details-audio-play" />
+              <RecordingPlayer leadId={lead.id} seconds={lead.duration_seconds} />
             ) : lead.transcript_purged_at ? <p className="text-xs text-slate-500" data-testid="lead-purged-note">Transcripción y grabación eliminadas el {fmtDate(lead.transcript_purged_at)} por tu plazo de conservación.</p>
               : lead.call_phase === "ended" && <p className="text-xs text-slate-500">Sin grabación disponible.</p>}
             <Score value={lead.interest_score} />

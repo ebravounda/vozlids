@@ -429,3 +429,7 @@
 - costs_real.match(): empareja por número, hora más cercana y duración más parecida (puntuación = diferencia de hora + 2 × diferencia de duración, ventana de ±10 min). Elige las parejas de mejor a peor puntuación, no en orden de llegada, y cada registro de Zadarma se usa una sola vez. La usan tanto sync_zadarma como compare.
 - Cada lead guarda line_zadarma_id. sync vuelve a emparejar una vez todos los leads sin ese id (corrige emparejamientos antiguos) y excluye los registros ya asignados.
 - Pendiente (el usuario no lo eligió): caché y límite de consultas para el tope de 3 consultas de estadísticas por minuto de Zadarma, contar las llamadas de 0 s en Vapi y marcar llamadas caras con su origen.
+
+## 2026-06 · Reproductor de grabaciones
+- Se cambia el <audio controls> nativo (en Safari salía encogido y no reproducía) por components/RecordingPlayer.jsx: botón de reproducir/pausa, barra para avanzar, tiempo y descarga.
+- Nuevo GET /api/leads/{id}/recording-url, que devuelve la URL firmada de Vapi. La redirección /recording se mantiene.

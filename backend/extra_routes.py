@@ -147,17 +147,25 @@ async def delete_custom_voice(vid: str, user=Depends(require_admin)):
 
 
 # ---------- Recording proxy ----------
-@router.get("/leads/{lead_id}/recording")
-async def lead_recording(lead_id: str, user=CurrentUser):
+async def _recording(lead_id: str, user: dict) -> str:
     lead = await db.leads.find_one({"_id": ObjectId(lead_id) if ObjectId.is_valid(lead_id) else None,
                                     "tenant_id": user["id"]})
     if not lead or not lead.get("vapi_call_id"):
         raise HTTPException(404, "Grabación no disponible")
     try:
-        url = await vapi.recording_url(lead["vapi_call_id"])
+        return await vapi.recording_url(lead["vapi_call_id"])
     except vapi.VapiError as e:
         raise HTTPException(404, str(e))
-    return RedirectResponse(url, status_code=302)
+
+
+@router.get("/leads/{lead_id}/recording")
+async def lead_recording(lead_id: str, user=CurrentUser):
+    return RedirectResponse(await _recording(lead_id, user), status_code=302)
+
+
+@router.get("/leads/{lead_id}/recording-url")
+async def lead_recording_url(lead_id: str, user=CurrentUser):
+    return {"url": await _recording(lead_id, user)}
 
 
 # ---------- Admin: costs & pricing ----------
