@@ -18,15 +18,16 @@ function ConnectDialog({ number, users, onClose, onDone }) {
   const [o, setO] = useState(null);
   const [target, setTarget] = useState("main");
   const [busy, setBusy] = useState(false);
+  const [charge, setCharge] = useState(true);
   useEffect(() => {
     setO(null); setTarget("main");
-    if (tid) api.get(`/admin/zadarma/connect-options/${tid}`).then((r) => { setO(r.data); if (r.data.has_main) setTarget(r.data.agents[0]?.id || ""); }).catch((e) => toast.error(errMsg(e)));
+    if (tid) api.get(`/admin/zadarma/connect-options/${tid}`).then((r) => { setO(r.data); if (r.data.has_main) setTarget(r.data.agents[0]?.id || ""); setCharge(r.data.can_charge); }).catch((e) => toast.error(errMsg(e)));
   }, [tid]);
   const targets = [...(o && !o.has_main ? [["main", "Número principal (recepcionista y llamadas)"]] : []), ...(o?.agents || []).map((a) => [a.id, `Número propio del agente ${a.name}`])];
   const go = async () => {
     setBusy(true);
     try {
-      await api.post("/admin/zadarma/connect", { number: number.number, tenant_id: tid, agent_id: target === "main" ? "" : target });
+      await api.post("/admin/zadarma/connect", { number: number.number, tenant_id: tid, agent_id: target === "main" ? "" : target, charge: target !== "main" && charge && o.can_charge });
       toast.success(`${number.number} conectado y funcionando`); onDone();
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
@@ -40,8 +41,14 @@ function ConnectDialog({ number, users, onClose, onDone }) {
           {o?.kyc_ok && <>
             {o.has_main && <p className="text-xs text-slate-400">Ya tiene número principal ({o.main_number}); este número se conectará a uno de sus agentes.</p>}
             {targets.length ? <Pick value={target} onChange={setTarget} opts={targets} testid="connect-number-target-select" placeholder="¿Para qué será?" />
-              : <p className="text-xs text-rose-300">El cliente aún no tiene agentes creados.</p>}
-            {target && target !== "main" && <p className="rounded-xl border border-slate-700 p-3 text-xs text-slate-300" data-testid="connect-number-price-note">Se cobra al cliente el número adicional: <b>{o.price}</b> ahora (mes completo) y luego cada mes en su plan.</p>}
+              : <p className="text-xs text-rose-300" data-testid="connect-number-no-target">Todos los agentes de esta cuenta ya tienen número. Crea otro agente (por ejemplo «Chile») para asignarle este número.</p>}
+            {o.numbers.length > 0 && <p className="text-xs text-slate-400" data-testid="connect-number-current">Números activos de esta cuenta: {o.numbers.map((n) => n.number).join(" · ")}</p>}
+            {target && target !== "main" && (
+              <label className="flex items-start gap-2 rounded-xl border border-slate-700 p-3 text-xs text-slate-300" data-testid="connect-number-price-note">
+                <input type="checkbox" className="mt-0.5" checked={charge} disabled={!o.can_charge} onChange={(e) => setCharge(e.target.checked)} data-testid="connect-number-charge-checkbox" />
+                <span>{o.can_charge ? <>Cobrar al cliente el número adicional por Stripe: <b>{o.price}</b> ahora (mes completo) y luego cada mes.</>
+                  : <>Esta cuenta no paga por Stripe (plan asignado por ti), así que <b>no se cobrará automáticamente</b>; gestiona tú el cobro.</>}</span>
+              </label>)}
             <p className="text-xs text-slate-500">Se crea la línea SIP en Zadarma, se conecta a la IA y el número queda listo para recibir llamadas (recepcionista) y para llamar.</p>
           </>}
           <Button onClick={go} disabled={busy || !o?.kyc_ok || !target} className="w-full rounded-full" data-testid="connect-number-confirm-button">{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Conectar y configurar todo</Button>
@@ -59,7 +66,7 @@ export function ConnectExisting({ users, onChanged }) {
     setBusy(true);
     try { setRows((await api.get("/admin/zadarma/my-numbers")).data); } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
-  const free = (rows || []).filter((r) => !r.used_by);
+  const free = rows?.numbers || [];
   return (
     <div className="space-y-3 border-t border-slate-800 pt-4" data-testid="zadarma-existing-numbers">
       <div className="flex items-center justify-between gap-2">
@@ -68,16 +75,14 @@ export function ConnectExisting({ users, onChanged }) {
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}{rows ? "Actualizar" : "Ver mis números"}</Button>
       </div>
       <p className="text-xs text-slate-400">Usa números que ya tienes comprados en Zadarma: elige uno libre, el cliente y si es su número principal o el de un agente. Todo se configura solo.</p>
-      {rows && !free.length && <p className="text-xs text-slate-500" data-testid="zadarma-existing-empty">No tienes números libres en Zadarma ({rows.length} en uso).</p>}
+      {rows && !free.length && <p className="text-xs text-slate-500" data-testid="zadarma-existing-empty">No tienes números disponibles en Zadarma.</p>}
+      {rows && <p className="text-xs text-slate-500" data-testid="zadarma-existing-summary">{free.length} disponibles{rows.hidden ? ` · ${rows.hidden} ocultos (en uso en VozLeads, vencidos o inactivos)` : ""}</p>}
       {free.map((r) => (
         <div key={r.number} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 p-3 text-sm" data-testid={`zadarma-existing-${r.number.slice(1)}`}>
           <span className="text-white"><span className="font-mono">{r.number}</span>
-            <span className="ml-2 text-xs text-slate-400">{[r.country === "CL" ? "Chile" : r.country === "ES" ? "España" : "", r.description, r.stop_date && `renueva ${r.stop_date}`].filter(Boolean).join(" · ")}</span></span>
+            <span className="ml-2 text-xs text-slate-400">{[r.country === "CL" ? "Chile" : r.country === "ES" ? "España" : "", r.description, r.stop_date && `pagado hasta ${r.stop_date}`].filter(Boolean).join(" · ")}</span></span>
           <Button size="sm" onClick={() => setOpen(r)} className="rounded-full" data-testid={`zadarma-existing-connect-${r.number.slice(1)}`}><Link2 className="mr-1.5 h-4 w-4" />Conectar</Button>
         </div>
-      ))}
-      {rows && rows.filter((r) => r.used_by).map((r) => (
-        <p key={r.number} className="text-xs text-slate-500"><span className="font-mono">{r.number}</span> · en uso: {r.used_by}</p>
       ))}
       {open && <ConnectDialog number={open} users={users} onClose={() => setOpen(null)} onDone={() => { setOpen(null); load(); onChanged(); }} />}
     </div>

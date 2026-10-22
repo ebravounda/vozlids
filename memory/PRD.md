@@ -363,3 +363,4 @@
 - Frontend: admin_only → nav only Super admin, /app redirects to /app/admin, no tutorial/usage meter; "Mi cuenta de llamadas" button (impersonate client_id); "Volver a mi cuenta" via existing impersonation bar. Users list marks "tu cuenta de llamadas".
 - minutes_used excludes landing demo leads (source web_vozleads).
 - Preview admin NOT split (test creds unchanged). Production: user must press the button after updating.
+- 2026-06 fix: connect existing numbers — /my-numbers now returns {hidden, numbers} with ONLY usable numbers (Zadarma status not off/blocked/expired, stop_date not past, not used by any VozLeads record); connect re-validates. connect-options returns current active numbers, can_charge (Stripe sub active), agents without own number. ConnectIn.charge: admin-assigned plans (no Stripe) connect without charge (billing "manual") instead of failing "Necesitas un plan activo".

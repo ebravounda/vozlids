@@ -1,5 +1,6 @@
 """Super admin: connect numbers already owned in the platform's Zadarma account to a client (main line or one agent)."""
 import re
+from datetime import date
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
@@ -31,23 +32,34 @@ async def _in_use() -> dict:
     return used
 
 
-@router.get("/my-numbers")
-async def my_numbers(user=Depends(require_admin)):
+OFF = {"off", "blocked", "disabled", "expired", "deleted", "inactive"}
+
+
+def _usable(r: dict) -> bool:
+    if str(r.get("status", "")).lower() in OFF:
+        return False
+    stop = str(r.get("stop_date") or "")[:10]
+    return not stop or stop >= date.today().isoformat()
+
+
+async def _free() -> tuple[list, int]:
     try:
         rows = await Z.my_numbers()
     except Z.ZadarmaError as e:
         raise HTTPException(424, str(e))
     used = await _in_use()
-    names = {str(u["_id"]): u.get("business_name") or u["email"] async for u in db.users.find(
-        {"_id": {"$in": [ObjectId(t) for t in used.values() if ObjectId.is_valid(t)]}}, {"business_name": 1, "email": 1})}
-    out = []
-    for r in rows:
-        n = _norm(r.get("number"))
-        owner = used.get(n)
-        out.append({"number": n, "country": PREFIX.get(n[1:3], ""), "description": r.get("description") or r.get("number_name") or "",
-                    "status": r.get("status", ""), "stop_date": r.get("stop_date", ""),
-                    "used_by": "Número de la plataforma" if owner == "plataforma" else names.get(owner, "") if owner else ""})
-    return out
+    free = [r for r in rows if _usable(r) and _norm(r.get("number")) not in used]
+    return free, len(rows) - len(free)
+
+
+@router.get("/my-numbers")
+async def my_numbers(user=Depends(require_admin)):
+    """Only numbers that are active in Zadarma, not expired and not used by any VozLeads account."""
+    free, hidden = await _free()
+    return {"hidden": hidden, "numbers": [
+        {"number": _norm(r.get("number")), "country": PREFIX.get(_norm(r.get("number"))[1:3], ""),
+         "description": r.get("description") or r.get("number_name") or "", "stop_date": str(r.get("stop_date") or "")[:10]}
+        for r in free]}
 
 
 @router.get("/connect-options/{tid}")
@@ -56,17 +68,22 @@ async def connect_options(tid: str, user=Depends(require_admin)):
     if not u:
         raise HTTPException(404, "Cliente no encontrado")
     main = await N.record(tid)
-    return {"kyc_ok": await kyc.group_for(tid) is not None, "has_main": bool(main and main.get("status") == "activo"),
+    nums = [{"number": r.get("number"), "agent": r.get("agent_id", ""), "extra": bool(r.get("extra"))}
+            async for r in db.tenant_numbers.find({"tenant_id": tid, "status": "activo"}, {"number": 1, "agent_id": 1, "extra": 1})]
+    taken = {n["agent"] for n in nums if n["extra"]}
+    return {"kyc_ok": u.get("role") == "admin" or await kyc.group_for(tid) is not None, "numbers": nums,
+            "can_charge": bool(u.get("stripe_subscription_id")) and u.get("billing_status") == "active", "has_main": bool(main and main.get("status") == "activo"),
             "main_number": (main or {}).get("number") if main and main.get("status") == "activo" else "",
             "price": E.price_label(u.get("country", "ES")),
             "agents": [{"id": str(a["_id"]), "name": a["name"], "role": a.get("role", "")}
-                       async for a in db.agents.find({"tenant_id": tid}, {"name": 1, "role": 1})]}
+                       async for a in db.agents.find({"tenant_id": tid}, {"name": 1, "role": 1}) if str(a["_id"]) not in taken]}
 
 
 class ConnectIn(BaseModel):
     number: str = Field(min_length=6, max_length=20)
     tenant_id: str
     agent_id: str = ""
+    charge: bool = True
 
 
 @router.post("/connect")
@@ -77,14 +94,9 @@ async def connect(body: ConnectIn, user=Depends(require_admin)):
         raise HTTPException(404, "Cliente no encontrado")
     if u.get("role") != "admin" and await kyc.group_for(body.tenant_id) is None:
         raise HTTPException(409, "Este cliente aún no tiene sus documentos de identidad aprobados. Revísalos en «Documentos de los titulares».")
-    try:
-        owned = {_norm(r.get("number")) for r in await Z.my_numbers()}
-    except Z.ZadarmaError as e:
-        raise HTTPException(424, str(e))
-    if number not in owned:
-        raise HTTPException(404, "Ese número no está en tu cuenta de Zadarma.")
-    if number in await _in_use():
-        raise HTTPException(409, "Ese número ya está en uso en VozLeads.")
+    free, _ = await _free()
+    if number not in {_norm(r.get("number")) for r in free}:
+        raise HTTPException(409, "Ese número ya no está disponible (en uso, vencido o inactivo en Zadarma). Actualiza la lista.")
     country = PREFIX.get(number[1:3], u.get("country", "ES"))
     tid = body.tenant_id
     if body.agent_id:
@@ -92,10 +104,11 @@ async def connect(body: ConnectIn, user=Depends(require_admin)):
         if await db.tenant_numbers.find_one({"tenant_id": tid, "extra": True, "agent_id": body.agent_id, "status": {"$in": E.OPEN}}):
             raise HTTPException(409, f"{agent['name']} ya tiene un número propio.")
         bill = u.get("country", "ES")
-        item = await E._charge(u, bill)
-        res = await db.tenant_numbers.insert_one({"tenant_id": tid, "extra": True, "agent_id": body.agent_id, "country": bill,
+        item = await E._charge(u, bill) if body.charge else ""
+        res = await db.tenant_numbers.insert_one({"tenant_id": tid, "extra": True, "agent_id": body.agent_id, "country": bill if item else country,
                                                   "number": number, "status": "comprando", "stripe_item_id": item,
-                                                  "created_at": now_iso(), "updated_at": now_iso(), "source": "zadarma_existente"})
+                                                  "created_at": now_iso(), "updated_at": now_iso(), "source": "zadarma_existente",
+                                                  "billing": "stripe" if item else "manual"})
         filt, inbound = {"_id": res.inserted_id}, body.agent_id
     else:
         main = await N.record(tid)
