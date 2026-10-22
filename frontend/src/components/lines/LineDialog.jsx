@@ -18,9 +18,11 @@ export const Pick = ({ label, value, onChange, opts, testid, placeholder }) => (
 );
 
 export function sipOptions(data, current = "") {
-  const free = data.sips.filter((s) => !s.used_by || s.id === current);
   return [
-    ...free.map((s) => [s.id, `Línea SIP ${s.id}${s.name ? ` · ${s.name}` : ""}${s.id === current ? " (la actual)" : ""}`]),
+    ...data.sips.map((s) => {
+      const busy = s.used_by && s.id !== current;
+      return [s.id, `Línea SIP ${s.id}${s.name ? ` · ${s.name}` : ""}${s.id === current ? " (la actual)" : busy ? ` · en uso por ${s.used_by}` : " · libre"}`, busy];
+    }),
     ["new", data.sips_left > 0 ? `Crear una línea SIP nueva (puedes crear ${data.sips_left})` : "Crear una línea SIP nueva (Zadarma no deja crear más)", data.sips_left <= 0],
   ];
 }

@@ -35,6 +35,23 @@ function Row({ l, act, busy }) {
   );
 }
 
+function SipList({ sips }) {
+  return (
+    <details className="rounded-xl border border-slate-800 p-3 text-sm" data-testid="lines-sip-list">
+      <summary className="cursor-pointer font-semibold text-white">Tus líneas SIP en Zadarma ({sips.length})</summary>
+      <div className="mt-2 space-y-1">
+        {sips.map((s) => (
+          <p key={s.id} className="flex flex-wrap gap-x-3 text-xs" data-testid={`lines-sip-${s.id}`}>
+            <span className="font-mono text-white">{s.id}</span><span className="text-slate-400">{s.name || "sin nombre"}</span>
+            <span className={s.used_by ? "text-amber-300" : "text-emerald-400"}>{s.used_by ? `en uso por ${s.used_by}` : "libre"}</span>
+          </p>
+        ))}
+        <p className="pt-1 text-xs text-slate-500">Esta lista viene directamente de tu cuenta de Zadarma. Si ves menos de las que esperas, puede que alguna sea una extensión de la centralita (PBX, como 100 o 101): esas no se listan como líneas SIP.</p>
+      </div>
+    </details>
+  );
+}
+
 export default function AdminLines() {
   const [data, setData] = useState(null);
   const [opts, setOpts] = useState(null);
@@ -85,6 +102,7 @@ export default function AdminLines() {
         </div>
         {results && <div className="rounded-xl border border-slate-700 p-3 text-xs" data-testid="lines-results">{results.map((r) => <p key={r.number} className={r.ok ? "text-emerald-400" : "text-rose-300"}>{r.number}: {r.detail}</p>)}</div>}
         {data?.orphans?.length > 0 && <p className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200" data-testid="lines-orphans"><AlertTriangle className="h-4 w-4 shrink-0" />Conectados en VozLeads pero no están en tu Zadarma: {data.orphans.map((o) => `${o.number} (${o.owner})`).join(", ")}.</p>}
+        {data && <SipList sips={data.sips} />}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left" data-testid="lines-table">
             <thead><tr className="text-[11px] uppercase tracking-wider text-slate-500"><th className="pb-2">Número</th><th className="pb-2">De quién es</th><th className="pb-2">Línea SIP</th><th className="pb-2">Estado</th><th className="pb-2 text-right">Acciones</th></tr></thead>
