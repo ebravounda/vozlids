@@ -1,5 +1,6 @@
 import { FEATURE_INFO, useFeature } from "@/components/PlanGate";
 import { WebScan } from "@/components/agent/WebScan";
+import { BusinessFacts, ReceptionPanel } from "@/components/agent/Reception";
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -61,12 +62,14 @@ export const GeneralTab = ({ agent, update }) => (
       </p>
       <WebScan agent={agent} update={update} />
     </div>
+    <BusinessFacts agent={agent} update={update} />
     <div className="space-y-3">
       <Label>Objetivo de la llamada</Label>
       <div className="grid gap-3 md:grid-cols-3">
         {OBJECTIVES.map((o) => <Choice key={o.id} active={agent.objective === o.id} onClick={() => update({ objective: o.id })} title={o.name} desc={o.desc} testid={`agent-objective-${o.id}`} />)}
       </div>
     </div>
+    <ReceptionPanel agent={agent} update={update} />
   </Panel>
 );
 

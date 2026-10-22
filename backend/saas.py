@@ -74,11 +74,17 @@ async def _quota_error(tenant_id: str) -> Optional[str]:
 
 
 # ---------- Notifications ----------
+async def notify_to(lead: dict, owner: dict | None) -> str:
+    aid = lead.get("agent_id")
+    agent = await db.agents.find_one({"_id": ObjectId(aid)}) if aid and ObjectId.is_valid(aid) else None
+    return (agent or {}).get("notify_email") or (owner or {}).get("email", "")
+
+
 async def notify_appointment(lead: dict, when: str):
     owner = await db.users.find_one({"_id": ObjectId(lead["tenant_id"])})
     rows = [("Cliente", lead["name"]), ("Teléfono", lead["phone"]), ("Fecha y hora", when)]
     if owner:
-        await emailer.send(owner["email"], f"Nueva cita: {lead['name']}", "Tu agente ha agendado una cita", rows,
+        await emailer.send(await notify_to(lead, owner), f"Nueva cita: {lead['name']}", "Tu agente ha agendado una cita", rows,
                            os.environ["APP_PUBLIC_URL"] + "/app/agenda")
     if lead.get("email"):
         biz = (owner or {}).get("business_name", "")
@@ -110,7 +116,7 @@ async def tool_human(lead: dict, args: dict) -> dict:
         rows = [("Cliente", lead["name"]), ("Teléfono", lead["phone"]), ("Motivo", reason)]
         if best:
             rows.append(("Mejor momento para llamar", best))
-        await emailer.send(owner["email"], f"{lead['name']} quiere hablar con una persona",
+        await emailer.send(await notify_to(lead, owner), f"{lead['name']} quiere hablar con una persona",
                            "Uno de tus clientes necesita asistencia", rows, os.environ["APP_PUBLIC_URL"] + "/app/asistencia")
     return {"ok": True, "mensaje": "Aviso enviado; una persona del equipo le llamará lo antes posible."}
 

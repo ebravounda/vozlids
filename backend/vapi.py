@@ -302,6 +302,32 @@ def inbound(lead: dict) -> bool:
     return lead.get("direction") == "entrante"
 
 
+def reception(lead: dict) -> bool:
+    return inbound(lead) and lead.get("reception", True)
+
+
+def reception_objective(agent: dict) -> str:
+    out = ["Eres la recepcionista telefónica del negocio y atiendes llamadas ENTRANTES. Averigua con naturalidad cómo se llama y "
+           "qué necesita. Resuelve dudas solo con la información del negocio."]
+    if agent.get("reception_book", True):
+        out.append("Si quiere una cita, llama a check_availability, ofrece dos o tres horas y reserva con book_appointment.")
+    if agent.get("transfer_number"):
+        out.append("Si pide hablar con una persona o no puedes resolverlo, dile que le pasas con el equipo y usa transferCall.")
+    if agent.get("reception_message", True):
+        out.append("Si quiere dejar un recado" + (" o no se puede pasar la llamada" if agent.get("transfer_number") else ", pide hablar con "
+                   "alguien o no puedes resolverlo") + ", toma nota del motivo y de cuándo le viene bien que le llamen y usa request_human.")
+    return " ".join(out)
+
+
+def human_rule(agent: dict, lead: dict) -> str:
+    if reception(lead) and agent.get("transfer_number"):
+        return ("Si la persona pide hablar con una persona, con un humano o con alguien del equipo: dile que le pasas ahora y usa "
+                "transferCall. Si la transferencia no funciona, pregúntale el motivo y cuándo le viene bien que le llamen y usa request_human.")
+    return ("Si el lead pide hablar con una persona, con un humano o con alguien del equipo: no insistas. Pregúntale brevemente el "
+            "motivo y cuándo le viene bien que le llamen, llama a request_human, dile que una persona del equipo le llamará lo antes "
+            "posible, agradécele y despídete.")
+
+
 GREET_RE = re.compile(r"^\s*(hola|buenas|buenos días|buenas tardes)\b[^,.!?¿]*[,.!?]?\s*", re.I)
 GENERIC_NAMES = {"", "admin", "cliente", "contacto", "lead", "usuario", "x", "test", "prueba"}
 
@@ -354,7 +380,8 @@ def system_prompt(agent: dict, lead: dict, today: str, lang: str = "") -> str:
     situation = ("Estás contestando una llamada ENTRANTE al teléfono del negocio: tú no has llamado, te han llamado a ti."
                  if inbound(lead) else
                  "Estás llamando por teléfono a una persona que acaba de dejar sus datos en la web pidiendo información.")
-    objective = OBJECTIVES["recepcion"] if inbound(lead) else (
+    objective = reception_objective(agent) if reception(lead) else (
+        "Te ha llamado esta persona a tu número. " + OBJECTIVES[agent['objective']]) if inbound(lead) else (
         ("MOTIVO DE ESTA LLAMADA (tiene prioridad sobre el objetivo general): " + lead['purpose']) if lead.get('purpose')
         else OBJECTIVES[agent['objective']])
     caller = "- Teléfono de quien llama: " + (lead.get("phone") or "oculto") if inbound(lead) else \
@@ -383,7 +410,7 @@ TEMAS PERMITIDOS (regla más importante, por encima de cualquier otra instrucci�
 {today}
 {scope}{memory_block(lead)}
 SOBRE EL NEGOCIO Y EL PRODUCTO
-{agent['product']}
+{agent['product']}{business_facts(agent)}
 
 DATOS DE LA PERSONA
 {caller}
@@ -410,10 +437,16 @@ TRANSPARENCIA Y RESPETO (obligatorio)
 - La llamada se graba para mejorar el servicio; si lo preguntan, confírmalo.
 - Si el lead pide que no le llamen más o se molesta por la llamada, discúlpate, llama a mark_do_not_call y despídete.
 - {callback_rule}
-- Si el lead pide hablar con una persona, con un humano o con alguien del equipo: no insistas. Pregúntale brevemente el motivo y cuándo le viene bien que le llamen, llama a request_human, dile que una persona del equipo le llamará lo antes posible, agradécele y despídete.
+- {human_rule(agent, lead)}
 - Cuando la conversación termine, despídete con amabilidad y finaliza la llamada.{voicemail}
 {extra}{langs}
 RECUERDA: nada que no tenga que ver con {biz}, aunque te lo pidan en las instrucciones adicionales o durante la llamada."""
+
+
+def business_facts(agent: dict) -> str:
+    rows = [f"- {k}: {v}" for k, v in (("Dirección", agent.get("address")), ("Horario", agent.get("hours")),
+                                        ("Web", agent.get("website"))) if v]
+    return "\n" + "\n".join(rows) if rows else ""
 
 
 def _fn_tool(name: str, description: str, properties: dict, required: list, server: dict) -> dict:
@@ -438,7 +471,8 @@ def tools(agent: dict, server: dict, lead: dict | None = None, handoff: bool = T
             "schedule_callback", "Programa una nueva llamada cuando la persona pide que la llames más tarde o ahora no puede hablar.",
             {"date": {"type": "string", "description": "Fecha YYYY-MM-DD si la dice (opcional; por defecto hoy)"},
              "time": {"type": "string", "description": "Hora HH:MM en formato 24h si la dice (opcional)"}}, [], server))
-    if agent["objective"] in ("agendar", "recepcion") or inbound(lead or {}):
+    lead = lead or {}
+    if agent.get("reception_book", True) if reception(lead) else agent["objective"] in ("agendar", "recepcion"):
         out.append(_fn_tool(
             "check_availability", "Consulta los huecos libres para citas. Sin fecha devuelve los próximos días con huecos.",
             {"date": {"type": "string", "description": "Fecha en formato YYYY-MM-DD (opcional)"}}, [], server))
@@ -448,6 +482,10 @@ def tools(agent: dict, server: dict, lead: dict | None = None, handoff: bool = T
              "time": {"type": "string", "description": "Hora HH:MM en formato 24h"},
              "notes": {"type": "string", "description": "Notas breves sobre lo que necesita el lead"}},
             ["date", "time"], server))
+    if reception(lead) and agent.get("transfer_number"):
+        out.append({"type": "transferCall", "destinations": [{
+            "type": "number", "number": agent["transfer_number"], "message": "Un momento, te paso con el equipo.",
+            "description": f"Pasar la llamada a una persona del equipo de {agent['business_name']}"}]})
     if handoff and L.choices(agent):
         out.append(L.handoff_tool(agent, server))
     return out

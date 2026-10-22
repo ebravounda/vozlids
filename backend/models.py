@@ -47,6 +47,13 @@ class Agent(BaseDocument):
     website: str = ""
     web_summary: str = ""
     web_suggestion: Optional[dict] = None
+    address: str = ""
+    hours: str = ""
+    notify_email: str = ""
+    receptionist: bool = True
+    reception_book: bool = True
+    reception_message: bool = True
+    transfer_number: str = ""
     active: bool = True
     is_sample: bool = False
     created_at: str = Field(default_factory=now_iso)

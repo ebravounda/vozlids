@@ -13,7 +13,7 @@ from typing import List, Literal, Optional  # noqa: E402
 from bson import ObjectId  # noqa: E402
 from bson.errors import InvalidId  # noqa: E402
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response  # noqa: E402
-from pydantic import BaseModel, Field  # noqa: E402
+from pydantic import BaseModel, Field, field_validator  # noqa: E402
 from pymongo.errors import DuplicateKeyError  # noqa: E402
 from starlette.middleware.cors import CORSMiddleware  # noqa: E402
 
@@ -243,7 +243,30 @@ class AgentIn(BaseModel):
     memory: bool = True
     website: str = Field("", max_length=300)
     web_summary: str = Field("", max_length=4000)
+    address: str = Field("", max_length=300)
+    hours: str = Field("", max_length=500)
+    notify_email: str = Field("", max_length=200)
+    receptionist: bool = True
+    reception_book: bool = True
+    reception_message: bool = True
+    transfer_number: str = Field("", max_length=20)
     active: bool = True
+
+    @field_validator("transfer_number")
+    @classmethod
+    def _e164(cls, v: str) -> str:
+        v = re.sub(r"[\s().-]", "", v or "")
+        if v and not re.fullmatch(r"\+\d{8,15}", v):
+            raise ValueError("El número para pasar llamadas debe empezar por + y el prefijo del país (por ejemplo +34600000000).")
+        return v
+
+    @field_validator("notify_email")
+    @classmethod
+    def _mail(cls, v: str) -> str:
+        v = (v or "").strip()
+        if v and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", v):
+            raise ValueError("El email de avisos no es válido.")
+        return v
 
 
 async def get_agent(tenant_id: str, agent_id: str) -> dict:

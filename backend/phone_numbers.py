@@ -207,7 +207,7 @@ async def assistant_request(msg: dict) -> dict:
     lead = Lead(executive=agent.get("executive", ""), tenant_id=r["tenant_id"], agent_id=str(agent["_id"]), agent_name=agent.get("base_name", agent["name"]), name="Llamada entrante",
                 phone=phone if phone.startswith("+") or phone == "oculto" else f"+{phone}", source="entrante",
                 direction="entrante", status="en_curso")
-    doc = {**lead.to_mongo(), "line_number": r.get("number", "")}
+    doc = {**lead.to_mongo(), "line_number": r.get("number", ""), "reception": not r.get("extra") or agent.get("receptionist", True)}
     doc["vapi_call_id"] = call.get("id")
     doc["_id"] = (await db.leads.insert_one(doc)).inserted_id
     import plan_limits as PL

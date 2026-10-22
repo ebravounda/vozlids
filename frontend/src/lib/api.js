@@ -29,6 +29,6 @@ export function errMsg(e, fallback = "Algo ha fallado. Inténtalo de nuevo.") {
   const d = e?.response?.data?.detail;
   if (!d) return e?.message && !e.response ? fallback : fallback;
   if (typeof d === "string") return d;
-  if (Array.isArray(d)) return d.map((x) => x?.msg || JSON.stringify(x)).join(" ");
+  if (Array.isArray(d)) return d.map((x) => (x?.msg || JSON.stringify(x)).replace(/^Value error, /, "")).join(" ");
   return d.detail || d.msg || String(d);
 }
