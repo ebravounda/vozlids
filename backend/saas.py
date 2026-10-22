@@ -41,7 +41,7 @@ def month_start() -> str:
 
 
 async def minutes_used(tenant_id: str) -> float:
-    q = [{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}, "source": {"$ne": "web_vozleads"}}},
+    q = [{"$match": {"tenant_id": tenant_id, "created_at": {"$gte": month_start()}, "source": {"$ne": "web_vozleads"}, "excluded": {"$ne": True}}},
          {"$group": {"_id": None, "s": {"$sum": {"$ifNull": ["$duration_seconds", 0]}}}}]
     secs = 0
     for col in (db.leads, db.usage_archive, db.dialer_calls):

@@ -66,7 +66,7 @@ function History({ d, onRefresh }) {
           <tbody>{d.calls.map((c) => (
             <tr key={c.id} className="border-t border-slate-800" data-testid={`dialer-call-${c.id}`}>
               <td className="p-3 text-xs text-slate-400">{c.start}</td>
-              <td className="p-3"><p className="font-mono text-white">{c.to}</p><p className="text-[11px] text-slate-500">{c.destination}</p></td>
+              <td className="p-3"><p className="font-mono text-white">+{c.to}</p><p className="text-[11px] text-slate-500">{c.destination}</p></td>
               <td className="p-3 text-xs">{STATUS[c.status] || c.status}</td>
               <td className="p-3 font-mono text-xs">{mmss(c.seconds)}</td>
               {admin && <td className="p-3 font-mono text-xs">{c.cost} {c.currency}</td>}

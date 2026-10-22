@@ -167,14 +167,26 @@ async def dialer_history(user=CurrentUser):
     import saas
     error = await sync_calls()
     admin = user.get("role") == "admin"
-    docs = await db.dialer_calls.find({"tenant_id": user["id"], "created_at": {"$gte": saas.month_start()}}).sort("created_at", -1).to_list(2000)
+    docs = await db.dialer_calls.find({"tenant_id": user["id"], "created_at": {"$gte": saas.month_start()}, "excluded": {"$ne": True}}).sort("created_at", -1).to_list(2000)
     calls = [{"id": d["_id"], **{k: d.get(k) for k in ("start", "to", "destination", "status", "from_number")},
               "seconds": d.get("duration_seconds", 0), **({"cost": d.get("cost"), "currency": d.get("currency")} if admin else {})}
              for d in docs]
     return {"calls": calls, "minutes": round(sum(c["seconds"] for c in calls) / 60, 1), "error": error}
 
 
+async def _drop_misdialed() -> None:
+    """One-off: keypad calls dialed as +56 34… / +34 56… by the old number bug are not charged to the tenant."""
+    if await db.platform_settings.find_one({"_id": "dialer_fix_prefix"}):
+        return
+    r = await db.dialer_calls.update_many({"to": {"$regex": r"^(5634|3456)\d{9}$"}}, {"$set": {"excluded": True}})
+    await db.platform_settings.insert_one({"_id": "dialer_fix_prefix", "removed": r.modified_count, "at": datetime.now(timezone.utc).isoformat()})
+
+
 async def loop() -> None:
+    try:
+        await _drop_misdialed()
+    except Exception as e:  # noqa: BLE001
+        log.warning("Dialer prefix cleanup failed: %s", e)
     while True:
         await asyncio.sleep(600)
         try:
