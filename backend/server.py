@@ -29,6 +29,7 @@ import landing  # noqa: E402
 import phone_numbers  # noqa: E402
 import monitor  # noqa: E402
 import costs_compare  # noqa: E402
+import dialer  # noqa: E402
 import sector_demo  # noqa: E402
 import widget  # noqa: E402
 import onboarding  # noqa: E402
@@ -685,6 +686,7 @@ app.include_router(landing.router)
 app.include_router(phone_numbers.router)
 app.include_router(monitor.router)
 app.include_router(costs_compare.router)
+app.include_router(dialer.router)
 app.include_router(sector_demo.router)
 app.include_router(widget.router)
 app.include_router(onboarding.router)

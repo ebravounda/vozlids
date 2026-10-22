@@ -24,6 +24,10 @@ async def compare(days: int) -> dict:
         stats = await CR._stats(since)
     except Z.ZadarmaError as e:
         return {"rows": [], "totals": {}, "error": str(e)}
+    import dialer
+    manual = await dialer.dialer_sips()
+    manual_rows = [r for r in stats if str(r.get("sip")) in manual]
+    stats = [r for r in stats if str(r.get("sip")) not in manual]
     if await CR.learn_rates(stats, pricing):
         pricing = await get_pricing()
     leads = await db.leads.find({"vapi_call_id": {"$ne": None}, "created_at": {"$gte": since.isoformat()}},
@@ -62,6 +66,8 @@ async def compare(days: int) -> dict:
                      "diff": round((panel or 0) - cost, 5), "status": status})
     t["zadarma"], t["panel"] = round(t["zadarma"], 4), round(t["panel"], 4)
     t["difference"] = round(t["panel"] - t["zadarma"], 4)
+    t["manual_calls"] = len(manual_rows)
+    t["manual_cost"] = round(sum(CR.to_usd(CR._num(r.get("billcost")), r.get("currency"), pricing) for r in manual_rows), 4)
     return {"rows": sorted(rows, key=lambda x: x["start"] or "", reverse=True), "totals": t, "error": ""}
 
 

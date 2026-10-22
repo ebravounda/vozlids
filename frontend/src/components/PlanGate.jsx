@@ -13,6 +13,7 @@ export const FEATURE_INFO = {
   premium_voices: ["Voces ultra naturales HD", "Las voces más humanas, casi imposibles de distinguir de una persona."],
   multilang: ["Atención en varios idiomas", "El agente pregunta el idioma y pasa la llamada a un ejecutivo nativo: inglés, portugués, francés, catalán, italiano o alemán."],
   ambience: ["Ambiente de oficina", "Sonido de oficina de fondo para que la llamada suene más real."],
+  dialer: ["Teléfono en el panel", "Llama tú mismo a tus clientes desde el navegador, con tu número de empresa."],
 };
 
 export function PlanProvider({ path, children }) {

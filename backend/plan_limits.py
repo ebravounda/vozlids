@@ -13,6 +13,7 @@ FEATURES = {
     "agenda_pro": "Google Calendar y los recordatorios de citas",
     "multilang": "la atención en varios idiomas",
     "ambience": "el ambiente de oficina de fondo",
+    "dialer": "el teléfono en el panel",
 }
 DEFAULT = {"max_agents": 0, "max_concurrent": 0, "recording_days": 0, **{k: True for k in FEATURES}}
 LIVE = ("llamando", "en_curso")
@@ -28,6 +29,7 @@ class LimitsIn(BaseModel):
     agenda_pro: bool = True
     multilang: bool = False
     ambience: bool = True
+    dialer: bool = False
 
 
 async def for_tenant(tid: str) -> dict:
@@ -35,7 +37,7 @@ async def for_tenant(tid: str) -> dict:
     if not u or u.get("role") == "admin" or not u.get("plan_id") or not ObjectId.is_valid(u["plan_id"]):
         return dict(DEFAULT)
     plan = await db.plans.find_one({"_id": ObjectId(u["plan_id"])}, {"limits": 1}) or {}
-    return {**DEFAULT, "multilang": False, **(plan.get("limits") or {})}
+    return {**DEFAULT, "multilang": False, "dialer": False, **(plan.get("limits") or {})}
 
 
 def locked(feature: str) -> HTTPException:

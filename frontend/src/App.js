@@ -17,6 +17,7 @@ import DoNotCall from "@/pages/dashboard/DoNotCall";
 import Telephony from "@/pages/dashboard/Telephony";
 import MyNumberPage from "@/pages/dashboard/MyNumberPage";
 import AdminCosts from "@/pages/dashboard/AdminCosts";
+import Dialer from "@/pages/dashboard/Dialer";
 import AdminLines from "@/pages/dashboard/AdminLines";
 import AdminVapi from "@/pages/dashboard/AdminVapi";
 import AdminPayments from "@/pages/dashboard/AdminPayments";
@@ -70,6 +71,7 @@ function App() {
             <Route path="bienvenida" element={<Welcome />} />
             <Route path="llamadas" element={<Gate f="outbound"><Outbound /></Gate>} />
             <Route path="asistencia" element={<Support />} />
+            <Route path="telefono" element={<Gate f="dialer"><Dialer /></Gate>} />
             <Route path="api" element={<Gate f="api"><Developers /></Gate>} />
             <Route path="privacidad" element={<Privacy />} />
             <Route path="admin" element={<SuperAdmin />} />

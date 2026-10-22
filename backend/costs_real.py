@@ -153,6 +153,9 @@ async def sync_zadarma(pricing: dict, force: bool = False) -> dict:
         except Z.ZadarmaError as e:
             out["error"] = str(e)
             rows = []
+        import dialer
+        manual = await dialer.dialer_sips()
+        rows = [r for r in rows if str(r.get("sip")) not in manual]
         await learn_rates(rows, pricing)
         taken = {d["line_zadarma_id"] async for d in db.leads.find({**base, "line_zadarma_id": {"$ne": None}}, {"line_zadarma_id": 1})}
         ids = {str(ld["_id"]): ld["_id"] for ld in leads}

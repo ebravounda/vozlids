@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Sparkles } from "lucide-react";
+import { Loader2, MousePointerClick, BellRing, Bot, CalendarDays, Code2, CreditCard, Grid3x3, Hash, LifeBuoy, Lock, LogOut, PhoneCall, PhoneOff, PhoneOutgoing, Plus, Sparkles } from "lucide-react";
 import { Logo } from "@/components/Common";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -15,6 +15,7 @@ const NAV = [
   { to: "/app/llamadas", label: "Llamadas salientes", icon: PhoneOutgoing, id: "outbound" },
   { to: "/app/agenda", label: "Agenda y citas", icon: CalendarDays, id: "agenda" },
   { to: "/app/asistencia", label: "Asistencia técnica", icon: LifeBuoy, id: "support" },
+  { to: "/app/telefono", label: "Teléfono", icon: Grid3x3, id: "dialer" },
   { to: "/app/numero", label: "Mi número", icon: Hash, id: "mynumber" },
   { to: "/app/boton-web", label: "Botón para tu web", icon: MousePointerClick, id: "webwidget" },
   { to: "/app/no-llamar", label: "No llamar", icon: PhoneOff, id: "donotcall" },
@@ -23,7 +24,7 @@ const NAV = [
   { to: "/app/plan", label: "Mi plan", icon: CreditCard, id: "plan" },
 ];
 const ADMIN_NAV = ADMIN_TABS.map(([to, label, icon, id]) => ({ to, label, icon, id, admin: true, end: true }));
-const LOCK = { outbound: "outbound", webwidget: "widget", api: "api" };
+const LOCK = { outbound: "outbound", webwidget: "widget", api: "api", dialer: "dialer" };
 
 function CreateAgentButton() {
   const { u } = usePlan();
