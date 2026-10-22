@@ -1,3 +1,4 @@
+import re
 import asyncio
 import logging
 import os
@@ -27,14 +28,18 @@ async def record(tenant_id: str):
     return await db.tenant_numbers.find_one({"tenant_id": tenant_id, **PRIMARY})
 
 
+def num_country(number: str) -> str:
+    return {"34": "ES", "56": "CL"}.get(re.sub(r"\D", "", number or "")[:2], "")
+
+
 async def phone_id_for(tenant_id: str, country: str, agent_id: str = ""):
-    if agent_id:
-        own = await db.tenant_numbers.find_one({"tenant_id": tenant_id, "extra": True, "agent_id": agent_id,
-                                                "status": "activo", "country": country})
-        if own:
-            return own["phone_number_id"]
-    r = await record(tenant_id)
-    return r["phone_number_id"] if r and r.get("status") == "activo" and r.get("country") == country else None
+    """Caller number for a call to `country`: the agent's own number there, else the main one, else any of the account's."""
+    rows = [r async for r in db.tenant_numbers.find({"tenant_id": tenant_id, "status": "activo", "phone_number_id": {"$nin": [None, ""]}})]
+    same = [r for r in rows if (num_country(r.get("number")) or r.get("country")) == country]
+    for pick in ([r for r in same if r.get("extra") and r.get("agent_id") == agent_id], [r for r in same if not r.get("extra")], same):
+        if pick:
+            return pick[0]["phone_number_id"]
+    return None
 
 
 def _out(r: dict | None) -> dict:
