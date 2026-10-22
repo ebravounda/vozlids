@@ -1,0 +1,46 @@
+{
+  "summary": "Iteration 39: Tested admin left sidebar (Administración section), Pagos page + backend, provisioning banner for new clients, OpenAI settings panel (read-only), and the AI web scan (2/day limit, SSRF guard). Everything requested works. Found one regression (not part of this feature): GET /api/admin/monitor/margins returned 500 because _parts() was called with a missing 'pricing' argument, which crashed the Monitor en vivo page with an unhandled-rejection overlay. I fixed it with a one-line change and verified it now returns 200. Backend: 19/19 pytest passed. Frontend: all requested flows passed. Used 2 real LLM scans.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/admin/monitor/margins", "issue": "500 TypeError: _parts() missing 1 required positional argument 'pricing' (monitor.py:269). The signature changed in extra_routes.py but this caller was not updated. FIXED by the testing agent: now passes pricing, returns 200.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/agents/scan-website", "issue": "SSRF guard only checks the first URL's hostname. httpx runs with follow_redirects=True, so a public URL that redirects (3xx) to 127.0.0.1, 169.254.169.254 or 10.x is not re-checked. DNS rebinding is also possible because the host is resolved twice. Fix: follow_redirects=False and follow redirects by hand, checking _public() on every hop."},
+      {"endpoint": "POST /api/agents/scan-website", "issue": "The quota check (count_documents, then insert after the LLM call) is not atomic. Parallel requests from one client can exceed 2/day. Fix: reserve the slot before the LLM call with an atomic counter, and release it if the scan fails."},
+      {"endpoint": "POST /api/admin/payments/invoices/{id}/pay", "issue": "The 402 detail passes the raw Stripe/proxy text to the user (e.g. 'Invalid response body from API: 404 page not found'). Acceptable, but not user-friendly Spanish."},
+      {"endpoint": "POST /api/admin/payments/send-link", "issue": "The admin plan select lists all plans from /admin/plans, but checkout only accepts public plans. Choosing a non-public plan gives 404 'Plan no encontrado'. Filter the select to public plans or allow private plans for admin-sent links."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "MonitorParts.jsx margins panel", "issue": "api.get('/admin/monitor/margins') has no .catch, so any backend error shows the full-screen 'Unhandled rejection' overlay instead of a toast or inline error.", "selector": "[data-testid=margins-panel]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Pagos /app/pagos", "issues": ["The accounts table shows every business account (83 in preview, many TEST_ leftovers) with no search or pagination. It will get unwieldy in production."]},
+      {"screen": "Agent editor WebScan", "issues": ["Remaining scans are only shown after a scan; there is no initial 'te quedan N lecturas hoy' indicator.", "The URL input is prefilled from agent.website, which is empty for new clients, even though they gave a website at signup (stored on the user doc)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_vozlead_iter39_payments_webscan.py", "/app/backend/tests/iter39_ui_setup.py", "/app/test_reports/pytest/pytest_iter39.xml"],
+  "action_items": [
+    "Review the testing agent's one-line fix in backend/monitor.py (pass pricing to _parts) and add a regression test for /api/admin/monitor/margins.",
+    "Add .catch to the margins fetch in MonitorParts.jsx.",
+    "Harden the webscan SSRF guard against redirects and DNS rebinding.",
+    "Make the 2/day scan quota atomic.",
+    "Optional: filter the send-link plan select to public plans; add search or pagination to the Pagos accounts table; show remaining scans up front."
+  ],
+  "critical_code_review_comments": [
+    "webscan._fetch: follow_redirects=True skips the private-host check on redirect targets, so SSRF is still possible.",
+    "webscan.scan: the quota check is a race (count, then insert after a slow LLM call).",
+    "payments.payments(): Stripe is called for both live and test modes on every page load with limit=100 and no pagination; invoices beyond 100 are silently dropped.",
+    "PlanGate.AdminTabs is still exported but no longer used (dead code)."
+  ],
+  "updated_files": ["/app/backend/monitor.py", "/app/backend/tests/test_vozlead_iter39_payments_webscan.py", "/app/backend/tests/iter39_ui_setup.py"],
+  "success_rate": {"backend": "100% (19/19) after the margins fix", "frontend": "100% of requested flows"},
+  "test_credentials": "admin@vozlead.es / VozLead2026! (from /app/memory/test_credentials.md). Test clients test_iter39* were created and then deleted.",
+  "seed_data_creation": "Temporary clients test_iter39*@example.com, one agent and the web_scans docs. All deleted after testing. One send-link email and checkout session (Stripe test mode via proxy) was created for a test client.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Login testids: auth-email-input, auth-password-input, auth-submit-button. Run pytest with '-n 0' to see prints (pytest.ini uses xdist). The OpenAI key is saved (hint …2046, gpt-5.4-mini); a real scan of python.org takes about 3-20s and returns 5 pages. In preview, send-link returns 200 with a checkout.stripe.com test URL. Charge-now returns 402 with the proxy. For the quota test, seed 2 web_scans docs {tenant_id, day: UTC YYYY-MM-DD} to avoid LLM cost.",
+  "rca of the issue": "The monitor margins 500 is a regression: extra_routes._parts gained a third 'pricing' parameter but monitor.margins was not updated. Reproduce: as admin open /app/monitor, which calls GET /api/admin/monitor/margins and returns 500 with a TypeError in backend.err.log. Mitigation applied: monitor.py:269 now passes pricing."
+}

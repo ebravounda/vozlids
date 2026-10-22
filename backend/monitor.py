@@ -266,7 +266,7 @@ async def margins(user=Depends(require_admin)):
         cost, minutes, calls = 0.0, 0.0, 0
         async for ld in db.leads.find({"tenant_id": uid, "vapi_call_id": {"$ne": None}, "created_at": {"$gte": since}},
                                       {"messages": 0, "transcript": 0}):
-            p = _parts(ld, rates.get(agent_country.get(ld["agent_id"], "ES"), rates["ES"]))
+            p = _parts(ld, rates.get(agent_country.get(ld["agent_id"], "ES"), rates["ES"]), pricing)
             cost += p["total"]
             minutes += p["minutes"]
             calls += 1
