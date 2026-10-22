@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Activity, AlertTriangle, CheckCircle2, Loader2, PhoneCall, RefreshCw, Wrench, XCircle } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Loader2, PhoneCall, PhoneIncoming, RefreshCw, Wrench, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/Common";
 import { api, errMsg } from "@/lib/api";
@@ -77,6 +77,15 @@ export default function AdminLines() {
     try { setResults((await api.post("/admin/lines/reconfigure-all", {}, { timeout: 600000 })).data); await load(); }
     catch (e) { toast.error(errMsg(e)); setBusy(false); }
   };
+  const repair = async () => {
+    setBusy(true);
+    try {
+      const r = (await api.post("/admin/lines/repair-inbound", {}, { timeout: 600000 })).data;
+      setResults(r.numbers);
+      toast.success("Llamadas entrantes reparadas: todos los números entran por la misma conexión");
+      await load();
+    } catch (e) { toast.error(errMsg(e)); setBusy(false); }
+  };
   const done = () => { setDlg(null); load(); };
   const health = async () => {
     setBusy(true);
@@ -98,6 +107,7 @@ export default function AdminLines() {
           <p className="mr-auto text-sm text-slate-400" data-testid="lines-summary">{data ? `${lines.length} números · ${lines.filter((l) => l.connected).length} conectados · ${lines.filter((l) => !l.connected && l.usable).length} libres · Líneas SIP: ${data.sips.length} (${data.sips.filter((s) => !s.used_by).length} sin usar, puedes crear ${data.sips_left} más)` : "Cargando…"}</p>
           <Button size="sm" variant="outline" onClick={load} disabled={busy} className="rounded-full" data-testid="lines-refresh-button">{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Actualizar</Button>
           <Button size="sm" variant="outline" onClick={health} disabled={busy} className="rounded-full" data-testid="lines-health-button"><Activity className="mr-2 h-4 w-4" />Revisar ahora</Button>
+          <Button size="sm" variant="outline" onClick={repair} disabled={busy || !lines.some((l) => l.connected)} className="rounded-full" title="Arregla el «number not found» al llamar a un número" data-testid="lines-repair-inbound-button"><PhoneIncoming className="mr-2 h-4 w-4" />Reparar llamadas entrantes</Button>
           <Button size="sm" onClick={all} disabled={busy || !lines.some((l) => l.connected)} className="rounded-full" data-testid="lines-reconfigure-all-button"><Wrench className="mr-2 h-4 w-4" />Reconfigurar todo</Button>
         </div>
         {results && <div className="rounded-xl border border-slate-700 p-3 text-xs" data-testid="lines-results">{results.map((r) => <p key={r.number} className={r.ok ? "text-emerald-400" : "text-rose-300"}>{r.number}: {r.detail}</p>)}</div>}

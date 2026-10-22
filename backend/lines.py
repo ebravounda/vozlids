@@ -122,12 +122,13 @@ async def _wire(number: str, sip_id: str, label: str) -> dict:
         await N._step(f"preparar tu línea SIP {sip_id} en Zadarma", Z.reuse_sip(sip_id, pwd, number))
         sip = sip_id
     v = await N._step("conectar la línea con la IA (Vapi)", vapi.connect_tenant_number(sip, pwd, number, label))
-    await N._step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"])))
+    await N._step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, v["inbound_uri"]))
     return {"sip_id": str(sip), **v, "routed": True}
 
 
 async def _unwire(r: dict) -> None:
-    for path in (f"/phone-number/{r.get('phone_number_id')}", f"/credential/{r.get('credential_id')}"):
+    for path in (f"/phone-number/{r.get('phone_number_id')}", f"/phone-number/{r.get('inbound_phone_number_id')}",
+                 f"/credential/{r.get('credential_id')}"):
         if "None" not in path and path.split("/")[-1]:
             try:
                 await vapi.delete(path)
@@ -293,6 +294,24 @@ async def reconfigure(number: str, body: SipIn, user=Depends(require_admin)):
 async def health_check(user=Depends(require_admin)):
     import linehealth
     return await linehealth.check_once()
+
+
+@router.post("/repair-inbound")
+async def repair_inbound(user=Depends(require_admin)):
+    isolated = await vapi.isolate_inbound()
+    out = []
+    async for r in db.tenant_numbers.find({"status": "activo", "number": {"$nin": [None, ""]}}):
+        try:
+            v = await vapi.connect_inbound(r["number"])
+            await Z.route_to(r["number"], v["inbound_uri"])
+            await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {**v, "routed": True, "updated_at": now_iso()}})
+            out.append({"number": r["number"], "ok": True, "detail": "Llamadas entrantes reparadas"})
+        except (vapi.VapiError, Z.ZadarmaError) as e:
+            out.append({"number": r["number"], "ok": False, "detail": str(e)[:200]})
+    for p in await vapi._list("/phone-number"):
+        if p.get("provider") == "vapi" and (p.get("sipUri") or "").startswith("sip:vozleads-"):
+            await vapi.delete(f"/phone-number/{p['id']}")
+    return {"isolated": isolated, "numbers": out}
 
 
 @router.post("/reconfigure-all")

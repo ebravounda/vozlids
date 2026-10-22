@@ -131,7 +131,7 @@ async def activate(filt: dict, u: dict, number: str, agent_id: str, sip_id: str 
     else:
         sip = await _step("crear la línea SIP en Zadarma", _sip_line(u, pwd, number))
     v = await _step("conectar la línea con la IA (Vapi)", vapi.connect_tenant_number(sip, pwd, number, u.get("business_name") or u["email"]))
-    await _step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, vapi.inbound_sip_uri(number, v["credential_id"])))
+    await _step("desviar el número a la recepcionista en Zadarma", Z.route_to(number, v["inbound_uri"]))
     await db.tenant_numbers.update_one(filt, {"$set": {
         "status": "activo", "error": "", "sip_id": sip, **v, "activated_at": now_iso(), "inbound_agent_id": agent_id}})
     agent = await db.agents.find_one({"_id": ObjectId(agent_id)}, {"name": 1}) if ObjectId.is_valid(agent_id or "") else None
@@ -155,7 +155,8 @@ async def release(user_id: str, num_id=None) -> dict:
             await Z.autorenew(r["number"], False)
         except Z.ZadarmaError as e:
             errors.append(str(e))
-    for path in (f"/phone-number/{r.get('phone_number_id')}", f"/credential/{r.get('credential_id')}"):
+    for path in (f"/phone-number/{r.get('phone_number_id')}", f"/phone-number/{r.get('inbound_phone_number_id')}",
+                 f"/credential/{r.get('credential_id')}"):
         if "None" not in path:
             await vapi.delete(path)
     await db.tenant_numbers.update_one({"_id": r["_id"]}, {"$set": {
@@ -335,7 +336,7 @@ async def platform_inbound(user=Depends(X.require_admin)):
     for c, n in vapi.STATE["numbers"].items():
         r = await db.tenant_numbers.find_one({"platform": True, "country": c}) or {}
         out.append({"country": c, "number": n.get("number"), "enabled": r.get("status") == "activo",
-                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": vapi.inbound_sip_uri(n.get("number", "")),
+                    "agent_id": r.get("inbound_agent_id", ""), "sip_uri": r.get("inbound_uri", ""),
                     "routed": r.get("routed", False)})
     return out
 
@@ -348,21 +349,20 @@ async def platform_inbound_on(body: PlatformInboundIn, user=Depends(X.require_ad
     a = await db.agents.find_one({"_id": ObjectId(body.agent_id) if ObjectId.is_valid(body.agent_id) else None, "tenant_id": user["id"]})
     if not a:
         raise HTTPException(404, "Agente no encontrado")
-    await vapi.enable_inbound(n["credential_id"], n["phone_number_id"])
-    sip = await vapi.ensure_sip_inbound(n["number"], f"Entrante {n['number']}")
+    await vapi.isolate_inbound()
+    sip = await vapi.connect_inbound(n["number"])
     routed, note = False, ""
     if (await Z.creds()).get("key"):
         try:
-            await Z.route_to(n["number"], vapi.inbound_sip_uri(n["number"]))
+            await Z.route_to(n["number"], sip["inbound_uri"])
             routed = True
         except Z.ZadarmaError as e:
             note = str(e)[:200]
     await db.tenant_numbers.update_one({"platform": True, "country": body.country}, {"$set": {
         "tenant_id": user["id"], "number": n["number"], "phone_number_id": n["phone_number_id"], "credential_id": n["credential_id"],
         "status": "activo", "inbound_agent_id": body.agent_id, "routed": routed, "updated_at": now_iso(),
-        "inbound_phone_number_id": sip["id"], "inbound_uri": vapi.inbound_sip_uri(n["number"])},
-        "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
-    return {"ok": True, "routed": routed, "note": note, "sip_uri": vapi.inbound_sip_uri(n["number"])}
+        **sip}, "$setOnInsert": {"created_at": now_iso()}}, upsert=True)
+    return {"ok": True, "routed": routed, "note": note, "sip_uri": sip["inbound_uri"]}
 
 
 @router.delete("/admin/platform-inbound/{country}")

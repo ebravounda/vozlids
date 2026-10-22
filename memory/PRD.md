@@ -394,3 +394,9 @@
 - UI: components/agent/Reception.jsx in GeneralTab (toggle only shown if agent has own number). Tested iteration_40 (100%).
 - Fix: Reception panel now also shows for agents on the MAIN number (inbound_agent_id); main number has no on/off toggle (always receptionist) but has book/message/transfer options.
 - Debug note: +34919939915 inbound "not found" is a Zadarma-side issue (all destinations fail; config VozLeads/Vapi identical to working numbers). User to open Zadarma ticket.
+
+## 2026-10-22 Inbound routing fix (Vapi "number not found")
+- Root cause: every per-number byo-sip-trunk credential had the same Zadarma inbound IPs; Vapi picked ONE credential (Chile 56233844477) for all Zadarma INVITEs, so other numbers got 404 "number not found".
+- Fix: per-number credentials are now OUTBOUND-only (OUTBOUND_GATEWAYS). One shared credential "VozLeads Entrante Zadarma" holds Zadarma inbound IPs; each number gets a 2nd byo-phone-number on it (inbound_phone_number_id, inbound_uri). Zadarma routes to NUM@<sharedCred>.sip.vapi.ai. Vapi allows same number on 2 credentials (verified).
+- Migration: Super admin > Líneas > "Reparar llamadas entrantes" (POST /api/admin/lines/repair-inbound): isolate_inbound() + connect_inbound() + Zadarma route for every active number; deletes legacy vapi-provider sip:vozleads-* numbers.
+- WARNING: preview and production share the SAME Vapi org. Never run repair/isolate from preview.

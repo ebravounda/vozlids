@@ -161,41 +161,67 @@ def server_cfg() -> dict:
     return {"url": webhook_url(), "headers": {"x-vapi-secret": secret}}
 
 
-async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:
+async def _outbound_line(sip_login: str, sip_password: str, number: str, name: str) -> dict:
     cred = await _post("/credential", {
-        "provider": "byo-sip-trunk", "name": f"VozLeads {label}"[:40],
-        "gateways": INBOUND_GATEWAYS,
-        "outboundLeadingPlusEnabled": True,
+        "provider": "byo-sip-trunk", "name": name[:40], "gateways": OUTBOUND_GATEWAYS, "outboundLeadingPlusEnabled": True,
         "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
     })
     phone = await _post("/phone-number", {
-        "provider": "byo-phone-number", "name": f"VozLeads {label}"[:40], "number": number.lstrip("+"),
+        "provider": "byo-phone-number", "name": name[:40], "number": number.lstrip("+"),
         "numberE164CheckEnabled": False, "credentialId": cred["id"], "server": server_cfg(),
     })
     return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
+
+
+async def connect_tenant_number(sip_login: str, sip_password: str, number: str, label: str) -> dict:
+    v = await _outbound_line(sip_login, sip_password, number, f"VozLeads {label}")
+    return {**v, **await connect_inbound(number)}
 
 
 ZADARMA_IN = [("185.45.152.0", 24), ("185.45.154.0", 24), ("185.45.155.0", 24), ("195.122.19.0", 24),
               ("15.235.128.0", 24), ("31.31.222.0", 24)]
 INBOUND_GATEWAYS = [{"ip": "sip.zadarma.com", "inboundEnabled": False}] + [
     {"ip": ip, "netmask": m, "inboundEnabled": True, "outboundEnabled": False} for ip, m in ZADARMA_IN]
+OUTBOUND_GATEWAYS = [{"ip": "sip.zadarma.com", "inboundEnabled": False}]
+INBOUND_NAME = "VozLeads Entrante Zadarma"
 
 
-async def enable_inbound(credential_id: str, phone_number_id: str) -> None:
-    await _post(f"/credential/{credential_id}", {"gateways": INBOUND_GATEWAYS}, "PATCH")
-    await _post(f"/phone-number/{phone_number_id}", {"server": server_cfg()}, "PATCH")
-
-
-async def ensure_sip_inbound(number: str, name: str) -> dict:
-    uri = f"sip:vozleads-{number.lstrip('+')}@sip.vapi.ai"
+async def _list(path: str) -> list:
     async with httpx.AsyncClient(timeout=30) as x:
-        nums = (await x.get(f"{VAPI_URL}/phone-number", headers=_headers(), params={"limit": 100})).json()
-    cur = next((p for p in nums if p.get("provider") == "vapi" and (p.get("sipUri") or "").lower() == uri), None)
+        r = await x.get(f"{VAPI_URL}{path}", headers=_headers(), params={"limit": 1000})
+    if r.status_code >= 400:
+        raise VapiError(f"El servicio de llamadas respondió con error ({r.status_code})")
+    return r.json()
+
+
+async def inbound_credential() -> str:
+    """One shared trunk owns Zadarma's inbound IPs; Vapi routes every Zadarma call through it by the dialled number."""
+    cur = next((c for c in await _list("/credential") if c.get("provider") == "byo-sip-trunk" and c.get("name") == INBOUND_NAME), None)
+    if cur:
+        return cur["id"]
+    return (await _post("/credential", {"provider": "byo-sip-trunk", "name": INBOUND_NAME, "gateways": INBOUND_GATEWAYS}))["id"]
+
+
+async def connect_inbound(number: str) -> dict:
+    cred, digits = await inbound_credential(), number.lstrip("+")
+    cur = next((p for p in await _list("/phone-number") if p.get("credentialId") == cred and p.get("number") == digits), None)
     if cur:
         await _post(f"/phone-number/{cur['id']}", {"server": server_cfg()}, "PATCH")
-        return {"id": cur["id"], "uri": uri}
-    p = await _post("/phone-number", {"provider": "vapi", "sipUri": uri, "name": name[:40], "server": server_cfg()})
-    return {"id": p["id"], "uri": uri}
+    else:
+        cur = await _post("/phone-number", {"provider": "byo-phone-number", "name": f"Entrante {digits}", "number": digits,
+                                            "numberE164CheckEnabled": False, "credentialId": cred, "server": server_cfg()})
+    return {"inbound_phone_number_id": cur["id"], "inbound_uri": inbound_sip_uri(digits, cred)}
+
+
+async def isolate_inbound() -> int:
+    """Strip inbound IPs from every other trunk so they can't swallow calls meant for the shared one."""
+    fixed = 0
+    for c in await _list("/credential"):
+        if c.get("provider") == "byo-sip-trunk" and c.get("name") != INBOUND_NAME and any(
+                g.get("inboundEnabled", True) for g in c.get("gateways") or []):
+            await _post(f"/credential/{c['id']}", {"gateways": OUTBOUND_GATEWAYS}, "PATCH")
+            fixed += 1
+    return fixed
 
 
 def inbound_sip_uri(number: str, credential_id: str = "") -> str:
@@ -212,17 +238,7 @@ async def ensure_11labs_credential(api_key: str) -> str:
 
 
 async def connect_zadarma(sip_login: str, sip_password: str, number: str, country: str = "ES") -> dict:
-    cred = await _post("/credential", {
-        "provider": "byo-sip-trunk", "name": f"Zadarma Trunk {country}",
-        "gateways": INBOUND_GATEWAYS,
-        "outboundLeadingPlusEnabled": True,
-        "outboundAuthenticationPlan": {"authUsername": sip_login, "authPassword": sip_password},
-    })
-    phone = await _post("/phone-number", {
-        "provider": "byo-phone-number", "name": f"Zadarma {COUNTRIES[country]['prefix']}", "number": number.lstrip("+"),
-        "numberE164CheckEnabled": False, "credentialId": cred["id"], "server": server_cfg(),
-    })
-    return {"credential_id": cred["id"], "phone_number_id": phone["id"]}
+    return await _outbound_line(sip_login, sip_password, number, f"Zadarma Trunk {country}")
 OBJECTIVES = {
     "agendar": (
         "Tu objetivo es calificar al lead con las preguntas y, si encaja, reservarle una cita. Para reservar: llama primero a "

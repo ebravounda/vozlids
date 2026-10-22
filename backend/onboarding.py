@@ -96,7 +96,7 @@ async def assign(uid: str, body: AssignIn, user=Depends(X.require_admin)):
     except vapi.VapiError as e:
         await db.tenant_numbers.update_one({"tenant_id": uid, "extra": {"$ne": True}}, {"$set": {"status": "error", "error": str(e)[:300], "number": number}}, upsert=True)
         raise HTTPException(400, f"No se pudo conectar la línea: {e}")
-    uri = vapi.inbound_sip_uri(number, v["credential_id"])
+    uri = v["inbound_uri"]
     routed = ""
     if (await Z.creds()).get("key"):
         try:
